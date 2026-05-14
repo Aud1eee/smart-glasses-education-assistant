@@ -1,17 +1,22 @@
-import os
+import argparse
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 
-def analyze():
-    path = "../data/study_report.csv"
-    if not os.path.exists(path) or os.stat(path).st_size < 50:
+def analyze(input_path=None, heatmap_path=None, legacy_output_path=None, title_prefix="Attention Heatmap Review"):
+    root = Path(__file__).resolve().parents[1]
+    input_path = Path(input_path) if input_path else root / "data" / "study_report.csv"
+    heatmap_path = Path(heatmap_path) if heatmap_path else root / "exports" / "attention_heatmap.png"
+    legacy_output_path = Path(legacy_output_path) if legacy_output_path else root / "exports" / "study_analysis.png"
+
+    if not input_path.exists() or input_path.stat().st_size < 50:
         print(">>> Not enough learning-state data to analyze.")
         return
 
-    df = pd.read_csv(path)
+    df = pd.read_csv(input_path)
     df = df[df["Relative_Pitch"] != "Relative_Pitch"].copy()
     if df.empty:
         print(">>> No valid learning-state rows found.")
@@ -59,7 +64,7 @@ def analyze():
     ax1.set_ylim(0, 105)
     ax1.set_ylabel("Score")
     ax1.set_title(
-        f"Attention Heatmap Review | Focus {avg_focus:.1f} | Load {avg_load:.1f} | High-load {high_load_ratio:.1f}%"
+        f"{title_prefix} | Focus {avg_focus:.1f} | Load {avg_load:.1f} | High-load {high_load_ratio:.1f}%"
     )
     ax1.legend(loc="upper right")
     ax1.grid(axis="y", linestyle="--", alpha=0.18)
@@ -80,10 +85,18 @@ def analyze():
     ax3.legend(loc="upper right")
     ax3.grid(axis="y", linestyle="--", alpha=0.18)
 
-    os.makedirs("../exports", exist_ok=True)
-    fig.savefig("../exports/attention_heatmap.png", dpi=150)
-    fig.savefig("../exports/study_analysis.png", dpi=150)
-    print(">>> Saved attention heatmap to ../exports/attention_heatmap.png")
+    heatmap_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(heatmap_path, dpi=150)
+    if legacy_output_path:
+        fig.savefig(legacy_output_path, dpi=150)
+    plt.close(fig)
+    print(f">>> Saved attention heatmap to {heatmap_path}")
+    return {
+        "samples": len(df),
+        "avg_focus": round(avg_focus, 1),
+        "avg_load": round(avg_load, 1),
+        "high_load_ratio": round(high_load_ratio, 1),
+    }
 
 
 def _segments(mask):
@@ -100,5 +113,20 @@ def _segments(mask):
     return starts
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="Generate a learning-state heatmap from a CSV report.")
+    parser.add_argument("--input", default=None, help="Path to the CSV report file.")
+    parser.add_argument("--heatmap-output", default=None, help="Path for the main heatmap PNG.")
+    parser.add_argument("--legacy-output", default=None, help="Optional secondary PNG output path.")
+    parser.add_argument("--title-prefix", default="Attention Heatmap Review", help="Chart title prefix.")
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    analyze()
+    args = parse_args()
+    analyze(
+        input_path=args.input,
+        heatmap_path=args.heatmap_output,
+        legacy_output_path=args.legacy_output,
+        title_prefix=args.title_prefix,
+    )

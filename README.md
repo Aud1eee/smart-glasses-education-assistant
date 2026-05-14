@@ -74,7 +74,9 @@ Demo-friendly default:
 
 - `exports\attention_heatmap.png`: A/B/C attention heatmap report
 - `exports\study_analysis.png`: same report exported under the legacy name
+- `exports\demo_attention_heatmap.png`: clean deterministic demo heatmap
 - `data\study_report.csv`: posture and learning-state log
+- `data\demo_study_report.csv`: deterministic presentation-mode demo log
 - `data\my_vocabulary.csv`: captured vocabulary
 - `data\study_notes.md`: collected OCR notes
 

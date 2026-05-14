@@ -57,6 +57,14 @@ class PostureEngine:
 
     def calibrate(self):
         self.base_pitch = self.smooth_pitch
+        self.history = [0.0] * len(self.history)
+        self.alert_start = None
+        self.is_alert = False
+        self.current_stability = 100
+        self.focus_score = 100
+        self.cognitive_load = 0
+        self.load_level = "low"
+        self.load_reason = "Stable learning state"
 
     def _classify_load(self, rel, variance):
         if self.is_alert or self.cognitive_load >= 75:

@@ -217,6 +217,33 @@ The current verified presentation-mode progression is:
 
 This was checked with `analytics/verify_demo_states.py` using the deterministic simulator profiles.
 
+### Demo asset pipeline
+
+There is now a non-destructive demo asset flow:
+
+- `generate_demo_assets.ps1`
+- `analytics/generate_demo_assets.py`
+
+It creates:
+
+- `data/demo_study_report.csv`
+- `exports/demo_attention_heatmap.png`
+
+This is preferred when preparing screenshots or presentation materials, because it does not overwrite the real `data/study_report.csv`.
+
+### Demo asset verification
+
+The demo asset pipeline was run successfully on Windows local.
+
+Latest generated summary:
+
+- samples: `349`
+- average focus: `66.7`
+- average cognitive load: `42.3`
+- high-load ratio: `37.0%`
+
+The current `demo_attention_heatmap.png` is visually clean and suitable as a presentation asset.
+
 ## Suggested future prompt for Codex
 
 If future context is tight, start with:

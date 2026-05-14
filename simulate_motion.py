@@ -8,6 +8,12 @@ import requests
 
 BASE_URL = "http://127.0.0.1:5000"
 POSTURE_URL = f"{BASE_URL}/api/v1/posture"
+PRESENTATION_SEQUENCE = [
+    ("stable", 10),
+    ("rising", 10),
+    ("overload", 12),
+    ("recovery", 10),
+]
 
 
 SCENARIOS = {
@@ -81,17 +87,10 @@ def run_single_mode(mode, interval, duration=None):
 
 
 def run_presentation(interval, loops=0):
-    sequence = [
-        ("stable", 10),
-        ("rising", 10),
-        ("overload", 12),
-        ("recovery", 10),
-    ]
-
     step = 0
     completed_loops = 0
     while True:
-        for mode, seconds in sequence:
+        for mode, seconds in PRESENTATION_SEQUENCE:
             config = SCENARIOS[mode]
             samples = max(1, int(seconds / interval))
             print(f"\nSwitching to: {config['label']} ({seconds}s)")

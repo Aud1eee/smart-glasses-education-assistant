@@ -62,6 +62,19 @@ The expected presentation progression is:
 - `Regulate now`
 - `Recovery`
 
+## Generate clean demo assets
+
+To produce a fresh demo CSV and heatmap without overwriting your real study log:
+
+```powershell
+.\generate_demo_assets.ps1
+```
+
+This creates:
+
+- `data\demo_study_report.csv`
+- `exports\demo_attention_heatmap.png`
+
 ## Important note
 
 OCR features need Windows `Tesseract OCR` installed and added to `PATH`.

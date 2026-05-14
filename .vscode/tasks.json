@@ -36,6 +36,18 @@
         "${workspaceFolder}\\start_simulator.ps1"
       ],
       "problemMatcher": []
+    },
+    {
+      "label": "Generate Demo Assets",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\generate_demo_assets.ps1"
+      ],
+      "problemMatcher": []
     }
   ]
 }
