@@ -85,6 +85,7 @@ Demo-friendly default:
 - `README.md`: project overview and setup
 - `README_WINDOWS.md`: short Windows-specific run note
 - `PROJECT_MEMORY.md`: project decisions, current scope, and next-step context
+- `PROJECT_EXPLANATION.md`: long-form explanation draft for defense and reporting
 
 ## Current scope
 

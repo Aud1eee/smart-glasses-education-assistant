@@ -249,3 +249,16 @@ The current `demo_attention_heatmap.png` is visually clean and suitable as a pre
 If future context is tight, start with:
 
 > Read `PROJECT_MEMORY.md` and continue from the current Windows-local project setup.
+
+## Explanation draft
+
+The long-form explanation draft now lives in:
+
+- `PROJECT_EXPLANATION.md`
+
+This should be the main expandable document for:
+
+- defense notes
+- module explanations
+- data interpretation
+- heatmap interpretation
