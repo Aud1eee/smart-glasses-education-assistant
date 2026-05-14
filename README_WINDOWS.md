@@ -73,7 +73,13 @@ To produce a fresh demo CSV and heatmap without overwriting your real study log:
 This creates:
 
 - `data\demo_study_report.csv`
+- `data\demo_difficulty_events.csv`
 - `exports\demo_attention_heatmap.png`
+
+The live HUD now also shows:
+
+- current or last difficulty marker
+- a review note for the flagged segment
 
 ## Important note
 

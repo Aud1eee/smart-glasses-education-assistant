@@ -19,11 +19,30 @@ class DataLogger:
         "Elapsed_Seconds",
         "Cycle_Index",
     ]
+    DIFFICULTY_FIELDS = [
+        "Event_ID",
+        "Start_Timestamp",
+        "End_Timestamp",
+        "Start_Sample",
+        "End_Sample",
+        "Duration_Seconds",
+        "Severity",
+        "Peak_Load",
+        "Min_Focus",
+        "Peak_Pitch",
+        "Lowest_Stability",
+        "Primary_Label",
+        "Trigger_Reason",
+        "Guidance",
+        "Review_Note",
+        "Sample_Count",
+    ]
 
     def __init__(self, root_dir="data"):
         self.root = root_dir
         os.makedirs(self.root, exist_ok=True)
         self.report_path = os.path.join(self.root, "study_report.csv")
+        self.difficulty_path = os.path.join(self.root, "difficulty_events.csv")
         self.vocab_path = os.path.join(self.root, "my_vocabulary.csv")
         self._init_files()
 
@@ -37,6 +56,10 @@ class DataLogger:
         if not os.path.exists(self.vocab_path) or os.stat(self.vocab_path).st_size < 10:
             with open(self.vocab_path, "w", newline="") as f:
                 csv.writer(f).writerow(["Word", "Translation", "Count", "Last_Seen"])
+
+        if not os.path.exists(self.difficulty_path) or os.stat(self.difficulty_path).st_size < 10:
+            with open(self.difficulty_path, "w", newline="") as f:
+                csv.writer(f).writerow(self.DIFFICULTY_FIELDS)
 
     def _migrate_report_schema(self):
         with open(self.report_path, newline="") as f:
@@ -80,10 +103,12 @@ class DataLogger:
         phase="focus",
         elapsed_seconds=0,
         cycle_index=1,
+        timestamp_text=None,
     ):
+        timestamp_text = timestamp_text or datetime.now().strftime("%H:%M:%S")
         with open(self.report_path, "a", newline="") as f:
             csv.writer(f).writerow([
-                datetime.now().strftime("%H:%M:%S"),
+                timestamp_text,
                 round(pitch, 2),
                 int(stability),
                 is_alert,
@@ -94,6 +119,27 @@ class DataLogger:
                 phase,
                 int(elapsed_seconds),
                 int(cycle_index),
+            ])
+
+    def log_difficulty_event(self, event):
+        with open(self.difficulty_path, "a", newline="") as f:
+            csv.writer(f).writerow([
+                int(event["event_id"]),
+                event["start_timestamp"],
+                event["end_timestamp"],
+                int(event["start_sample"]),
+                int(event["end_sample"]),
+                round(event["duration_seconds"], 1),
+                event["severity"],
+                round(event["peak_load"], 1),
+                round(event["min_focus"], 1),
+                round(event["peak_pitch"], 1),
+                round(event["lowest_stability"], 1),
+                event["primary_label"],
+                event["trigger_reason"],
+                event["guidance"],
+                event["review_note"],
+                int(event["sample_count"]),
             ])
 
     def save_word(self, word, trans):

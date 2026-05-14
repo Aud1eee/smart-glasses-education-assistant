@@ -57,6 +57,7 @@ Recommended structure:
 - focus score estimation
 - cognitive load score and load level
 - adaptive focus / recovery session engine
+- difficulty event marker for sustained rising/high load segments
 - HUD interface showing focus score, load, stability, timer, and guidance
 - CSV logging with expanded learning-state schema
 - attention heatmap report export
@@ -228,6 +229,7 @@ It creates:
 
 - `data/demo_study_report.csv`
 - `exports/demo_attention_heatmap.png`
+- `data/demo_difficulty_events.csv`
 
 This is preferred when preparing screenshots or presentation materials, because it does not overwrite the real `data/study_report.csv`.
 
@@ -241,8 +243,33 @@ Latest generated summary:
 - average focus: `66.7`
 - average cognitive load: `42.3`
 - high-load ratio: `37.0%`
+- difficulty events: `1`
 
 The current `demo_attention_heatmap.png` is visually clean and suitable as a presentation asset.
+
+### Difficulty-event marker status
+
+The first version of the difficulty-event marker is now integrated across:
+
+- real-time detection
+- live HUD status output
+- CSV event logging
+- demo asset generation
+- heatmap event overlays
+
+Current demo output:
+
+- one sustained high-severity event is detected in the rising/overload segment
+- the demo difficulty-event CSV records:
+  - start and end timestamps
+  - start and end sample indices
+  - severity
+  - peak load
+  - min focus
+  - peak pitch
+  - lowest stability
+  - trigger label and reason
+  - review note
 
 ## Suggested future prompt for Codex
 

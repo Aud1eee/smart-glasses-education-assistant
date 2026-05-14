@@ -11,4 +11,4 @@ Thumbs.db
 .vscode/*.log
 
 exports/*.png
-
+data/difficulty_events.csv

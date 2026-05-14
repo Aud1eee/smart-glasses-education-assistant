@@ -19,6 +19,7 @@ This prototype combines:
 - real-time posture and stability sensing
 - cognitive load estimation
 - adaptive focus / recovery guidance
+- difficulty event marking
 - classroom attention timeline visualization
 - optional OCR-based word capture and note collection
 
@@ -31,6 +32,7 @@ The current priority is the A/B/C learning-state workflow. OCR features are kept
 - `simulate_motion.py`: demo posture data simulator
 - `core/posture.py`: posture metrics and cognitive load scoring
 - `core/focus_session.py`: adaptive focus-cycle engine
+- `core/difficulty_marker.py`: sustained difficulty event detection
 - `core/vision.py`: OCR, translation, note capture
 - `utils/storage.py`: CSV logging
 - `analytics/analyze_report.py`: attention heatmap export
@@ -76,7 +78,9 @@ Demo-friendly default:
 - `exports\study_analysis.png`: same report exported under the legacy name
 - `exports\demo_attention_heatmap.png`: clean deterministic demo heatmap
 - `data\study_report.csv`: posture and learning-state log
+- `data\difficulty_events.csv`: detected difficulty-event log
 - `data\demo_study_report.csv`: deterministic presentation-mode demo log
+- `data\demo_difficulty_events.csv`: deterministic demo difficulty-event log
 - `data\my_vocabulary.csv`: captured vocabulary
 - `data\study_notes.md`: collected OCR notes
 
@@ -93,6 +97,7 @@ The main demo story should stay focused on:
 
 - real-time learning-state sensing
 - adaptive study regulation
+- difficulty event marking
 - after-class attention review
 
 Avoid presenting OCR and note capture as the core innovation, because those overlap more with teammates' content-assistance ideas.

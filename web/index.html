@@ -94,6 +94,13 @@
             margin-top: 8px;
         }
 
+        .note-value {
+            color: rgba(255, 255, 255, 0.78);
+            font-size: 16px;
+            line-height: 1.35;
+            margin-top: 8px;
+        }
+
         .bar {
             height: 8px;
             margin-top: 10px;
@@ -247,6 +254,14 @@
                 <div class="label">Signal</div>
                 <div id="reason-val" class="small-value">Stable learning state</div>
             </div>
+            <div class="metric">
+                <div class="label">Difficulty Marker</div>
+                <div id="event-val" class="small-value">Clear</div>
+            </div>
+            <div class="metric">
+                <div class="label">Review Note</div>
+                <div id="review-val" class="note-value">No flagged segment yet.</div>
+            </div>
         </section>
     </main>
 
@@ -283,6 +298,9 @@
                 const res = await fetch("/status");
                 const d = await res.json();
                 const session = d.session || {};
+                const difficulty = d.difficulty || {};
+                const activeEvent = difficulty.active_event || null;
+                const lastEvent = difficulty.last_event || null;
 
                 document.getElementById("pitch-val").innerText = Number(d.rel_pitch || 0).toFixed(1);
                 document.getElementById("stab-val").innerText = Math.round(d.stability || 0);
@@ -295,6 +313,18 @@
                 document.getElementById("time-left").innerText = formatTime(session.remaining_seconds);
                 document.getElementById("state-label").innerText = (session.state_label || "Focus settling").toUpperCase();
                 document.getElementById("guidance-text").innerText = session.guidance || "Keep learning steadily.";
+
+                let eventText = "Clear";
+                let reviewText = "No flagged segment yet.";
+                if (activeEvent) {
+                    eventText = `D${activeEvent.event_id} ${String(activeEvent.severity || "").toUpperCase()}`;
+                    reviewText = activeEvent.review_note || activeEvent.primary_label || reviewText;
+                } else if (lastEvent) {
+                    eventText = `Last D${lastEvent.event_id} ${String(lastEvent.severity || "").toUpperCase()}`;
+                    reviewText = lastEvent.review_note || lastEvent.primary_label || reviewText;
+                }
+                document.getElementById("event-val").innerText = eventText;
+                document.getElementById("review-val").innerText = reviewText;
 
                 setBar("focus-bar", d.focus_score || 0);
                 setBar("load-bar", d.cognitive_load || 0, true);
