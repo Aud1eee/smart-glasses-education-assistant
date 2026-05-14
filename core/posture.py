@@ -1,6 +1,7 @@
 import numpy as np
 import time
 
+
 class PostureEngine:
     def __init__(self, alpha=0.3):
         self.alpha = alpha
@@ -15,7 +16,8 @@ class PostureEngine:
         self.load_level = "low"
         self.load_reason = "Stable posture"
 
-    def process(self, raw_pitch):
+    def process(self, raw_pitch, now=None):
+        now = time.time() if now is None else now
         self.smooth_pitch = (self.alpha * raw_pitch) + ((1 - self.alpha) * self.smooth_pitch)
         rel = abs(self.smooth_pitch - self.base_pitch)
         
@@ -29,8 +31,10 @@ class PostureEngine:
         cognitive_load = min(100, max(0, (rel * 1.7) + (variance * 2.4) + ((100 - self.current_stability) * 0.35)))
         
         if rel > 28.0:
-            if not self.alert_start: self.alert_start = time.time()
-            if time.time() - self.alert_start > 0.8: self.is_alert = True
+            if not self.alert_start:
+                self.alert_start = now
+            if now - self.alert_start > 0.8:
+                self.is_alert = True
         else:
             self.alert_start = None
             self.is_alert = False

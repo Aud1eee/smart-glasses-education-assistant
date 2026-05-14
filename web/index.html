@@ -140,10 +140,11 @@
 
         .guidance .state {
             color: var(--primary);
-            font-size: 14px;
+            font-size: 18px;
             font-weight: 800;
             text-transform: uppercase;
             margin-bottom: 14px;
+            letter-spacing: 1px;
         }
 
         .guidance .message {
@@ -226,7 +227,7 @@
 
         <section class="center">
             <div class="guidance">
-                <div id="state-label" class="state">FOCUS ROUND 1</div>
+                <div id="state-label" class="state">FOCUS SETTLING</div>
                 <div id="guidance-text" class="message">Keep learning steadily.</div>
             </div>
         </section>
@@ -292,7 +293,7 @@
 
                 document.getElementById("phase-val").innerText = session.phase_label || "Focus";
                 document.getElementById("time-left").innerText = formatTime(session.remaining_seconds);
-                document.getElementById("state-label").innerText = `${(session.phase_label || "Focus").toUpperCase()} ROUND ${session.cycle_index || 1}`;
+                document.getElementById("state-label").innerText = (session.state_label || "Focus settling").toUpperCase();
                 document.getElementById("guidance-text").innerText = session.guidance || "Keep learning steadily.";
 
                 setBar("focus-bar", d.focus_score || 0);

@@ -66,6 +66,10 @@ Optional dependency:
 
 - `pix2tex` is optional. If missing, the app falls back to basic OCR.
 
+Demo-friendly default:
+
+- `ENABLE_AUTO_RECALL=0` keeps random vocabulary flashcards from interrupting the A/B/C presentation flow.
+
 ## Output files
 
 - `exports\attention_heatmap.png`: A/B/C attention heatmap report

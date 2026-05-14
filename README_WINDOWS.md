@@ -40,6 +40,36 @@ Available modes:
 - `overload`
 - `recovery`
 
+Useful options:
+
+```powershell
+.\.venv\Scripts\python.exe .\simulate_motion.py --mode presentation --loops 1
+.\.venv\Scripts\python.exe .\simulate_motion.py --mode overload --duration 8
+```
+
+## Quick verification
+
+To verify the expected state labels without opening the HUD:
+
+```powershell
+.\.venv\Scripts\python.exe .\analytics\verify_demo_states.py
+```
+
+The expected presentation progression is:
+
+- `Stable focus`
+- `Load rising`
+- `Regulate now`
+- `Recovery`
+
 ## Important note
 
 OCR features need Windows `Tesseract OCR` installed and added to `PATH`.
+
+For the A/B/C presentation flow, keep:
+
+```text
+ENABLE_AUTO_RECALL=0
+```
+
+in `.env`, so the HUD is not interrupted by random vocabulary prompts during the demo.

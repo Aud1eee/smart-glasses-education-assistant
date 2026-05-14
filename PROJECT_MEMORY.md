@@ -105,6 +105,7 @@ Recommended structure:
 - `pix2tex` is optional
 - `core/vision.py` was adjusted to fall back gracefully if `pix2tex` is missing
 - The real blocker for OCR on Windows is `Tesseract OCR`
+- `ENABLE_AUTO_RECALL=0` is the preferred demo default so A/B/C presentations stay focused
 
 ## What should remain core vs secondary
 
@@ -204,6 +205,17 @@ Next:
 
 - verify the HUD transitions against these modes in a full local run
 - tune thresholds or wording if one state is not visually clear enough
+
+### Scenario verification status
+
+The current verified presentation-mode progression is:
+
+- `Stable focus`
+- `Load rising`
+- `Regulate now`
+- `Recovery`
+
+This was checked with `analytics/verify_demo_states.py` using the deterministic simulator profiles.
 
 ## Suggested future prompt for Codex
 

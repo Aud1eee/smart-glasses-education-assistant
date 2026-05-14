@@ -64,19 +64,23 @@ def scenario_pitch(config, step):
     return config["center"] + wave + noise
 
 
-def run_single_mode(mode, interval):
+def run_single_mode(mode, interval, duration=None):
     config = SCENARIOS[mode]
     step = 0
+    start_time = time.time()
     print(f"Running simulator mode: {config['label']}")
     while True:
+        if duration is not None and time.time() - start_time >= duration:
+            break
         pitch = scenario_pitch(config, step)
         post_pitch(pitch)
         print(f"\r{config['label']:<24} | pitch {pitch:5.2f} deg", end="")
         step += 1
         time.sleep(interval)
+    print()
 
 
-def run_presentation(interval):
+def run_presentation(interval, loops=0):
     sequence = [
         ("stable", 10),
         ("rising", 10),
@@ -85,6 +89,7 @@ def run_presentation(interval):
     ]
 
     step = 0
+    completed_loops = 0
     while True:
         for mode, seconds in sequence:
             config = SCENARIOS[mode]
@@ -96,6 +101,10 @@ def run_presentation(interval):
                 print(f"\r{config['label']:<24} | pitch {pitch:5.2f} deg", end="")
                 step += 1
                 time.sleep(interval)
+        completed_loops += 1
+        if loops and completed_loops >= loops:
+            print()
+            break
 
 
 def parse_args():
@@ -114,6 +123,18 @@ def parse_args():
         default=0.12,
         help="Seconds between posture samples.",
     )
+    parser.add_argument(
+        "--duration",
+        type=float,
+        default=None,
+        help="Optional total seconds for a single-mode run.",
+    )
+    parser.add_argument(
+        "--loops",
+        type=int,
+        default=0,
+        help="Optional number of presentation loops. 0 means infinite.",
+    )
     return parser.parse_args()
 
 
@@ -124,9 +145,9 @@ def main():
 
     try:
         if args.mode == "presentation":
-            run_presentation(args.interval)
+            run_presentation(args.interval, loops=args.loops)
         else:
-            run_single_mode(args.mode, args.interval)
+            run_single_mode(args.mode, args.interval, duration=args.duration)
     except KeyboardInterrupt:
         print("\nSimulator stopped.")
 
