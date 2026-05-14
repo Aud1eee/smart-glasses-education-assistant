@@ -1,2 +1,2 @@
 Event_ID,Start_Timestamp,End_Timestamp,Start_Sample,End_Sample,Duration_Seconds,Severity,Peak_Load,Min_Focus,Peak_Pitch,Lowest_Stability,Primary_Label,Trigger_Reason,Guidance,Review_Note,Sample_Count
-1,00:12.63,00:37.95,85,309,26.9,high,100.0,0.0,38.6,0.0,Regulate now,Sustained posture drift,High load detected. Pause briefly and mark this moment.,Review this segment first: load rose and reached a high-load state.,212
+1,00:11.07,00:37.95,85,309,26.9,high,100.0,0.0,38.6,0.0,Regulate now,Sustained posture drift,High load detected. Pause briefly and mark this moment.,Review this segment first: load rose and reached a high-load state.,212

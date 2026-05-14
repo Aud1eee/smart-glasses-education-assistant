@@ -12,6 +12,7 @@ class DifficultyEventMarker:
 
     def reset(self):
         self.candidate_start = None
+        self.candidate_start_timestamp = None
         self.candidate_rank = 0
         self.candidate_label = ""
         self.candidate_reason = ""
@@ -83,6 +84,7 @@ class DifficultyEventMarker:
 
         if self.candidate_start is None:
             self.candidate_start = now
+            self.candidate_start_timestamp = timestamp_text
             self.candidate_rank = rank
             self.candidate_label = label
             self.candidate_reason = reason
@@ -103,7 +105,7 @@ class DifficultyEventMarker:
             "event_id": self.event_counter,
             "severity": "high" if self.candidate_rank == 2 else "medium",
             "start_time": self.candidate_start,
-            "start_timestamp": timestamp_text,
+            "start_timestamp": self.candidate_start_timestamp or timestamp_text,
             "start_sample": self.candidate_start_sample or sample_index or 0,
             "end_time": now,
             "end_timestamp": timestamp_text,
@@ -221,6 +223,7 @@ class DifficultyEventMarker:
 
     def _clear_candidate(self):
         self.candidate_start = None
+        self.candidate_start_timestamp = None
         self.candidate_rank = 0
         self.candidate_label = ""
         self.candidate_reason = ""

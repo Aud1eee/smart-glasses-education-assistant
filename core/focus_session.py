@@ -24,9 +24,11 @@ class FocusSessionEngine:
         self.last_guidance = "Keep learning steadily."
         self.last_action = "continue"
         self.last_state_label = "Focus settling"
+        self.last_update_at = self.phase_start
 
     def update(self, state, now=None):
         now = time.time() if now is None else now
+        self.last_update_at = now
         duration = self.focus_duration if self.phase == "focus" else self.break_duration
         elapsed = int(now - self.phase_start)
 
@@ -80,6 +82,25 @@ class FocusSessionEngine:
         self.last_guidance = "Keep learning steadily."
         self.last_action = "continue"
         self.last_state_label = "Focus settling"
+        self.last_update_at = now
+
+    def snapshot(self, now=None):
+        now = time.time() if now is None else now
+        duration = self.focus_duration if self.phase == "focus" else self.break_duration
+        elapsed = int(now - self.phase_start)
+        remaining = max(0, int(duration - elapsed))
+        return {
+            "phase": self.phase,
+            "phase_label": "Focus" if self.phase == "focus" else "Recovery",
+            "cycle_index": self.cycle_index,
+            "elapsed_seconds": elapsed,
+            "remaining_seconds": remaining,
+            "progress": round(min(1, elapsed / duration), 3) if duration else 0,
+            "guidance": self.last_guidance,
+            "action": self.last_action,
+            "state_label": self.last_state_label,
+            "stale_seconds": round(max(0.0, now - self.last_update_at), 1),
+        }
 
     def _switch_phase(self, now):
         if self.phase == "focus":

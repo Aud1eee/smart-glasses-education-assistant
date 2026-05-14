@@ -26,6 +26,7 @@ focus_session = FocusSessionEngine()
 difficulty_marker = DifficultyEventMarker()
 auto_recall_enabled = os.getenv("ENABLE_AUTO_RECALL", "0").lower() in {"1", "true", "yes", "on"}
 sample_counter = 0
+last_posture_at = None
 
 pending_card = {"word": "", "trans": "", "type": ""}
 latest_session = focus_session.update({
@@ -48,9 +49,10 @@ def index():
 
 @app.route("/api/v1/posture", methods=["POST"])
 def handle_posture():
-    global pending_card, latest_session, latest_difficulty, sample_counter
+    global pending_card, latest_session, latest_difficulty, sample_counter, last_posture_at
     data = request.json or {}
     sample_counter += 1
+    last_posture_at = datetime.now()
     timestamp_text = datetime.now().strftime("%H:%M:%S")
     res = posture.process(data.get("pitch", 0))
     latest_session = focus_session.update(res)
@@ -106,12 +108,8 @@ def handle_collect():
 
 @app.route("/status")
 def get_status():
-    global pending_card, latest_session, latest_difficulty
-    latest_session = focus_session.update({
-        "cognitive_load": posture.cognitive_load,
-        "load_level": posture.load_level,
-        "focus_score": posture.focus_score,
-    })
+    global pending_card, latest_session, latest_difficulty, last_posture_at
+    latest_session = focus_session.snapshot()
     data = {
         "rel_pitch": round(abs(posture.smooth_pitch - posture.base_pitch), 1),
         "stability": posture.current_stability,
@@ -126,6 +124,7 @@ def get_status():
             "last_event": latest_difficulty.get("last_event"),
             "event_count": latest_difficulty.get("event_count", 0),
         },
+        "last_posture_age_seconds": None if last_posture_at is None else round((datetime.now() - last_posture_at).total_seconds(), 1),
         "flashcard": pending_card,
     }
     pending_card = {"word": "", "trans": "", "type": ""}
@@ -134,27 +133,36 @@ def get_status():
 
 @app.route("/calibrate")
 def calibrate():
+    global latest_session, latest_difficulty, sample_counter, last_posture_at
     posture.calibrate()
+    focus_session.reset()
     difficulty_marker.reset()
+    latest_session = focus_session.snapshot()
+    latest_difficulty = {
+        "active_event": None,
+        "completed_event": None,
+        "last_event": None,
+        "event_count": difficulty_marker.event_counter,
+    }
+    sample_counter = 0
+    last_posture_at = None
     return "ok"
 
 
 @app.route("/reset_session")
 def reset_session():
-    global latest_session, latest_difficulty
+    global latest_session, latest_difficulty, sample_counter, last_posture_at
     focus_session.reset()
     difficulty_marker.reset()
-    latest_session = focus_session.update({
-        "cognitive_load": posture.cognitive_load,
-        "load_level": posture.load_level,
-        "focus_score": 100,
-    })
+    latest_session = focus_session.snapshot()
     latest_difficulty = {
         "active_event": None,
         "completed_event": None,
-        "last_event": difficulty_marker.last_completed_event,
+        "last_event": None,
         "event_count": difficulty_marker.event_counter,
     }
+    sample_counter = 0
+    last_posture_at = None
     return "ok"
 
 

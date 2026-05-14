@@ -271,6 +271,23 @@ Current demo output:
   - trigger label and reason
   - review note
 
+### Consistency fixes completed
+
+The following consistency fixes were completed after review:
+
+- difficulty-event start timestamps now match the real candidate start, not the later trigger moment
+- `/status` no longer re-runs the regulation engine and no longer changes guidance labels just because the page is polling
+- `calibrate` and `reset_session` now clear:
+  - sample counter
+  - visible difficulty state
+  - stale posture age state
+
+Current behavior after the fix:
+
+- state labels remain stable during polling if no new posture data arrives
+- `stale_seconds` is exposed from the session snapshot
+- the demo pipeline still produces `1` deterministic difficulty event with correct timing fields
+
 ## Suggested future prompt for Codex
 
 If future context is tight, start with:
