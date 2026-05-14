@@ -11,6 +11,35 @@ For the full project overview, setup steps, and current scope, read `README.md` 
 5. Run `Run Motion Simulator`.
 6. Open `http://127.0.0.1:5000`.
 
+## Demo simulator modes
+
+Default demo:
+
+```powershell
+.\start_simulator.ps1
+```
+
+This now runs the `presentation` mode, which cycles through:
+
+- stable focus
+- rising cognitive load
+- high-load regulation
+- recovery
+
+You can also run a single state:
+
+```powershell
+.\start_simulator.ps1 -Mode overload
+```
+
+Available modes:
+
+- `presentation`
+- `stable`
+- `rising`
+- `overload`
+- `recovery`
+
 ## Important note
 
 OCR features need Windows `Tesseract OCR` installed and added to `PATH`.

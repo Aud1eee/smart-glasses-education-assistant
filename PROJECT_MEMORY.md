@@ -60,6 +60,7 @@ Recommended structure:
 - HUD interface showing focus score, load, stability, timer, and guidance
 - CSV logging with expanded learning-state schema
 - attention heatmap report export
+- deterministic simulator modes for presentation demos
 - optional OCR word capture and note collection
 
 ### Main files
@@ -144,9 +145,68 @@ These should support the demo, but not dominate the project story.
    - missed-content markers
    - more classroom-like simulated states
 
+## Development roadmap
+
+### Phase 1 goal
+
+Build a **stable local demo** for the A/B/C system:
+
+- `A` Cognitive load monitoring should be visible and understandable
+- `B` Adaptive focus timer should produce meaningful guidance changes
+- `C` Attention heatmap should be generated reliably after a demo run
+
+### Phase 1 acceptance criteria
+
+- The app runs locally on Windows in VSCode without WSL
+- `run.py` and `simulate_motion.py` work together in a clean demo flow
+- The HUD clearly shows focus score, cognitive load, stability, timer, and guidance
+- At least 3 demo states are easy to show:
+  - stable focus
+  - rising load
+  - high-load / regulation state
+- `exports/attention_heatmap.png` is generated successfully after the demo
+- Core demo steps are documented so the project can be presented repeatedly
+
+### Phase 1 task breakdown
+
+1. Verify the Windows-local runtime and OCR constraints
+2. Stabilize the HUD text and state transitions for presentation use
+3. Improve the simulator so it can intentionally trigger demo scenarios
+4. Verify heatmap generation from a fresh local demo run
+5. Save the final demo flow in docs and commit the phase result
+
+### Immediate first task
+
+The first concrete task is:
+
+**Make the simulator and HUD work as a predictable presentation demo**
+
+That means:
+
+- the simulator should support clearly different learning states
+- the HUD should react in a way that is easy to explain live
+- the output should be repeatable, not random-only
+
+### Phase 1 progress note
+
+Completed:
+
+- the simulator now supports:
+  - `presentation`
+  - `stable`
+  - `rising`
+  - `overload`
+  - `recovery`
+- the default Windows simulator launcher now starts the `presentation` mode
+- Windows quick-start notes were updated to explain the demo modes
+
+Next:
+
+- verify the HUD transitions against these modes in a full local run
+- tune thresholds or wording if one state is not visually clear enough
+
 ## Suggested future prompt for Codex
 
 If future context is tight, start with:
 
 > Read `PROJECT_MEMORY.md` and continue from the current Windows-local project setup.
-
