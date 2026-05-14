@@ -29,6 +29,10 @@ def analyze(
         print(">>> No valid learning-state rows found.")
         return
 
+    if "Session_ID" not in df.columns:
+        df["Session_ID"] = "legacy-session-1"
+    df["Session_ID"] = df["Session_ID"].fillna("").replace("", "legacy-session-1")
+
     df["Relative_Pitch"] = pd.to_numeric(df["Relative_Pitch"], errors="coerce").fillna(0)
     df["Focus_Score"] = pd.to_numeric(df["Focus_Score"], errors="coerce").fillna(0)
 
@@ -48,7 +52,8 @@ def analyze(
     avg_focus = df["Focus_Score"].mean()
     avg_load = df["Cognitive_Load"].mean()
     high_load_ratio = high_load.mean() * 100
-    events_df = _load_events(events_path)
+    session_offsets = _build_session_offsets(df)
+    events_df = _load_events(events_path, session_offsets)
     event_count = 0 if events_df is None else len(events_df)
 
     print("\nLearning State Review")
@@ -127,7 +132,7 @@ def _segments(mask):
     return starts
 
 
-def _load_events(events_path):
+def _load_events(events_path, session_offsets):
     if not events_path or not events_path.exists() or events_path.stat().st_size < 20:
         return None
 
@@ -135,10 +140,34 @@ def _load_events(events_path):
     if events_df.empty:
         return None
 
+    if "Session_ID" not in events_df.columns:
+        events_df["Session_ID"] = "legacy-session-1"
+    events_df["Session_ID"] = events_df["Session_ID"].fillna("").replace("", "legacy-session-1")
+
     for column in ["Start_Sample", "End_Sample", "Event_ID"]:
         if column in events_df.columns:
             events_df[column] = pd.to_numeric(events_df[column], errors="coerce").fillna(0).astype(int)
+    events_df["_absolute_start"] = events_df.apply(
+        lambda row: max(0, session_offsets.get(row["Session_ID"], 0) + int(row.get("Start_Sample", 0)) - 1),
+        axis=1,
+    )
+    events_df["_absolute_end"] = events_df.apply(
+        lambda row: max(
+            int(row["_absolute_start"]),
+            session_offsets.get(row["Session_ID"], 0) + int(row.get("End_Sample", 0)) - 1,
+        ),
+        axis=1,
+    )
     return events_df
+
+
+def _build_session_offsets(df):
+    offsets = {}
+    start = 0
+    for session_id, session_rows in df.groupby("Session_ID", sort=False):
+        offsets[session_id] = start
+        start += len(session_rows)
+    return offsets
 
 
 def _draw_event_overlays(axis, events_df, show_labels=True):
@@ -146,8 +175,8 @@ def _draw_event_overlays(axis, events_df, show_labels=True):
         return
 
     for _, event in events_df.iterrows():
-        start = max(0, int(event.get("Start_Sample", 0)) - 1)
-        end = max(start, int(event.get("End_Sample", 0)) - 1)
+        start = int(event.get("_absolute_start", 0))
+        end = int(event.get("_absolute_end", start))
         severity = str(event.get("Severity", "medium")).lower()
         color = "#66d6ff" if severity == "medium" else "#7c8dff"
         axis.axvspan(start, end, color=color, alpha=0.08)

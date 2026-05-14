@@ -33,6 +33,7 @@ def generate_demo_report(
     difficulty_output_path=DEMO_DIFFICULTY_PATH,
     seed=7,
     interval=0.12,
+    session_id="demo-session-1",
 ):
     random.seed(seed)
     posture = PostureEngine()
@@ -76,8 +77,10 @@ def generate_demo_report(
                     now=now,
                     timestamp_text=timestamp_text,
                     sample_index=sample_index,
+                    session_id=session_id,
                 )
                 writer.writerow([
+                    session_id,
                     timestamp_text,
                     round(result["relative_pitch"], 2),
                     int(result["stability"]),
@@ -93,6 +96,7 @@ def generate_demo_report(
                 if difficulty_result["completed_event"]:
                     event = difficulty_result["completed_event"]
                     difficulty_writer.writerow([
+                        event["session_id"],
                         int(event["event_id"]),
                         event["start_timestamp"],
                         event["end_timestamp"],
@@ -112,9 +116,15 @@ def generate_demo_report(
                     ])
                 now += interval
 
-        final_event = difficulty_marker.flush(now=now, timestamp_text=format_timestamp(now), sample_index=sample_index)
+        final_event = difficulty_marker.flush(
+            now=now,
+            timestamp_text=format_timestamp(now),
+            sample_index=sample_index,
+            session_id=session_id,
+        )
         if final_event:
             difficulty_writer.writerow([
+                final_event["session_id"],
                 int(final_event["event_id"]),
                 final_event["start_timestamp"],
                 final_event["end_timestamp"],

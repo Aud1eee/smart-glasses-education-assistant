@@ -42,6 +42,37 @@ latest_difficulty = {
 }
 
 
+def _build_session_id(now=None):
+    now = now or datetime.now()
+    return now.strftime("session-%Y%m%d-%H%M%S-%f")
+
+
+def _new_difficulty_snapshot():
+    return {
+        "active_event": None,
+        "completed_event": None,
+        "last_event": None,
+        "event_count": difficulty_marker.event_counter,
+    }
+
+
+def _start_new_session(reset_posture=False):
+    global latest_session, latest_difficulty, sample_counter, last_posture_at, current_session_id
+    if reset_posture:
+        posture.calibrate()
+    focus_session.reset()
+    difficulty_marker.reset()
+    current_session_id = _build_session_id()
+    latest_session = focus_session.snapshot()
+    latest_difficulty = _new_difficulty_snapshot()
+    sample_counter = 0
+    last_posture_at = None
+    return current_session_id
+
+
+current_session_id = _build_session_id()
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -61,6 +92,7 @@ def handle_posture():
         latest_session,
         timestamp_text=timestamp_text,
         sample_index=sample_counter,
+        session_id=current_session_id,
     )
     logger.log_study(
         res["relative_pitch"],
@@ -74,6 +106,7 @@ def handle_posture():
         latest_session["elapsed_seconds"],
         latest_session["cycle_index"],
         timestamp_text=timestamp_text,
+        session_id=current_session_id,
     )
     if latest_difficulty["completed_event"]:
         logger.log_difficulty_event(latest_difficulty["completed_event"])
@@ -124,6 +157,7 @@ def get_status():
             "last_event": latest_difficulty.get("last_event"),
             "event_count": latest_difficulty.get("event_count", 0),
         },
+        "session_id": current_session_id,
         "last_posture_age_seconds": None if last_posture_at is None else round((datetime.now() - last_posture_at).total_seconds(), 1),
         "flashcard": pending_card,
     }
@@ -133,37 +167,14 @@ def get_status():
 
 @app.route("/calibrate")
 def calibrate():
-    global latest_session, latest_difficulty, sample_counter, last_posture_at
-    posture.calibrate()
-    focus_session.reset()
-    difficulty_marker.reset()
-    latest_session = focus_session.snapshot()
-    latest_difficulty = {
-        "active_event": None,
-        "completed_event": None,
-        "last_event": None,
-        "event_count": difficulty_marker.event_counter,
-    }
-    sample_counter = 0
-    last_posture_at = None
-    return "ok"
+    session_id = _start_new_session(reset_posture=True)
+    return jsonify({"status": "ok", "session_id": session_id})
 
 
 @app.route("/reset_session")
 def reset_session():
-    global latest_session, latest_difficulty, sample_counter, last_posture_at
-    focus_session.reset()
-    difficulty_marker.reset()
-    latest_session = focus_session.snapshot()
-    latest_difficulty = {
-        "active_event": None,
-        "completed_event": None,
-        "last_event": None,
-        "event_count": difficulty_marker.event_counter,
-    }
-    sample_counter = 0
-    last_posture_at = None
-    return "ok"
+    session_id = _start_new_session(reset_posture=False)
+    return jsonify({"status": "ok", "session_id": session_id})
 
 
 if __name__ == "__main__":

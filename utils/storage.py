@@ -7,6 +7,7 @@ import pandas as pd
 
 class DataLogger:
     REPORT_FIELDS = [
+        "Session_ID",
         "Timestamp",
         "Relative_Pitch",
         "Stability",
@@ -20,6 +21,7 @@ class DataLogger:
         "Cycle_Index",
     ]
     DIFFICULTY_FIELDS = [
+        "Session_ID",
         "Event_ID",
         "Start_Timestamp",
         "End_Timestamp",
@@ -60,6 +62,8 @@ class DataLogger:
         if not os.path.exists(self.difficulty_path) or os.stat(self.difficulty_path).st_size < 10:
             with open(self.difficulty_path, "w", newline="") as f:
                 csv.writer(f).writerow(self.DIFFICULTY_FIELDS)
+        else:
+            self._migrate_difficulty_schema()
 
     def _migrate_report_schema(self):
         with open(self.report_path, newline="") as f:
@@ -73,6 +77,7 @@ class DataLogger:
         migrated = []
         for row in rows:
             migrated.append({
+                "Session_ID": row.get("Session_ID", "") or "legacy-session-1",
                 "Timestamp": row.get("Timestamp", ""),
                 "Relative_Pitch": row.get("Relative_Pitch", ""),
                 "Stability": row.get("Stability", ""),
@@ -91,6 +96,42 @@ class DataLogger:
             writer.writeheader()
             writer.writerows(migrated)
 
+    def _migrate_difficulty_schema(self):
+        with open(self.difficulty_path, newline="") as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+            current_fields = reader.fieldnames or []
+
+        if current_fields == self.DIFFICULTY_FIELDS:
+            return
+
+        migrated = []
+        for row in rows:
+            migrated.append({
+                "Session_ID": row.get("Session_ID", "") or "legacy-session-1",
+                "Event_ID": row.get("Event_ID", ""),
+                "Start_Timestamp": row.get("Start_Timestamp", ""),
+                "End_Timestamp": row.get("End_Timestamp", ""),
+                "Start_Sample": row.get("Start_Sample", ""),
+                "End_Sample": row.get("End_Sample", ""),
+                "Duration_Seconds": row.get("Duration_Seconds", ""),
+                "Severity": row.get("Severity", ""),
+                "Peak_Load": row.get("Peak_Load", ""),
+                "Min_Focus": row.get("Min_Focus", ""),
+                "Peak_Pitch": row.get("Peak_Pitch", ""),
+                "Lowest_Stability": row.get("Lowest_Stability", ""),
+                "Primary_Label": row.get("Primary_Label", ""),
+                "Trigger_Reason": row.get("Trigger_Reason", ""),
+                "Guidance": row.get("Guidance", ""),
+                "Review_Note": row.get("Review_Note", ""),
+                "Sample_Count": row.get("Sample_Count", ""),
+            })
+
+        with open(self.difficulty_path, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=self.DIFFICULTY_FIELDS)
+            writer.writeheader()
+            writer.writerows(migrated)
+
     def log_study(
         self,
         pitch,
@@ -104,10 +145,12 @@ class DataLogger:
         elapsed_seconds=0,
         cycle_index=1,
         timestamp_text=None,
+        session_id="",
     ):
         timestamp_text = timestamp_text or datetime.now().strftime("%H:%M:%S")
         with open(self.report_path, "a", newline="") as f:
             csv.writer(f).writerow([
+                session_id or "session-unknown",
                 timestamp_text,
                 round(pitch, 2),
                 int(stability),
@@ -124,6 +167,7 @@ class DataLogger:
     def log_difficulty_event(self, event):
         with open(self.difficulty_path, "a", newline="") as f:
             csv.writer(f).writerow([
+                event.get("session_id", "session-unknown"),
                 int(event["event_id"]),
                 event["start_timestamp"],
                 event["end_timestamp"],

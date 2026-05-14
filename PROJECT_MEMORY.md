@@ -281,12 +281,21 @@ The following consistency fixes were completed after review:
   - sample counter
   - visible difficulty state
   - stale posture age state
+- learning-state logs and difficulty-event logs are now session-aware:
+  - `Session_ID` is stored in both CSV files
+  - `reset_session` and `calibrate` create a new session id
+  - difficulty-event counters reset to `0` for the new session
+  - heatmap overlays are aligned by `Session_ID + Start_Sample / End_Sample`
 
 Current behavior after the fix:
 
 - state labels remain stable during polling if no new posture data arrives
 - `stale_seconds` is exposed from the session snapshot
 - the demo pipeline still produces `1` deterministic difficulty event with correct timing fields
+- real API validation confirms that after `reset_session`:
+  - a new `session_id` is returned
+  - `difficulty.event_count` returns to `0`
+  - the visible state returns to `Focus settling`
 
 ## Suggested future prompt for Codex
 

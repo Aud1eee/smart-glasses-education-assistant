@@ -7,10 +7,11 @@ class DifficultyEventMarker:
         self.medium_trigger_seconds = medium_trigger_seconds
         self.high_trigger_seconds = high_trigger_seconds
         self.resolve_seconds = resolve_seconds
-        self.event_counter = 0
         self.reset()
 
-    def reset(self):
+    def reset(self, reset_counter=True):
+        if reset_counter:
+            self.event_counter = 0
         self.candidate_start = None
         self.candidate_start_timestamp = None
         self.candidate_rank = 0
@@ -21,7 +22,15 @@ class DifficultyEventMarker:
         self.resolve_start = None
         self.last_completed_event = None
 
-    def update(self, posture_state, session_state, now=None, timestamp_text=None, sample_index=None):
+    def update(
+        self,
+        posture_state,
+        session_state,
+        now=None,
+        timestamp_text=None,
+        sample_index=None,
+        session_id="",
+    ):
         now = time.time() if now is None else now
         timestamp_text = timestamp_text or self._format_timestamp(now)
         rank, severity, label, reason = self._classify(posture_state, session_state)
@@ -38,6 +47,7 @@ class DifficultyEventMarker:
                 now,
                 timestamp_text,
                 sample_index,
+                session_id,
             )
         else:
             completed_event = self._update_active_event(
@@ -50,6 +60,7 @@ class DifficultyEventMarker:
                 now,
                 timestamp_text,
                 sample_index,
+                session_id,
             )
 
         return {
@@ -59,12 +70,12 @@ class DifficultyEventMarker:
             "event_count": self.event_counter,
         }
 
-    def flush(self, now=None, timestamp_text=None, sample_index=None):
+    def flush(self, now=None, timestamp_text=None, sample_index=None, session_id=""):
         if self.active_event is None:
             return None
         now = time.time() if now is None else now
         timestamp_text = timestamp_text or self._format_timestamp(now)
-        return self._close_event(now, timestamp_text, sample_index)
+        return self._close_event(now, timestamp_text, sample_index, session_id)
 
     def _handle_candidate(
         self,
@@ -77,6 +88,7 @@ class DifficultyEventMarker:
         now,
         timestamp_text,
         sample_index,
+        session_id,
     ):
         if rank == 0:
             self._clear_candidate()
@@ -103,6 +115,7 @@ class DifficultyEventMarker:
         self.event_counter += 1
         self.active_event = {
             "event_id": self.event_counter,
+            "session_id": session_id or "session-unknown",
             "severity": "high" if self.candidate_rank == 2 else "medium",
             "start_time": self.candidate_start,
             "start_timestamp": self.candidate_start_timestamp or timestamp_text,
@@ -134,8 +147,11 @@ class DifficultyEventMarker:
         now,
         timestamp_text,
         sample_index,
+        session_id,
     ):
         event = self.active_event
+        if session_id and event.get("session_id") != session_id:
+            event["session_id"] = session_id
         event["end_time"] = now
         event["end_timestamp"] = timestamp_text
         event["end_sample"] = sample_index or event["end_sample"]
@@ -157,17 +173,19 @@ class DifficultyEventMarker:
             if self.resolve_start is None:
                 self.resolve_start = now
             elif now - self.resolve_start >= self.resolve_seconds:
-                return self._close_event(now, timestamp_text, sample_index)
+                return self._close_event(now, timestamp_text, sample_index, session_id)
         else:
             self.resolve_start = None
 
         return None
 
-    def _close_event(self, now, timestamp_text, sample_index):
+    def _close_event(self, now, timestamp_text, sample_index, session_id):
         event = self.active_event
         if event is None:
             return None
 
+        if session_id and event.get("session_id") != session_id:
+            event["session_id"] = session_id
         event["end_time"] = now
         event["end_timestamp"] = timestamp_text
         event["end_sample"] = sample_index or event["end_sample"]
@@ -203,6 +221,7 @@ class DifficultyEventMarker:
             return None
         return {
             "event_id": int(event["event_id"]),
+            "session_id": event.get("session_id", ""),
             "status": "resolved" if resolved else "active",
             "severity": event["severity"],
             "start_timestamp": event["start_timestamp"],
