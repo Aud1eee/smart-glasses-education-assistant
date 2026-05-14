@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Setup Windows Environment",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\setup_windows.ps1"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Focus Project",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\start_windows.ps1"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Motion Simulator",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\start_simulator.ps1"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

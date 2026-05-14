@@ -1,0 +1,41 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Focus Project",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}\\run.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Run Flask App",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}\\app.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Run Motion Simulator",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}\\simulate_motion.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ],
+  "compounds": [
+    {
+      "name": "App + Simulator",
+      "configurations": [
+        "Run Flask App",
+        "Run Motion Simulator"
+      ]
+    }
+  ]
+}
