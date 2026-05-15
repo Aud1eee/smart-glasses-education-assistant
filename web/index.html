@@ -215,6 +215,35 @@
             align-items: center;
         }
 
+        .view-switch {
+            display: inline-flex;
+            gap: 6px;
+            padding: 4px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 189, 92, 0.14);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .view-chip {
+            border: 0;
+            border-radius: 999px;
+            padding: 7px 12px;
+            background: transparent;
+            color: var(--muted);
+            font: inherit;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 180ms ease, color 180ms ease;
+        }
+
+        .view-chip.active {
+            background: rgba(255, 189, 92, 0.18);
+            color: var(--ink);
+        }
+
         .pill {
             display: inline-flex;
             align-items: center;
@@ -539,6 +568,164 @@
             background: linear-gradient(90deg, rgba(205, 184, 255, 0.38), var(--signal));
         }
 
+        body.view-glasses .brand-copy {
+            display: none;
+        }
+
+        body.view-glasses .brand-mark {
+            width: 30px;
+            height: 30px;
+            border-radius: 10px;
+            font-size: 11px;
+            letter-spacing: 0.14em;
+        }
+
+        body.view-glasses .top-strip,
+        body.view-glasses .bottom-strip {
+            padding: 10px 14px;
+            background: rgba(10, 8, 6, 0.36);
+            border-color: rgba(255, 189, 92, 0.10);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+        }
+
+        body.view-glasses .lens-grid {
+            grid-template-columns: minmax(160px, 210px) 1fr minmax(180px, 220px);
+            gap: 12px;
+        }
+
+        body.view-glasses .lens-stage {
+            border-color: transparent;
+            background: transparent;
+            box-shadow: none;
+            overflow: visible;
+        }
+
+        body.view-glasses .lens-stage::before,
+        body.view-glasses .lens-stage::after,
+        body.view-glasses .reticle {
+            display: none;
+        }
+
+        body.view-glasses .status-card {
+            position: absolute;
+            top: 10px;
+            right: 8px;
+            width: min(360px, calc(100% - 16px));
+            padding: 18px 20px 16px;
+            border-radius: 22px;
+            text-align: left;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+            transition: width 180ms ease, opacity 180ms ease, transform 180ms ease, padding 180ms ease;
+        }
+
+        body.view-glasses .status-card .eyebrow {
+            font-size: 10px;
+            letter-spacing: 0.22em;
+        }
+
+        body.view-glasses .status-card .state {
+            margin-top: 10px;
+            font-size: clamp(24px, 2vw, 34px);
+            line-height: 1.02;
+        }
+
+        body.view-glasses .status-card .message {
+            margin-top: 10px;
+            font-size: 14px;
+            line-height: 1.38;
+        }
+
+        body.view-glasses .status-band {
+            margin-top: 14px;
+            gap: 8px;
+        }
+
+        body.view-glasses .status-tile {
+            padding: 10px 10px 9px;
+            border-radius: 14px;
+        }
+
+        body.view-glasses .status-tile strong {
+            margin-top: 6px;
+            font-size: 15px;
+        }
+
+        body.view-glasses .rail {
+            justify-content: center;
+        }
+
+        body.view-glasses .rail-card,
+        body.view-glasses .rail-stack {
+            background: rgba(12, 9, 6, 0.44);
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.14);
+        }
+
+        body.view-glasses .rail-card {
+            padding: 14px 14px 12px;
+        }
+
+        body.view-glasses .stack-item {
+            padding: 12px 14px;
+            background: rgba(8, 6, 4, 0.76);
+        }
+
+        body.view-glasses .metric-value {
+            font-size: 30px;
+        }
+
+        body.view-glasses .metric-value.small {
+            font-size: 20px;
+        }
+
+        body.view-glasses .metric-note,
+        body.view-glasses .stack-note {
+            font-size: 12px;
+        }
+
+        body.view-glasses .command-strip {
+            display: none;
+        }
+
+        body.view-glasses .bottom-strip {
+            grid-template-columns: auto auto;
+            justify-content: end;
+        }
+
+        body.view-glasses .time-cluster {
+            min-width: 180px;
+        }
+
+        body.view-glasses .time-value {
+            font-size: 24px;
+        }
+
+        body.view-glasses.quiet-hud .status-card {
+            width: min(258px, calc(100% - 16px));
+            padding: 14px 16px 13px;
+            opacity: 0.78;
+            transform: translateY(-2px);
+        }
+
+        body.view-glasses.quiet-hud .status-card .eyebrow,
+        body.view-glasses.quiet-hud .status-card .message,
+        body.view-glasses.quiet-hud .status-band {
+            display: none;
+        }
+
+        body.view-glasses.quiet-hud .status-card .state {
+            margin-top: 0;
+            font-size: 20px;
+            letter-spacing: -0.03em;
+        }
+
+        body.view-glasses.quiet-hud .rail {
+            opacity: 0.72;
+        }
+
+        body.view-demo .command-strip {
+            display: flex;
+        }
+
         @media (max-width: 1120px) {
             .lens-grid {
                 grid-template-columns: 1fr;
@@ -594,7 +781,7 @@
         }
     </style>
 </head>
-<body class="state-calm" onclick="audio=true">
+<body class="state-calm view-glasses quiet-hud" onclick="audio=true">
     <div id="flashcard" class="flashcard">
         <h2 id="word">Word</h2>
         <p id="trans">Translation</p>
@@ -618,6 +805,10 @@
             </div>
 
             <div class="quick-status">
+                <div class="view-switch" aria-label="HUD display mode">
+                    <button class="view-chip active" data-view="glasses" onclick="switchViewMode('glasses')">Glasses</button>
+                    <button class="view-chip" data-view="demo" onclick="switchViewMode('demo')">Demo</button>
+                </div>
                 <div class="pill"><span>Mode</span><strong id="mode-val-top">reading</strong></div>
                 <div class="pill"><span>Confidence</span><strong id="confidence-val-top">MEDIUM</strong></div>
                 <div class="pill"><span>Difficulty</span><strong id="event-pill">CLEAR</strong></div>
@@ -705,6 +896,7 @@
         <footer class="bottom-strip">
             <div class="command-strip">
                 <div class="hint"><b>1-4</b><span>Switch task mode</span></div>
+                <div class="hint"><b>V</b><span>Toggle HUD view</span></div>
                 <div class="hint"><b>C</b><span>Calibrate baseline</span></div>
                 <div class="hint"><b>R</b><span>Reset session</span></div>
                 <div class="hint"><b>Space</b><span>OCR capture</span></div>
@@ -723,6 +915,7 @@
 
     <script>
         let audio = false;
+        const VIEW_STORAGE_KEY = "rokid-learning-hud-view";
 
         function clamp(value) {
             return Math.max(0, Math.min(100, Number(value) || 0));
@@ -745,6 +938,26 @@
             document.querySelectorAll(".mode-chip").forEach((chip) => {
                 chip.classList.toggle("active", chip.dataset.mode === mode);
             });
+        }
+
+        function setViewSelection(mode) {
+            const nextMode = mode === "demo" ? "view-demo" : "view-glasses";
+            document.body.classList.remove("view-demo", "view-glasses");
+            document.body.classList.add(nextMode);
+            document.querySelectorAll(".view-chip").forEach((chip) => {
+                chip.classList.toggle("active", chip.dataset.view === (mode === "demo" ? "demo" : "glasses"));
+            });
+        }
+
+        function switchViewMode(mode) {
+            const normalized = mode === "demo" ? "demo" : "glasses";
+            localStorage.setItem(VIEW_STORAGE_KEY, normalized);
+            setViewSelection(normalized);
+        }
+
+        function restoreViewMode() {
+            const saved = localStorage.getItem(VIEW_STORAGE_KEY);
+            setViewSelection(saved === "demo" ? "demo" : "glasses");
         }
 
         async function switchMode(mode) {
@@ -784,6 +997,20 @@
                 return;
             }
             body.classList.add("state-calm");
+        }
+
+        function setOcclusionState(loadLevel, stateLabel, confidence, activeEvent) {
+            const label = String(stateLabel || "").toLowerCase();
+            const normalizedConfidence = String(confidence || "").toLowerCase();
+            const quietState =
+                !activeEvent &&
+                loadLevel === "low" &&
+                normalizedConfidence === "high" &&
+                !label.includes("fatigue") &&
+                !label.includes("signal") &&
+                (label.includes("stable") || label.includes("focus") || label.includes("recovery"));
+
+            document.body.classList.toggle("quiet-hud", quietState);
         }
 
         async function update() {
@@ -841,6 +1068,7 @@
 
                 setModeSelection(mode);
                 setVisualState(d.load_level, session.state_label, d.confidence_level);
+                setOcclusionState(d.load_level, session.state_label, d.confidence_level, activeEvent);
 
                 if (d.flashcard && d.flashcard.word) {
                     showFlashcard(d.flashcard);
@@ -880,8 +1108,10 @@
             if (e.code === "Digit2") switchMode("reading");
             if (e.code === "Digit3") switchMode("note-taking");
             if (e.code === "Digit4") switchMode("review");
+            if (e.code === "KeyV") switchViewMode(document.body.classList.contains("view-demo") ? "glasses" : "demo");
         };
 
+        restoreViewMode();
         setInterval(update, 500);
         update();
     </script>

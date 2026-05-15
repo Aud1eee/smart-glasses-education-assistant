@@ -176,6 +176,11 @@ The main visual principles are:
 - slim left and right rails for secondary data
 - top task-mode capsules for quick switching and recognition
 
+The HUD now supports two display views:
+
+- `Glasses view`: low-occlusion mode intended for actual near-eye use
+- `Demo view`: fuller information layout intended for presentations and defense demos
+
 The HUD shows:
 
 - behavior alignment / focus proxy
@@ -195,6 +200,12 @@ The redesigned layout is intended to fit the logic of smart glasses:
 - side rails reduce central visual clutter
 - confidence and task mode remain visible without blocking the main view
 - keyboard and clickable mode switching make demo interaction easier
+
+In `Glasses view`, the HUD further reduces occlusion by:
+
+- shrinking the main state card toward the upper-right area
+- fading into a quieter compact state during stable learning
+- hiding keyboard hint strips that are only useful during demos
 
 This makes the system easier to explain as a **glasses-oriented HUD prototype** rather than a general web dashboard.
 

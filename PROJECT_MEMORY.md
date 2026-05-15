@@ -366,6 +366,10 @@ New HUD interaction highlights:
 - central state emphasis
 - separate confidence and difficulty indicators
 - reduced visual clutter in the middle of the view
+- dual display modes:
+  - `glasses` for low-occlusion near-eye use
+  - `demo` for full presentation layout
+- quiet automatic compact state during stable low-risk learning in glasses view
 
 Verification:
 
