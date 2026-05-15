@@ -366,6 +366,29 @@ Verified after the fix:
   - `confidence_level = warming_up`
   - `state_label = Focus settling`
 
+### Report layer upgraded
+
+`analytics/analyze_report.py` has now been upgraded to match the new algorithm semantics.
+
+The report now emphasizes:
+
+- behavioral alignment
+- cognitive load
+- fatigue risk
+- confidence / uncertainty
+- task-mode context
+
+The demo report now prints:
+
+- average behavioral alignment
+- average focus proxy
+- average cognitive load
+- average fatigue risk
+- drift-risk ratio
+- high-load ratio
+- low-confidence ratio
+- task modes present
+
 ## Suggested future prompt for Codex
 
 If future context is tight, start with:

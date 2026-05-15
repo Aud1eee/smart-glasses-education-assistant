@@ -281,17 +281,19 @@ The clean demonstration heatmap is stored in:
 
 - [demo_attention_heatmap.png](</C:/Users/11721/Desktop/focus_project_windows/exports/demo_attention_heatmap.png>)
 
-This figure has three layers.
+This figure now has four layers under the upgraded algorithm framework.
 
 The event overlays are session-aware. In other words, if the log contains multiple study sessions, each difficulty event is drawn inside the correct session segment instead of being shifted back to the beginning of the full timeline.
 
-### 5.1 Top chart: learning-state trend
+### 5.1 Top chart: learning-state overview
 
 The top chart shows:
 
-- green line: `Focus score`
+- green line: `Behavioral alignment`
 - yellow line: `Load comfort`, which is `100 - Cognitive_Load`
+- blue line: `Fatigue comfort`, which is `100 - Fatigue_Risk`
 - red shaded background: high-load periods
+- gray shaded background: low-confidence / signal-check periods
 - blue difficulty-event overlay labels such as `D1`
 
 This layer answers:
@@ -302,17 +304,29 @@ And, if difficulty events are present:
 
 > Which continuous segment should be reviewed first?
 
-### 5.2 Middle band: cognitive-load heatmap
+### 5.2 Middle band: risk heat bands
 
-The middle band uses color to show the overall intensity of cognitive load:
+The middle band uses color to compare three kinds of risk:
 
-- green: low load
-- yellow: medium load
-- red: high load
+- behavior alignment risk
+- cognitive load
+- fatigue risk
 
-This is the most intuitive part of the figure, because it helps the audience quickly locate difficult periods.
+This helps the audience distinguish whether the system is reacting to drift, regulation pressure, or possible fatigue.
 
-### 5.3 Bottom chart: motion evidence
+### 5.3 Third chart: confidence and task mode context
+
+This chart shows:
+
+- uncertainty score
+- stability
+- task-mode spans such as `lecture`, `reading`, `note-taking`, and `review`
+
+This layer answers:
+
+> Was the system highly confident at this point, and under which learning mode was the learner operating?
+
+### 5.4 Bottom chart: motion evidence
 
 The bottom chart shows:
 
@@ -320,10 +334,11 @@ The bottom chart shows:
 - light line: `Stability`
 - yellow points: medium-load samples
 - red points: high-load samples
+- blue cross markers: fatigue-risk samples
 
 This layer answers:
 
-> Why did the system classify a time range as rising load or high load?
+> What posture-motion evidence supported the higher-level state interpretation?
 
 It provides a visible motion-based explanation for the state changes.
 
@@ -332,9 +347,12 @@ It provides a visible motion-based explanation for the state changes.
 The latest generated clean demo summary is:
 
 - samples: `349`
-- average focus score: `66.7`
-- average cognitive load: `42.3`
-- high-load ratio: `37.0%`
+- average behavioral alignment: `63.9`
+- average focus proxy: `61.7`
+- average cognitive load: `42.6`
+- average fatigue risk: `30.6`
+- high-load ratio: `36.7%`
+- low-confidence ratio: `0.0%`
 - difficulty events: `1`
 
 The demo sequence can currently be interpreted as:
@@ -351,11 +369,11 @@ This matches the intended A/B/C demonstration logic.
 
 Recommended short explanation:
 
-> This module simulates and detects posture-related learning-state changes, provides adaptive guidance in real time, records the process as structured study-state data, and generates a heatmap afterward for reflection and review.
+> This module estimates task-mode-aware learning-state changes from posture-related signals, provides adaptive guidance in real time, records structured state data, and generates a report afterward for reflection and review.
 
 Recommended longer explanation:
 
-> The completed module is Learning State Guardian. It includes cognitive load monitoring, adaptive focus regulation, and attention heatmap review. First, the system receives posture-related input and converts it into focus score, cognitive load, and load level. Then it provides real-time guidance through the HUD, such as stable focus, rising load, regulation, or recovery. At the same time, it records the full learning-state timeline. After the session, the recorded data is converted into a heatmap, which helps identify when the learner was stable, when the load rose, and which time periods are worth reviewing.
+> The completed module is Learning State Guardian. It includes task-mode-aware behavioral alignment estimation, cognitive load monitoring, fatigue-risk estimation, and adaptive regulation. First, the system receives posture-related input and converts it into behavioral alignment, cognitive load, fatigue risk, and confidence indicators. Then it provides real-time guidance through the HUD, such as stable focus, signal check, load rising, regulation, fatigue risk, or recovery. At the same time, it records the full learning-state timeline. After the session, the recorded data is converted into a multi-layer report, which helps identify when behavior was aligned, when load rose, when signal confidence was low, and which time periods are worth reviewing.
 
 Recommended wording for the difficulty-event marker:
 

@@ -170,8 +170,8 @@ def main():
     if summary:
         print(
             f"- Summary: {summary['samples']} samples | "
-            f"focus {summary['avg_focus']} | load {summary['avg_load']} | "
-            f"high-load {summary['high_load_ratio']}%"
+            f"align {summary['avg_alignment']} | load {summary['avg_load']} | "
+            f"fatigue {summary['avg_fatigue']} | low-conf {summary['low_conf_ratio']}%"
         )
 
 
