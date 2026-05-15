@@ -217,6 +217,47 @@
             gap: 16px;
         }
 
+        .insight-strip {
+            margin-top: 16px;
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .insight-card {
+            padding: 16px 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 189, 92, 0.12);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .insight-card.good { border-color: rgba(143, 240, 200, 0.18); }
+        .insight-card.warn { border-color: rgba(255, 211, 108, 0.18); }
+        .insight-card.high { border-color: rgba(255, 123, 92, 0.22); }
+        .insight-card.cool { border-color: rgba(159, 215, 255, 0.18); }
+        .insight-card.signal { border-color: rgba(205, 184, 255, 0.20); }
+
+        .insight-label {
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .insight-value {
+            margin-top: 10px;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+        }
+
+        .insight-detail {
+            margin-top: 8px;
+            color: rgba(255, 242, 218, 0.74);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
         .timeline-panel {
             margin-top: 16px;
             padding: 20px 22px;
@@ -382,6 +423,91 @@
             margin-top: 18px;
             display: grid;
             gap: 14px;
+        }
+
+        .sidebar-stack {
+            display: grid;
+            gap: 16px;
+        }
+
+        .spotlight-card,
+        .asset-card {
+            margin-top: 16px;
+            padding: 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 189, 92, 0.10);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .spotlight-kicker,
+        .asset-kicker {
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .spotlight-card h3,
+        .asset-card h3 {
+            margin: 10px 0 0;
+            font-size: 28px;
+            letter-spacing: -0.05em;
+        }
+
+        .spotlight-copy,
+        .asset-copy {
+            margin-top: 10px;
+            color: rgba(255, 242, 218, 0.76);
+            line-height: 1.6;
+        }
+
+        .spotlight-meta {
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .spotlight-empty {
+            color: rgba(255, 242, 218, 0.72);
+            line-height: 1.6;
+        }
+
+        .asset-preview {
+            margin-top: 14px;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 189, 92, 0.12);
+            object-fit: cover;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .asset-actions {
+            margin-top: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .asset-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 189, 92, 0.16);
+            background: rgba(255, 189, 92, 0.16);
+            color: var(--ink);
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .asset-link.secondary {
+            background: rgba(255, 255, 255, 0.04);
         }
 
         .event-card {
@@ -556,13 +682,15 @@
 
         @media (max-width: 980px) {
             .hero,
-            .section-grid {
+            .section-grid,
+            .insight-strip {
                 grid-template-columns: 1fr;
             }
 
             .event-meta,
             .event-actions,
-            .hero-callout {
+            .hero-callout,
+            .spotlight-meta {
                 grid-template-columns: 1fr 1fr;
             }
         }
@@ -589,7 +717,8 @@
 
             .event-meta,
             .event-actions,
-            .hero-callout {
+            .hero-callout,
+            .spotlight-meta {
                 grid-template-columns: 1fr;
             }
         }
@@ -650,6 +779,8 @@
             </div>
         </section>
 
+        <section id="insight-strip" class="insight-strip"></section>
+
         <section class="panel timeline-panel">
             <div class="timeline-header">
                 <div>
@@ -698,13 +829,31 @@
                 </div>
             </section>
 
-            <section class="panel section">
-                <h2>Next Actions</h2>
-                <div class="section-sub">
-                    These suggestions are generated from the session-wide state pattern and the strongest flagged segment.
-                </div>
-                <div id="action-list" class="action-list"></div>
-            </section>
+            <div class="sidebar-stack">
+                <section class="panel section">
+                    <h2>Selected Event Spotlight</h2>
+                    <div class="section-sub">
+                        Click a timeline block or event card to focus this panel on the segment that matters most.
+                    </div>
+                    <div id="spotlight-card" class="spotlight-card"></div>
+                </section>
+
+                <section class="panel section">
+                    <h2>Next Actions</h2>
+                    <div class="section-sub">
+                        These suggestions are generated from the session-wide state pattern and the strongest flagged segment.
+                    </div>
+                    <div id="action-list" class="action-list"></div>
+                </section>
+
+                <section class="panel section">
+                    <h2>Report Assets</h2>
+                    <div class="section-sub">
+                        Open the exported heatmap when you want to compare the event list with the full learning-state curve.
+                    </div>
+                    <div id="asset-list"></div>
+                </section>
+            </div>
         </section>
     </main>
 
@@ -712,6 +861,9 @@
         const params = new URLSearchParams(window.location.search);
         let activeDataset = params.get("dataset") === "demo" ? "demo" : "live";
         let currentTimeline = null;
+        let currentSummary = null;
+        let currentEvents = [];
+        let currentAssets = null;
         const APP_BASE_URL = window.location.protocol === "file:" ? "http://127.0.0.1:5000" : "";
 
         document.getElementById("back-link").href = `${APP_BASE_URL}/`;
@@ -736,6 +888,7 @@
         }
 
         function renderSummary(summary) {
+            currentSummary = summary || {};
             document.getElementById("summary-session").innerText = summary.session_id || "--";
             document.getElementById("summary-mode").innerText = `Task mode: ${titleCase(summary.primary_task_mode || "unknown")}`;
             document.getElementById("summary-priority").innerText = String(summary.review_priority || "clear").toUpperCase();
@@ -744,6 +897,22 @@
             document.getElementById("summary-signal").innerText = `Low-confidence ratio: ${formatPercent(summary.low_confidence_ratio)}`;
             document.getElementById("summary-duration").innerText = summary.duration_label || "00:00";
             document.getElementById("summary-samples").innerText = `${summary.samples || 0} samples`;
+        }
+
+        function renderInsights(insights) {
+            const host = document.getElementById("insight-strip");
+            host.innerHTML = "";
+
+            (insights || []).forEach((insight) => {
+                const card = document.createElement("article");
+                card.className = `panel insight-card ${insight.tone || "warn"}`;
+                card.innerHTML = `
+                    <div class="insight-label">${insight.label}</div>
+                    <div class="insight-value">${insight.value}</div>
+                    <div class="insight-detail">${insight.detail}</div>
+                `;
+                host.appendChild(card);
+            });
         }
 
         function clampPercent(value) {
@@ -772,17 +941,104 @@
             });
         }
 
+        function renderSpotlight(event) {
+            const host = document.getElementById("spotlight-card");
+            if (!event) {
+                host.innerHTML = `
+                    <div class="spotlight-kicker">Session status</div>
+                    <h3>Steady review map</h3>
+                    <div class="spotlight-copy spotlight-empty">
+                        No flagged event is selected yet. Use the event list on the left to focus this panel, or keep the heatmap as a general reflection asset.
+                    </div>
+                `;
+                return;
+            }
+
+            host.innerHTML = `
+                <div class="spotlight-kicker">Priority replay</div>
+                <h3>D${event.event_id}</h3>
+                <div class="spotlight-copy">
+                    <strong>${event.trigger_label}</strong><br>
+                    ${event.review_note}
+                </div>
+                <div class="spotlight-meta">
+                    <div class="meta-item">
+                        <span>Window</span>
+                        <strong>${event.time_window}</strong>
+                    </div>
+                    <div class="meta-item">
+                        <span>Mode</span>
+                        <strong>${titleCase(event.task_mode)}</strong>
+                    </div>
+                    <div class="meta-item">
+                        <span>Peak / Fatigue</span>
+                        <strong>${Math.round(event.peak_load)} / ${Math.round(event.avg_fatigue)}</strong>
+                    </div>
+                    <div class="meta-item">
+                        <span>Missed Risk</span>
+                        <strong>${String(event.missed_content_risk || "low").toUpperCase()}</strong>
+                    </div>
+                </div>
+                <div class="event-actions">
+                    <div class="event-action">
+                        <strong>Trigger reason</strong>
+                        <p>${event.trigger_reason}</p>
+                    </div>
+                    <div class="event-action">
+                        <strong>Catch-up action</strong>
+                        <p>${event.catch_up_action}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAssets(assets) {
+            currentAssets = assets || {};
+            const host = document.getElementById("asset-list");
+            host.innerHTML = "";
+            const heatmap = currentAssets.heatmap;
+
+            if (!heatmap) {
+                host.innerHTML = `
+                    <div class="asset-card">
+                        <div class="asset-kicker">Report image</div>
+                        <h3>No export yet</h3>
+                        <div class="asset-copy">Generate the heatmap report first, then come back here to open it from the review page.</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const heatmapUrl = heatmap.available && heatmap.url ? `${APP_BASE_URL}${heatmap.url}` : "";
+            host.innerHTML = `
+                <div class="asset-card">
+                    <div class="asset-kicker">${heatmap.label}</div>
+                    <h3>${heatmap.available ? "Ready to open" : "Not generated yet"}</h3>
+                    <div class="asset-copy">${heatmap.detail}</div>
+                    ${heatmap.available ? `<img class="asset-preview" src="${heatmapUrl}" alt="Heatmap preview">` : `<div class="asset-preview"></div>`}
+                    <div class="asset-actions">
+                        ${heatmap.available
+                            ? `<a class="asset-link" href="${heatmapUrl}" target="_blank" rel="noreferrer">Open Heatmap</a>
+                               <a class="asset-link secondary" href="${APP_BASE_URL}/?view=demo" target="_blank" rel="noreferrer">Back to HUD</a>`
+                            : `<span class="asset-link secondary">Generate report first</span>`}
+                    </div>
+                </div>
+            `;
+        }
+
         function selectEvent(eventId) {
+            const selected = currentEvents.find((event) => String(event.event_id) === String(eventId)) || currentEvents[0] || null;
             document.querySelectorAll(".timeline-event").forEach((block) => {
-                block.classList.toggle("selected", String(block.dataset.eventId) === String(eventId));
+                block.classList.toggle("selected", selected && String(block.dataset.eventId) === String(selected.event_id));
             });
             document.querySelectorAll(".event-card").forEach((card) => {
-                const active = String(card.dataset.eventId) === String(eventId);
+                const active = selected && String(card.dataset.eventId) === String(selected.event_id);
                 card.classList.toggle("selected", active);
                 if (active) {
                     card.scrollIntoView({ behavior: "smooth", block: "nearest" });
                 }
             });
+            renderSpotlight(selected);
         }
 
         function renderTimeline(timeline) {
@@ -827,17 +1083,19 @@
         }
 
         function renderEvents(events) {
+            currentEvents = events || [];
             const host = document.getElementById("event-list");
             const empty = document.getElementById("event-empty");
             host.innerHTML = "";
 
-            if (!events || !events.length) {
+            if (!currentEvents.length) {
                 empty.hidden = false;
+                renderSpotlight(null);
                 return;
             }
 
             empty.hidden = true;
-            events.forEach((event) => {
+            currentEvents.forEach((event) => {
                 const card = document.createElement("article");
                 card.className = `event-card ${event.severity}`;
                 card.dataset.eventId = event.event_id;
@@ -896,8 +1154,8 @@
                 host.appendChild(card);
             });
 
-            if (events.length) {
-                selectEvent(events[0].event_id);
+            if (currentEvents.length) {
+                selectEvent(currentEvents[0].event_id);
             }
         }
 
@@ -937,7 +1195,9 @@
 
                 syncSessionOptions(payload.session_options, payload.session_id);
                 renderSummary(payload.summary || {});
+                renderInsights(payload.insights || []);
                 renderTimeline(payload.timeline || null);
+                renderAssets(payload.assets || {});
                 renderActions(payload.next_actions || []);
                 renderEvents(payload.events || []);
             } catch (error) {
@@ -955,7 +1215,20 @@
                     duration_label: "00:00",
                     samples: 0,
                 });
+                renderInsights([{
+                    label: "Status",
+                    value: "Offline",
+                    detail: "Start the local Flask backend first, then refresh this page to pull live or demo review data.",
+                    tone: "signal",
+                }]);
                 renderTimeline(null);
+                renderAssets({
+                    heatmap: {
+                        available: false,
+                        label: "Attention heatmap",
+                        detail: "The export link appears here after the backend is running and a report image exists.",
+                    },
+                });
                 renderActions([{
                     title: "Start local backend first",
                     detail: "Run start_windows.ps1 or launch the Flask app in VSCode, then refresh this page.",

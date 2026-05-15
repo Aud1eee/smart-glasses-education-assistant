@@ -71,6 +71,13 @@ Recommended structure:
 - attention heatmap report export
 - deterministic simulator modes for presentation demos
 - optional OCR word capture and note collection
+- review page with:
+  - session timeline
+  - difficulty event list
+  - selected-event spotlight card
+  - insight strip
+  - heatmap export entry
+  - catch-up action panel
 
 ### Main files
 

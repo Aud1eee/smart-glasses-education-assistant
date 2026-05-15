@@ -250,6 +250,9 @@ class DataLogger:
                 "session_options": [],
                 "summary": self._empty_review_summary(),
                 "events": [],
+                "highlight_event": None,
+                "insights": [],
+                "assets": self._build_assets(dataset),
                 "next_actions": [{
                     "title": "No session data yet",
                     "detail": "Run a study session or generate demo assets before opening the review page.",
@@ -263,6 +266,8 @@ class DataLogger:
 
         summary = self._build_review_summary(resolved_session_id, session_report, session_events)
         events = self._build_review_events(session_report, session_events)
+        highlight_event = self._pick_highlight_event(events)
+        insights = self._build_review_insights(summary, events)
         next_actions = self._build_next_actions(summary, events)
 
         return {
@@ -271,6 +276,9 @@ class DataLogger:
             "session_options": self._build_session_options(report_df, difficulty_df),
             "summary": summary,
             "events": events,
+            "highlight_event": highlight_event,
+            "insights": insights,
+            "assets": self._build_assets(dataset),
             "timeline": self._build_timeline(summary, session_report, events),
             "next_actions": next_actions,
             "empty": False,
@@ -477,6 +485,79 @@ class DataLogger:
             })
 
         return actions[:3]
+
+    def _pick_highlight_event(self, events):
+        if not events:
+            return None
+        return sorted(
+            events,
+            key=lambda item: (0 if item["severity"] == "high" else 1, -item["peak_load"], -item["duration_seconds"]),
+        )[0]
+
+    def _build_review_insights(self, summary, events):
+        insights = []
+        priority = str(summary.get("review_priority", "clear")).lower()
+        if priority == "high":
+            insights.append({
+                "label": "Priority",
+                "value": "Replay first",
+                "detail": "At least one segment reached sustained high difficulty and should be reviewed before the next study block.",
+                "tone": "high",
+            })
+        elif priority == "medium":
+            insights.append({
+                "label": "Priority",
+                "value": "Targeted recap",
+                "detail": "A medium-risk segment was recorded. A short replay should be enough before continuing.",
+                "tone": "warn",
+            })
+        else:
+            insights.append({
+                "label": "Priority",
+                "value": "Clear session",
+                "detail": "No sustained difficulty segment was captured in this run.",
+                "tone": "good",
+            })
+
+        insights.append({
+            "label": "Load pressure",
+            "value": f"{int(round(self._safe_float(summary.get('avg_load', 0))))}",
+            "detail": f"Average regulation pressure with {int(round(self._safe_float(summary.get('high_load_ratio', 0))))}% of samples in high load.",
+            "tone": "warn" if self._safe_float(summary.get("avg_load", 0)) >= 50 else "good",
+        })
+
+        fatigue_value = self._safe_float(summary.get("avg_fatigue", 0))
+        insights.append({
+            "label": "Fatigue drift",
+            "value": f"{int(round(fatigue_value))}",
+            "detail": "Use this to tell apart productive struggle from a tired replay attempt.",
+            "tone": "cool" if fatigue_value < 40 else "signal",
+        })
+
+        if events:
+            top_event = self._pick_highlight_event(events)
+            insights.append({
+                "label": "Focus point",
+                "value": f"D{top_event['event_id']}",
+                "detail": f"{top_event['task_mode'].title()} mode, {top_event['time_window']}, peak load {int(round(top_event['peak_load']))}.",
+                "tone": "high" if top_event["severity"] == "high" else "warn",
+            })
+
+        return insights[:4]
+
+    def _build_assets(self, dataset):
+        filename = "demo_attention_heatmap.png" if str(dataset).lower() == "demo" else "attention_heatmap.png"
+        file_path = os.path.join("exports", filename)
+        exists = os.path.exists(file_path) and os.path.getsize(file_path) > 0
+        return {
+            "heatmap": {
+                "filename": filename,
+                "available": bool(exists),
+                "url": f"/exports/{filename}" if exists else "",
+                "label": "Attention heatmap",
+                "detail": "Open the exported report image to compare the flagged events with the full learning-state curve.",
+            }
+        }
 
     def _missed_content_risk(self, severity, avg_load, low_conf_ratio):
         if severity == "high" or avg_load >= 70 or low_conf_ratio >= 25:

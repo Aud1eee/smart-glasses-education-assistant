@@ -55,6 +55,14 @@ In simple terms:
 - `D` identifies which segment was likely difficult
 - `E` turns flagged segments into review priorities and catch-up suggestions
 
+The current review page is now designed as a **presentation-ready after-class follow-up surface** rather than a plain debug panel. It includes:
+
+- a session timeline that locates flagged segments in the full run
+- an insight strip that summarizes the review priority in one glance
+- a selected-event spotlight card for the currently focused difficulty segment
+- a catch-up action panel for concrete replay guidance
+- a heatmap export entry so the reviewer can jump from structured events to the full report image
+
 ## 3. Completed submodules
 
 ### 3.1 Deterministic demo simulator

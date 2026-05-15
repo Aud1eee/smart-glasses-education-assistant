@@ -3,7 +3,7 @@ from datetime import datetime
 
 import bootstrap_windows_runtime  # noqa: F401
 from dotenv import load_dotenv
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, send_from_directory
 from flask_cors import CORS
 
 from core.difficulty_marker import DifficultyEventMarker
@@ -18,6 +18,7 @@ load_dotenv()
 
 app = Flask(__name__, template_folder="web", static_folder="web")
 CORS(app)
+EXPORT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "exports")
 
 logger = DataLogger()
 posture = PostureEngine()
@@ -84,6 +85,11 @@ def index():
 @app.route("/review")
 def review_page():
     return render_template("review.html")
+
+
+@app.route("/exports/<path:filename>")
+def export_asset(filename):
+    return send_from_directory(EXPORT_DIR, filename)
 
 
 @app.route("/api/v1/posture", methods=["POST"])
