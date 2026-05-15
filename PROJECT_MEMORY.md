@@ -56,6 +56,14 @@ Recommended structure:
 - stability estimation
 - focus score estimation
 - cognitive load score and load level
+- behavioral alignment scoring
+- fatigue-risk estimation
+- uncertainty / confidence scoring
+- task-mode-aware thresholds:
+  - `lecture`
+  - `reading`
+  - `note-taking`
+  - `review`
 - adaptive focus / recovery session engine
 - difficulty event marker for sustained rising/high load segments
 - HUD interface showing focus score, load, stability, timer, and guidance
@@ -296,6 +304,49 @@ Current behavior after the fix:
   - a new `session_id` is returned
   - `difficulty.event_count` returns to `0`
   - the visible state returns to `Focus settling`
+
+### Phase 1 algorithm refactor completed
+
+The learning-state algorithm has now been upgraded from a mostly posture-only `focus_score` framing into a more explicit multi-signal proxy framework that still works with the current hardware limits.
+
+New posture-engine outputs:
+
+- `behavioral_alignment`
+- `behavioral_level`
+- `fatigue_risk`
+- `fatigue_level`
+- `uncertainty_score`
+- `confidence_level`
+- `task_mode`
+
+Current interpretation:
+
+- `focus_score` is retained mainly for compatibility with the existing HUD and heatmap
+- `behavioral_alignment` is the more honest primary signal for presentation and explanation
+- `fatigue_risk` is now separated from generic load
+- `uncertainty_score` prevents overconfident interpretation during warm-up or task-mode transitions
+
+The adaptive engine now also reacts to:
+
+- low-confidence signal states
+- fatigue-risk states
+- task-mode-aware alignment drift
+
+The HUD also now exposes:
+
+- task mode
+- confidence level
+- fatigue risk
+
+Verified after refactor:
+
+- syntax check passed
+- demo asset pipeline still runs successfully
+- local API returns:
+  - `task_mode`
+  - `behavioral_alignment`
+  - `fatigue_risk`
+  - `confidence_level`
 
 ## Suggested future prompt for Codex
 

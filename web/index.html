@@ -212,7 +212,7 @@
         <section class="panel">
             <div class="panel-title">Learning State</div>
             <div class="metric">
-                <div class="label">Focus Score</div>
+                <div class="label">Behavior Alignment</div>
                 <div class="value"><span id="focus-val">100</span></div>
                 <div class="bar"><span id="focus-bar"></span></div>
             </div>
@@ -223,12 +223,12 @@
                 <div id="load-level" class="level-pill">LOW</div>
             </div>
             <div class="metric">
-                <div class="label">Stability</div>
-                <div class="small-value"><span id="stab-val">100</span>%</div>
+                <div class="label">Fatigue Risk</div>
+                <div class="small-value"><span id="fatigue-val">0</span>%</div>
             </div>
             <div class="metric">
-                <div class="label">Pitch Delta</div>
-                <div class="small-value"><span id="pitch-val">0.0</span> deg</div>
+                <div class="label">Stability</div>
+                <div class="small-value"><span id="stab-val">100</span>%</div>
             </div>
         </section>
 
@@ -253,6 +253,14 @@
             <div class="metric">
                 <div class="label">Signal</div>
                 <div id="reason-val" class="small-value">Stable learning state</div>
+            </div>
+            <div class="metric">
+                <div class="label">Task Mode</div>
+                <div id="mode-val" class="small-value">reading</div>
+            </div>
+            <div class="metric">
+                <div class="label">Confidence</div>
+                <div id="confidence-val" class="small-value">medium</div>
             </div>
             <div class="metric">
                 <div class="label">Difficulty Marker</div>
@@ -302,12 +310,14 @@
                 const activeEvent = difficulty.active_event || null;
                 const lastEvent = difficulty.last_event || null;
 
-                document.getElementById("pitch-val").innerText = Number(d.rel_pitch || 0).toFixed(1);
                 document.getElementById("stab-val").innerText = Math.round(d.stability || 0);
                 document.getElementById("focus-val").innerText = Math.round(d.focus_score || 0);
                 document.getElementById("load-val").innerText = Math.round(d.cognitive_load || 0);
+                document.getElementById("fatigue-val").innerText = Math.round(d.fatigue_risk || 0);
                 document.getElementById("load-level").innerText = (d.load_level || "low").toUpperCase();
                 document.getElementById("reason-val").innerText = d.load_reason || "Stable learning state";
+                document.getElementById("mode-val").innerText = d.task_mode || "reading";
+                document.getElementById("confidence-val").innerText = (d.confidence_level || "medium").toUpperCase();
 
                 document.getElementById("phase-val").innerText = session.phase_label || "Focus";
                 document.getElementById("time-left").innerText = formatTime(session.remaining_seconds);
@@ -364,6 +374,10 @@
             if (e.code === "Enter") fetch("/collect");
             if (e.code === "KeyC") fetch("/calibrate");
             if (e.code === "KeyR") fetch("/reset_session");
+            if (e.code === "Digit1") fetch("/task_mode", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ task_mode: "lecture" }) });
+            if (e.code === "Digit2") fetch("/task_mode", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ task_mode: "reading" }) });
+            if (e.code === "Digit3") fetch("/task_mode", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ task_mode: "note-taking" }) });
+            if (e.code === "Digit4") fetch("/task_mode", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ task_mode: "review" }) });
         };
 
         setInterval(update, 500);

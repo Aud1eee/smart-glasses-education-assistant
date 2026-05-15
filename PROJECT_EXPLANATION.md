@@ -81,7 +81,18 @@ This is important because it makes the project easier to demonstrate in a gradua
 
 The posture-based scoring logic is implemented in [core/posture.py](</C:/Users/11721/Desktop/focus_project_windows/core/posture.py:5>).
 
-The current system uses:
+The current system now uses a **task-mode-aware posture proxy** instead of a single raw focus formula.
+
+It still begins from posture input, but the output is now split into multiple interpretable signals.
+
+Supported task modes are:
+
+- `lecture`
+- `reading`
+- `note-taking`
+- `review`
+
+The current engine uses:
 
 - smoothed pitch
 - relative pitch offset from the calibrated baseline
@@ -95,8 +106,22 @@ The output includes:
 - `Cognitive_Load`
 - `Load_Level`
 - `Load_Reason`
+- `Behavioral_Alignment`
+- `Behavioral_Level`
+- `Fatigue_Risk`
+- `Fatigue_Level`
+- `Uncertainty_Score`
+- `Confidence_Level`
+- `Task_Mode`
 
-This stage is best described as a **posture-based learning-state proxy**, not a final absolute attention detector. That wording is more rigorous for the graduation project.
+The meaning of these outputs is:
+
+- `Behavioral_Alignment`: whether current posture behavior still matches the intended study mode
+- `Cognitive_Load`: whether regulation pressure is rising
+- `Fatigue_Risk`: whether the learner may be entering a passive slump state
+- `Uncertainty_Score`: whether the current estimate should be interpreted cautiously
+
+This stage is best described as a **task-mode-aware, posture-based learning-state proxy**, not a final absolute attention detector. That wording is more rigorous for the graduation project.
 
 ### 3.3 Adaptive focus regulation
 
@@ -110,6 +135,8 @@ This engine converts raw state values into presentation-level labels and guidanc
 - `High load`
 - `Regulate now`
 - `Recovery`
+- `Fatigue risk`
+- `Signal check`
 
 The engine also gives action guidance such as:
 
@@ -121,6 +148,12 @@ The engine also gives action guidance such as:
 
 This is the core of part `B`, because it changes the system from passive monitoring into adaptive study support.
 
+After the recent refactor, the regulation logic no longer depends only on `load_level`. It also reacts to:
+
+- fatigue risk
+- signal confidence
+- task-mode-aware alignment drift
+
 ### 3.4 HUD interaction layer
 
 The Flask service and the HUD are connected through:
@@ -130,13 +163,15 @@ The Flask service and the HUD are connected through:
 
 The HUD shows:
 
-- focus score
+- behavior alignment / focus proxy
 - cognitive load
+- fatigue risk
 - stability
-- pitch delta
 - current state label
 - adaptive guidance
 - session phase and time remaining
+- task mode
+- confidence level
 
 This allows the user to understand the current study state at a glance, which is especially suitable for smart-glasses-style display.
 
@@ -203,11 +238,18 @@ The main fields are:
 - `Session_ID`: which learning session this row belongs to
 - `Timestamp`: sampling time
 - `Relative_Pitch`: deviation from the calibrated pitch baseline
+- `Task_Mode`: the expected learning behavior mode
 - `Stability`: short-window posture stability
 - `Is_Alert`: whether sustained drift triggered an alert
 - `Focus_Score`: focus proxy score
 - `Cognitive_Load`: estimated cognitive load
 - `Load_Level`: low / medium / high
+- `Behavioral_Alignment`: posture-based task alignment score
+- `Behavioral_Level`: aligned / drifting / misaligned
+- `Fatigue_Risk`: fatigue-related risk estimate
+- `Fatigue_Level`: low / medium / high
+- `Uncertainty_Score`: caution level for the estimate
+- `Confidence_Level`: low / medium / high confidence
 - `Guidance`: real-time system guidance at that moment
 - `Phase`: focus or break
 - `Elapsed_Seconds`: elapsed session time

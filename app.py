@@ -95,16 +95,23 @@ def handle_posture():
         session_id=current_session_id,
     )
     logger.log_study(
-        res["relative_pitch"],
-        res["is_alert"],
-        res["focus_score"],
-        res["stability"],
-        res["cognitive_load"],
-        res["load_level"],
-        latest_session["guidance"],
-        latest_session["phase"],
-        latest_session["elapsed_seconds"],
-        latest_session["cycle_index"],
+        pitch=res["relative_pitch"],
+        is_alert=res["is_alert"],
+        score=res["focus_score"],
+        stability=res["stability"],
+        cognitive_load=res["cognitive_load"],
+        load_level=res["load_level"],
+        task_mode=res["task_mode"],
+        behavioral_alignment=res["behavioral_alignment"],
+        behavioral_level=res["behavioral_level"],
+        fatigue_risk=res["fatigue_risk"],
+        fatigue_level=res["fatigue_level"],
+        uncertainty_score=res["uncertainty_score"],
+        confidence_level=res["confidence_level"],
+        guidance=latest_session["guidance"],
+        phase=latest_session["phase"],
+        elapsed_seconds=latest_session["elapsed_seconds"],
+        cycle_index=latest_session["cycle_index"],
         timestamp_text=timestamp_text,
         session_id=current_session_id,
     )
@@ -151,6 +158,13 @@ def get_status():
         "cognitive_load": posture.cognitive_load,
         "load_level": posture.load_level,
         "load_reason": posture.load_reason,
+        "task_mode": posture.task_mode,
+        "behavioral_alignment": posture.behavioral_alignment,
+        "behavioral_level": posture.behavioral_level,
+        "fatigue_risk": posture.fatigue_risk,
+        "fatigue_level": posture.fatigue_level,
+        "uncertainty_score": posture.uncertainty_score,
+        "confidence_level": posture.confidence_level,
         "session": latest_session,
         "difficulty": {
             "active_event": latest_difficulty.get("active_event"),
@@ -175,6 +189,17 @@ def calibrate():
 def reset_session():
     session_id = _start_new_session(reset_posture=False)
     return jsonify({"status": "ok", "session_id": session_id})
+
+
+@app.route("/task_mode", methods=["POST"])
+def set_task_mode():
+    data = request.json or {}
+    mode = posture.set_task_mode(data.get("task_mode", "reading"))
+    return jsonify({
+        "status": "ok",
+        "task_mode": mode,
+        "message": f"Task mode switched to {mode}. Hold steady or recalibrate if posture changed.",
+    })
 
 
 if __name__ == "__main__":

@@ -1,2 +1,2 @@
 Session_ID,Event_ID,Start_Timestamp,End_Timestamp,Start_Sample,End_Sample,Duration_Seconds,Severity,Peak_Load,Min_Focus,Peak_Pitch,Lowest_Stability,Primary_Label,Trigger_Reason,Guidance,Review_Note,Sample_Count
-demo-session-1,1,00:11.07,00:37.95,85,309,26.9,high,100.0,0.0,38.6,0.0,Regulate now,Sustained posture drift,High load detected. Pause briefly and mark this moment.,Review this segment first: load rose and reached a high-load state.,212
+demo-session-1,1,00:11.07,00:38.07,85,310,27.0,high,100.0,0.0,38.6,0.0,Load rising,Behavior alignment is drifting,Behavior alignment is drifting in reading. Reduce switching and keep one target.,Review this segment first: load rose and reached a high-load state.,213
