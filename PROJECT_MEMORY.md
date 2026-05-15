@@ -89,6 +89,7 @@ Recommended structure:
   - generated outputs:
     - `exports/validation_summary.md`
     - `exports/validation_summary.json`
+    - `THESIS_EXPERIMENT_DRAFT.md`
   - Windows launcher:
     - `generate_validation_report.ps1`
 

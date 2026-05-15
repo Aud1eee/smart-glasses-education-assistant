@@ -89,10 +89,15 @@ The main outputs are:
 
 - [validation_summary.md](</C:/Users/11721/Desktop/focus_project_windows/exports/validation_summary.md>)
 - [validation_summary.json](</C:/Users/11721/Desktop/focus_project_windows/exports/validation_summary.json>)
+- [THESIS_EXPERIMENT_DRAFT.md](</C:/Users/11721/Desktop/focus_project_windows/THESIS_EXPERIMENT_DRAFT.md>)
 
 The validation launcher for Windows is:
 
 - [generate_validation_report.ps1](</C:/Users/11721/Desktop/focus_project_windows/generate_validation_report.ps1>)
+
+For paper writing and defense preparation, the preferred human-readable writeup is:
+
+- [THESIS_EXPERIMENT_DRAFT.md](</C:/Users/11721/Desktop/focus_project_windows/THESIS_EXPERIMENT_DRAFT.md>)
 
 ## 3. Completed submodules
 
