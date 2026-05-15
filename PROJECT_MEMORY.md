@@ -78,6 +78,10 @@ Recommended structure:
   - insight strip
   - heatmap export entry
   - catch-up action panel
+  - simplified presentation layout with:
+    - cleaner hero summary
+    - 2-column insight strip
+    - sticky right-side spotlight / asset rail
 
 ### Main files
 

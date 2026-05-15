@@ -62,6 +62,11 @@ The current review page is now designed as a **presentation-ready after-class fo
 - a selected-event spotlight card for the currently focused difficulty segment
 - a catch-up action panel for concrete replay guidance
 - a heatmap export entry so the reviewer can jump from structured events to the full report image
+- a cleaner editorial layout that reduces visual clutter and separates:
+  - session summary
+  - replay priority
+  - detailed event list
+  - supporting report assets
 
 ## 3. Completed submodules
 
