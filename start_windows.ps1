@@ -8,4 +8,4 @@ Set-Location $projectRoot
 
 Write-FocusProjectRuntimeBanner -PythonExe $pythonExe
 
-& $pythonExe run.py
+& $pythonExe run.py --serve-only

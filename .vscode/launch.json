@@ -6,6 +6,16 @@
       "type": "python",
       "request": "launch",
       "program": "${workspaceFolder}\\run.py",
+      "args": ["--serve-only"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Run Focus Project Console",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}\\run.py",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": true

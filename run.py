@@ -1,3 +1,4 @@
+import argparse
 import os
 import signal
 import subprocess
@@ -7,7 +8,18 @@ import time
 import bootstrap_windows_runtime  # noqa: F401
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="Focus Project launcher")
+    parser.add_argument(
+        "--serve-only",
+        action="store_true",
+        help="Start the Flask HUD service and keep it running without the console menu.",
+    )
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
     root = os.path.dirname(os.path.abspath(__file__))
 
     print("=" * 52)
@@ -35,6 +47,13 @@ def main():
     print("Modes: Space=capture word | Enter=collect note | C=calibrate | R=reset session")
 
     try:
+        if args.serve_only:
+            print("Serve-only mode active. Press Ctrl+C to stop the backend.")
+            while app_proc.poll() is None:
+                time.sleep(1)
+            print(f"Backend service exited with code {app_proc.returncode}.")
+            return
+
         while True:
             print("\n" + "-" * 18 + " Console Menu " + "-" * 18)
             print(" 1. Generate attention heatmap report (png)")

@@ -95,6 +95,16 @@ Recommended structure:
 - `start_windows.ps1`
 - `start_simulator.ps1`
 
+### Windows launcher behavior
+
+- `start_windows.ps1` now starts `run.py --serve-only` by default
+- the default VSCode config `Run Focus Project` also uses `--serve-only`
+- this avoids the old issue where the interactive console menu could exit and stop the Flask HUD child process at the same time
+- if analytics menu access is needed, use:
+  - `Run Focus Project Console`
+  - or run `python run.py` manually
+- when testing the HUD in a browser, keep the launcher terminal open and visit `http://127.0.0.1:5000`
+
 ### Python environment
 
 - Local Windows virtual environment path: `.venv`

@@ -11,6 +11,9 @@ For the full project overview, setup steps, and current scope, read `README.md` 
 5. Run `Run Motion Simulator`.
 6. Open `http://127.0.0.1:5000`.
 
+`Run Focus Project` and `.\start_windows.ps1` now use **serve-only mode** by default, so the Flask HUD stays alive until you stop it with `Ctrl+C`.
+If you still want the old console menu, use the `Run Focus Project Console` launch config or run `python run.py` manually.
+
 ## Runtime note
 
 The old Windows `.venv` currently points to a broken local Python 3.14 installation path.

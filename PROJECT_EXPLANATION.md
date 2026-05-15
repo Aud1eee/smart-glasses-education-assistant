@@ -215,6 +215,17 @@ In `Glasses view`, the HUD further reduces occlusion by:
 
 This makes the system easier to explain as a **glasses-oriented HUD prototype** rather than a general web dashboard.
 
+For local Windows use, the launcher now defaults to a **serve-only mode**:
+
+- `start_windows.ps1` runs `run.py --serve-only`
+- the default VSCode profile `Run Focus Project` also uses this mode
+- this keeps the Flask HUD alive for browser testing instead of dropping into the old console menu flow
+
+If the analytics console menu is needed, it is still available through:
+
+- `Run Focus Project Console`
+- or a direct `python run.py`
+
 ### 3.5 Clean demo asset pipeline
 
 The demo asset generation pipeline is implemented in:

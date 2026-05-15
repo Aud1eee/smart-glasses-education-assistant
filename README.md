@@ -48,6 +48,11 @@ The current priority is the A/B/C learning-state workflow. OCR features are kept
 5. Run `Run Motion Simulator` in a second terminal or launch config.
 6. Open `http://127.0.0.1:5000`.
 
+Notes:
+
+- `Run Focus Project` and `start_windows.ps1` now default to **serve-only mode**, which keeps the Flask HUD running for browser testing.
+- if you want the original console menu for analytics scripts, use the `Run Focus Project Console` launch config or run `python run.py` manually.
+
 PowerShell commands also work:
 
 ```powershell
