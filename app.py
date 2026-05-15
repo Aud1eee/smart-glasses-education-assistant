@@ -9,6 +9,7 @@ from flask_cors import CORS
 from core.difficulty_marker import DifficultyEventMarker
 from core.edu import EduEngine
 from core.focus_session import FocusSessionEngine
+from core.multimodal_schema import build_multimodal_blueprint
 from core.posture import PostureEngine
 from core.vision import VisionEngine
 from utils.storage import DataLogger
@@ -199,6 +200,11 @@ def review_summary():
     session_id = request.args.get("session_id") or None
     payload = logger.build_review_payload(session_id=session_id, dataset=dataset)
     return jsonify(payload)
+
+
+@app.route("/api/multimodal_blueprint")
+def multimodal_blueprint():
+    return jsonify(build_multimodal_blueprint())
 
 
 @app.route("/calibrate")

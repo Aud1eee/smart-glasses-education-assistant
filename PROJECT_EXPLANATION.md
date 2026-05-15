@@ -99,6 +99,28 @@ For paper writing and defense preparation, the preferred human-readable writeup 
 
 - [THESIS_EXPERIMENT_DRAFT.md](</C:/Users/11721/Desktop/focus_project_windows/THESIS_EXPERIMENT_DRAFT.md>)
 
+## 2.2 Multimodal future-work framework
+
+The next algorithm-development direction is no longer "make the posture score more complicated". Instead, the recommended route is to gradually expand the current posture proxy into a **multimodal learning-state framework**.
+
+The preferred planning document is:
+
+- [MULTIMODAL_FUTURE_WORK.md](</C:/Users/11721/Desktop/focus_project_windows/MULTIMODAL_FUTURE_WORK.md>)
+
+The project also now includes a lightweight code-level blueprint:
+
+- [multimodal_schema.py](</C:/Users/11721/Desktop/focus_project_windows/core/multimodal_schema.py>)
+- `/api/multimodal_blueprint`
+
+This blueprint separates the future system into four branches:
+
+- behavioral alignment
+- cognitive effort
+- fatigue risk
+- confidence / uncertainty
+
+Its purpose is to prove that future multimodal work has already been structured at the architecture level, even though device-side signals such as gaze, eye openness, blink, and pupil-related features are not active yet in the current prototype.
+
 ## 3. Completed submodules
 
 ### 3.1 Deterministic demo simulator

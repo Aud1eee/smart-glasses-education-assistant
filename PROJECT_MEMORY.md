@@ -92,6 +92,12 @@ Recommended structure:
     - `THESIS_EXPERIMENT_DRAFT.md`
   - Windows launcher:
     - `generate_validation_report.ps1`
+- future-work algorithm framework with:
+  - [MULTIMODAL_FUTURE_WORK.md](</C:/Users/11721/Desktop/focus_project_windows/MULTIMODAL_FUTURE_WORK.md>)
+  - code-level placeholder schema:
+    - `core/multimodal_schema.py`
+  - explanation API:
+    - `/api/multimodal_blueprint`
 
 ### Main files
 
