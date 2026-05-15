@@ -30,6 +30,7 @@ It includes:
 - `B` Adaptive focus timer
 - `C` Attention heatmap review
 - `D` Difficulty event marking
+- `E` Difficulty review and catch-up page
 
 Recommended one-line description:
 
@@ -52,6 +53,7 @@ In simple terms:
 - `B` regulates the learning rhythm in real time
 - `C` visualizes the learning process afterward
 - `D` identifies which segment was likely difficult
+- `E` turns flagged segments into review priorities and catch-up suggestions
 
 ## 3. Completed submodules
 
@@ -209,6 +211,7 @@ In `Glasses view`, the HUD further reduces occlusion by:
 - compressing side information into narrow edge docks
 - showing difficulty emphasis only when a real event is active
 - converting long guidance text into short glasses-style status vocabulary
+- adding a dot-based signal language for alignment, load, fatigue, confidence, and difficulty
 
 This makes the system easier to explain as a **glasses-oriented HUD prototype** rather than a general web dashboard.
 
@@ -260,6 +263,37 @@ In educational terms, this module tries to answer:
 > Which part of the learning process was likely difficult enough to deserve review afterward?
 
 This is important because the system now moves from general state monitoring to **difficulty localization**.
+
+### 3.7 Difficulty review and catch-up page
+
+The review page is implemented through:
+
+- [app.py](</C:/Users/11721/Desktop/focus_project_windows/app.py:67>)
+- [utils/storage.py](</C:/Users/11721/Desktop/focus_project_windows/utils/storage.py:213>)
+- [web/review.html](</C:/Users/11721/Desktop/focus_project_windows/web/review.html:1>)
+
+Its purpose is to convert difficulty-event logs into a **review-first action page**.
+
+The current page provides:
+
+- session-level summary
+- difficulty-event list
+- event severity and time window
+- task-mode context
+- missed-content risk hint
+- review note
+- catch-up action suggestion
+
+This makes the system more educationally complete, because the pipeline is no longer:
+
+- detect state
+- show status
+
+It becomes:
+
+- detect state
+- identify difficult segments
+- guide the learner on what to revisit next
 
 ## 4. What the data means
 

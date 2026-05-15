@@ -372,12 +372,27 @@ New HUD interaction highlights:
 - quiet automatic compact state during stable low-risk learning in glasses view
 - narrower edge docks and event-only difficulty emphasis for glasses view
 - compact glasses-specific state/guidance vocabulary in the live HUD
+- dot-based icon language for the live glasses HUD state summary
 
 Verification:
 
 - local page HTML served successfully from Flask
 - simulator-driven `/status` updates still work with the redesigned HUD
 - Browser plugin runtime was unavailable in this environment, so final verification was done through local server fetch + API checks rather than in-app visual automation
+
+### Difficulty review page added
+
+The project now includes a separate review page at `/review`.
+
+This page is backed by `logger.build_review_payload(...)` and turns logged difficulty events into:
+
+- session summary
+- flagged event list
+- missed-content risk hints
+- review notes
+- catch-up action suggestions
+
+The HUD also has a direct shortcut (`G`) to open this page during demos.
 
 ### Post-refactor algorithm fixes
 

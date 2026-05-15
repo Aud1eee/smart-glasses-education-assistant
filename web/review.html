@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning State Review</title>
+    <style>
+        :root {
+            --bg: #040404;
+            --ink: #fff2da;
+            --muted: rgba(255, 242, 218, 0.60);
+            --glass: rgba(18, 14, 10, 0.66);
+            --line: rgba(255, 189, 92, 0.18);
+            --accent: #ffbd5c;
+            --good: #8ff0c8;
+            --warn: #ffd36c;
+            --high: #ff7b5c;
+            --cool: #9fd7ff;
+            --signal: #cdb8ff;
+            --shadow: 0 22px 60px rgba(0, 0, 0, 0.30);
+            --round: 24px;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            min-height: 100%;
+            background:
+                radial-gradient(circle at 18% 16%, rgba(255, 189, 92, 0.14), transparent 28%),
+                radial-gradient(circle at 84% 12%, rgba(159, 215, 255, 0.12), transparent 22%),
+                linear-gradient(135deg, #030303 0%, #0b0906 62%, #040404 100%);
+            color: var(--ink);
+            font-family: "Segoe UI", "PingFang SC", sans-serif;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+            background-size: 56px 56px;
+            opacity: 0.38;
+        }
+
+        main {
+            position: relative;
+            z-index: 1;
+            width: min(1220px, calc(100vw - 32px));
+            margin: 0 auto;
+            padding: 22px 0 28px;
+        }
+
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: var(--round);
+            background: var(--glass);
+            backdrop-filter: blur(18px);
+            box-shadow: var(--shadow);
+        }
+
+        .topbar {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 18px;
+            align-items: center;
+            padding: 18px 20px;
+        }
+
+        .brand {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .brand-mark {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(255, 189, 92, 0.30);
+            color: var(--accent);
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            background: linear-gradient(145deg, rgba(255, 189, 92, 0.16), rgba(255, 189, 92, 0.04));
+        }
+
+        .brand-copy strong {
+            display: block;
+            font-size: 17px;
+            letter-spacing: 0.05em;
+        }
+
+        .brand-copy span {
+            display: block;
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .chip-switch {
+            display: inline-flex;
+            gap: 6px;
+            padding: 4px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 189, 92, 0.12);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .chip-switch button,
+        .nav-link {
+            border: 0;
+            border-radius: 999px;
+            padding: 8px 12px;
+            background: transparent;
+            color: var(--muted);
+            font: inherit;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .chip-switch button.active,
+        .nav-link {
+            background: rgba(255, 189, 92, 0.18);
+            color: var(--ink);
+        }
+
+        .session-select {
+            min-width: 260px;
+            max-width: 360px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 189, 92, 0.16);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--ink);
+            padding: 10px 14px;
+            font: inherit;
+        }
+
+        .hero {
+            margin-top: 16px;
+            padding: 22px 24px;
+            display: grid;
+            grid-template-columns: minmax(280px, 420px) 1fr;
+            gap: 18px;
+            align-items: stretch;
+        }
+
+        .hero-copy h1 {
+            margin: 0;
+            font-size: clamp(28px, 3.6vw, 44px);
+            letter-spacing: -0.05em;
+            line-height: 0.98;
+        }
+
+        .hero-copy p {
+            margin: 14px 0 0;
+            color: rgba(255, 242, 218, 0.76);
+            line-height: 1.6;
+        }
+
+        .hero-callout {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .callout {
+            padding: 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 189, 92, 0.12);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .callout-label {
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .callout-value {
+            margin-top: 10px;
+            font-size: 34px;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+        }
+
+        .callout-note {
+            margin-top: 8px;
+            color: rgba(255, 242, 218, 0.70);
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .section-grid {
+            margin-top: 16px;
+            display: grid;
+            grid-template-columns: minmax(0, 1.8fr) minmax(300px, 0.9fr);
+            gap: 16px;
+        }
+
+        .section {
+            padding: 20px;
+        }
+
+        .section h2 {
+            margin: 0;
+            font-size: 18px;
+            letter-spacing: 0.03em;
+        }
+
+        .section-sub {
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .event-list {
+            margin-top: 18px;
+            display: grid;
+            gap: 14px;
+        }
+
+        .event-card {
+            padding: 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 189, 92, 0.12);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .event-card.high { border-color: rgba(255, 123, 92, 0.24); }
+        .event-card.medium { border-color: rgba(255, 211, 108, 0.22); }
+
+        .event-head {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .event-title {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 189, 92, 0.12);
+            font-size: 11px;
+            letter-spacing: 0.10em;
+            text-transform: uppercase;
+        }
+
+        .badge-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 999px;
+            background: var(--warn);
+            box-shadow: 0 0 14px rgba(255, 211, 108, 0.20);
+        }
+
+        .badge.high .badge-dot,
+        .tone-high {
+            background: var(--high);
+            box-shadow: 0 0 14px rgba(255, 123, 92, 0.20);
+        }
+
+        .badge.medium .badge-dot,
+        .tone-medium {
+            background: var(--warn);
+            box-shadow: 0 0 14px rgba(255, 211, 108, 0.20);
+        }
+
+        .badge.low .badge-dot,
+        .tone-low {
+            background: var(--good);
+            box-shadow: 0 0 14px rgba(143, 240, 200, 0.20);
+        }
+
+        .event-title strong {
+            font-size: 20px;
+            letter-spacing: -0.03em;
+        }
+
+        .event-meta {
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .meta-item {
+            padding: 12px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .meta-item span {
+            display: block;
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+
+        .meta-item strong {
+            display: block;
+            margin-top: 8px;
+            font-size: 20px;
+            letter-spacing: -0.03em;
+        }
+
+        .event-copy {
+            margin-top: 14px;
+            color: rgba(255, 242, 218, 0.78);
+            line-height: 1.6;
+        }
+
+        .event-actions {
+            margin-top: 14px;
+            display: grid;
+            gap: 10px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .event-action {
+            padding: 14px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 189, 92, 0.10);
+        }
+
+        .event-action strong {
+            display: block;
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .event-action p {
+            margin: 8px 0 0;
+            color: rgba(255, 242, 218, 0.72);
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        .action-list {
+            margin-top: 16px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .action-card {
+            padding: 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 189, 92, 0.10);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .action-card strong {
+            display: block;
+            font-size: 15px;
+        }
+
+        .action-card p {
+            margin: 8px 0 0;
+            color: rgba(255, 242, 218, 0.72);
+            line-height: 1.55;
+            font-size: 14px;
+        }
+
+        .empty-state {
+            margin-top: 18px;
+            padding: 24px;
+            border-radius: 20px;
+            border: 1px dashed rgba(255, 189, 92, 0.16);
+            color: rgba(255, 242, 218, 0.70);
+            line-height: 1.6;
+        }
+
+        @media (max-width: 980px) {
+            .hero,
+            .section-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .event-meta,
+            .event-actions,
+            .hero-callout {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            main {
+                width: min(100vw - 20px, 100%);
+                padding: 10px 0 20px;
+            }
+
+            .topbar,
+            .hero,
+            .section {
+                padding: 16px;
+            }
+
+            .topbar {
+                grid-template-columns: 1fr;
+            }
+
+            .controls {
+                justify-content: flex-start;
+            }
+
+            .event-meta,
+            .event-actions,
+            .hero-callout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <section class="panel topbar">
+            <div class="brand">
+                <div class="brand-mark">RK</div>
+                <div class="brand-copy">
+                    <strong>Difficulty Review & Catch-up</strong>
+                    <span>Learning State Guardian follow-up page</span>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="chip-switch" aria-label="Dataset switch">
+                    <button id="live-btn" class="active" type="button" onclick="switchDataset('live')">Live</button>
+                    <button id="demo-btn" type="button" onclick="switchDataset('demo')">Demo</button>
+                </div>
+                <select id="session-select" class="session-select" onchange="loadReview()"></select>
+            </div>
+
+            <a class="nav-link" href="/">Back to HUD</a>
+        </section>
+
+        <section class="panel hero">
+            <div class="hero-copy">
+                <h1 id="hero-title">Review flagged learning segments</h1>
+                <p id="hero-copy">
+                    This page turns detected difficulty events into replay priorities and catch-up suggestions.
+                    It is meant to help you decide which section to revisit first after the live HUD session ends.
+                </p>
+            </div>
+
+            <div class="hero-callout">
+                <div class="callout">
+                    <div class="callout-label">Session</div>
+                    <div class="callout-value" id="summary-session">--</div>
+                    <div class="callout-note" id="summary-mode">Task mode: --</div>
+                </div>
+                <div class="callout">
+                    <div class="callout-label">Review Priority</div>
+                    <div class="callout-value" id="summary-priority">Clear</div>
+                    <div class="callout-note" id="summary-events">0 flagged events</div>
+                </div>
+                <div class="callout">
+                    <div class="callout-label">Load / Fatigue</div>
+                    <div class="callout-value" id="summary-load">0 / 0</div>
+                    <div class="callout-note" id="summary-signal">Low-confidence ratio: 0%</div>
+                </div>
+                <div class="callout">
+                    <div class="callout-label">Duration / Samples</div>
+                    <div class="callout-value" id="summary-duration">00:00</div>
+                    <div class="callout-note" id="summary-samples">0 samples</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-grid">
+            <section class="panel section">
+                <h2>Difficulty Event List</h2>
+                <div class="section-sub">
+                    Each event below summarizes a sustained medium/high difficulty segment and explains how to catch up.
+                </div>
+                <div id="event-list" class="event-list"></div>
+                <div id="event-empty" class="empty-state" hidden>
+                    No difficulty event was recorded for this session yet. You can still use the summary on the right as a lightweight review guide.
+                </div>
+            </section>
+
+            <section class="panel section">
+                <h2>Next Actions</h2>
+                <div class="section-sub">
+                    These suggestions are generated from the session-wide state pattern and the strongest flagged segment.
+                </div>
+                <div id="action-list" class="action-list"></div>
+            </section>
+        </section>
+    </main>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        let activeDataset = params.get("dataset") === "demo" ? "demo" : "live";
+
+        function switchDataset(dataset) {
+            activeDataset = dataset === "demo" ? "demo" : "live";
+            document.getElementById("live-btn").classList.toggle("active", activeDataset === "live");
+            document.getElementById("demo-btn").classList.toggle("active", activeDataset === "demo");
+            loadReview(true);
+        }
+
+        function formatPercent(value) {
+            return `${Math.round(Number(value) || 0)}%`;
+        }
+
+        function titleCase(value) {
+            return String(value || "")
+                .split(/[-_\s]+/)
+                .filter(Boolean)
+                .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+                .join(" ");
+        }
+
+        function renderSummary(summary) {
+            document.getElementById("summary-session").innerText = summary.session_id || "--";
+            document.getElementById("summary-mode").innerText = `Task mode: ${titleCase(summary.primary_task_mode || "unknown")}`;
+            document.getElementById("summary-priority").innerText = String(summary.review_priority || "clear").toUpperCase();
+            document.getElementById("summary-events").innerText = `${summary.difficulty_count || 0} flagged events`;
+            document.getElementById("summary-load").innerText = `${Math.round(summary.avg_load || 0)} / ${Math.round(summary.avg_fatigue || 0)}`;
+            document.getElementById("summary-signal").innerText = `Low-confidence ratio: ${formatPercent(summary.low_confidence_ratio)}`;
+            document.getElementById("summary-duration").innerText = summary.duration_label || "00:00";
+            document.getElementById("summary-samples").innerText = `${summary.samples || 0} samples`;
+        }
+
+        function renderActions(actions) {
+            const host = document.getElementById("action-list");
+            host.innerHTML = "";
+            (actions || []).forEach((action) => {
+                const card = document.createElement("article");
+                card.className = "action-card";
+                card.innerHTML = `<strong>${action.title}</strong><p>${action.detail}</p>`;
+                host.appendChild(card);
+            });
+        }
+
+        function renderEvents(events) {
+            const host = document.getElementById("event-list");
+            const empty = document.getElementById("event-empty");
+            host.innerHTML = "";
+
+            if (!events || !events.length) {
+                empty.hidden = false;
+                return;
+            }
+
+            empty.hidden = true;
+            events.forEach((event) => {
+                const card = document.createElement("article");
+                card.className = `event-card ${event.severity}`;
+                card.innerHTML = `
+                    <div class="event-head">
+                        <div class="event-title">
+                            <strong>D${event.event_id}</strong>
+                            <div class="badge ${event.severity}">
+                                <span class="badge-dot"></span>
+                                <span>${event.severity_label}</span>
+                            </div>
+                        </div>
+                        <div class="badge ${event.missed_content_risk}">
+                            <span class="badge-dot"></span>
+                            <span>Missed-content ${event.missed_content_risk}</span>
+                        </div>
+                    </div>
+
+                    <div class="event-meta">
+                        <div class="meta-item">
+                            <span>Window</span>
+                            <strong>${event.time_window}</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>Task Mode</span>
+                            <strong>${titleCase(event.task_mode)}</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>Peak Load</span>
+                            <strong>${Math.round(event.peak_load)}</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>Min Focus</span>
+                            <strong>${Math.round(event.min_focus)}</strong>
+                        </div>
+                    </div>
+
+                    <div class="event-copy">
+                        <strong>${event.trigger_label}</strong><br>
+                        ${event.trigger_reason}
+                    </div>
+
+                    <div class="event-actions">
+                        <div class="event-action">
+                            <strong>Review Note</strong>
+                            <p>${event.review_note}</p>
+                        </div>
+                        <div class="event-action">
+                            <strong>Catch-up Action</strong>
+                            <p>${event.catch_up_action}</p>
+                        </div>
+                    </div>
+                `;
+                host.appendChild(card);
+            });
+        }
+
+        function syncSessionOptions(options, selectedSessionId) {
+            const select = document.getElementById("session-select");
+            const currentValue = selectedSessionId || select.value;
+            select.innerHTML = "";
+
+            (options || []).forEach((item) => {
+                const option = document.createElement("option");
+                option.value = item.session_id;
+                option.innerText = item.session_id;
+                if (item.session_id === currentValue) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+
+            if (!select.options.length && currentValue) {
+                const option = document.createElement("option");
+                option.value = currentValue;
+                option.innerText = currentValue;
+                option.selected = true;
+                select.appendChild(option);
+            }
+        }
+
+        async function loadReview(resetSession = false) {
+            const select = document.getElementById("session-select");
+            const sessionId = resetSession ? "" : (select.value || params.get("session_id") || "");
+            const query = new URLSearchParams({ dataset: activeDataset });
+            if (sessionId) query.set("session_id", sessionId);
+
+            const response = await fetch(`/api/review_summary?${query.toString()}`);
+            const payload = await response.json();
+
+            syncSessionOptions(payload.session_options, payload.session_id);
+            renderSummary(payload.summary || {});
+            renderActions(payload.next_actions || []);
+            renderEvents(payload.events || []);
+        }
+
+        switchDataset(activeDataset);
+    </script>
+</body>
+</html>

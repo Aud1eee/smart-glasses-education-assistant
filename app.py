@@ -80,6 +80,11 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/review")
+def review_page():
+    return render_template("review.html")
+
+
 @app.route("/api/v1/posture", methods=["POST"])
 def handle_posture():
     global pending_card, latest_session, latest_difficulty, sample_counter, last_posture_at
@@ -179,6 +184,14 @@ def get_status():
     }
     pending_card = {"word": "", "trans": "", "type": ""}
     return jsonify(data)
+
+
+@app.route("/api/review_summary")
+def review_summary():
+    dataset = request.args.get("dataset", "live")
+    session_id = request.args.get("session_id") or None
+    payload = logger.build_review_payload(session_id=session_id, dataset=dataset)
+    return jsonify(payload)
 
 
 @app.route("/calibrate")

@@ -263,6 +263,62 @@
             text-transform: uppercase;
         }
 
+        .pill-led,
+        .metric-led,
+        .signal-dot,
+        .state-sigil {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.18);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+            flex: 0 0 auto;
+        }
+
+        .state-sigil {
+            width: 14px;
+            height: 14px;
+            box-shadow:
+                0 0 0 1px rgba(255, 255, 255, 0.12),
+                0 0 16px rgba(255, 189, 92, 0.18);
+        }
+
+        .tone-calm {
+            background: var(--good);
+            box-shadow:
+                0 0 0 1px rgba(143, 240, 200, 0.22),
+                0 0 14px rgba(143, 240, 200, 0.18);
+        }
+
+        .tone-rising {
+            background: var(--warn);
+            box-shadow:
+                0 0 0 1px rgba(255, 211, 108, 0.22),
+                0 0 14px rgba(255, 211, 108, 0.18);
+        }
+
+        .tone-high {
+            background: var(--high);
+            box-shadow:
+                0 0 0 1px rgba(255, 123, 92, 0.22),
+                0 0 14px rgba(255, 123, 92, 0.18);
+        }
+
+        .tone-fatigue {
+            background: var(--cool);
+            box-shadow:
+                0 0 0 1px rgba(159, 215, 255, 0.22),
+                0 0 14px rgba(159, 215, 255, 0.18);
+        }
+
+        .tone-signal {
+            background: var(--signal);
+            box-shadow:
+                0 0 0 1px rgba(205, 184, 255, 0.22),
+                0 0 14px rgba(205, 184, 255, 0.18);
+        }
+
         .pill strong {
             color: var(--ink);
             font-size: 12px;
@@ -310,6 +366,9 @@
 
         .metric-label,
         .stack-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             color: var(--muted);
             font-size: 11px;
             letter-spacing: 0.16em;
@@ -439,6 +498,13 @@
             text-transform: uppercase;
         }
 
+        .status-head {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
         .status-card .state {
             margin-top: 16px;
             font-size: clamp(32px, 4vw, 58px);
@@ -453,6 +519,28 @@
             line-height: 1.4;
             color: rgba(255, 242, 218, 0.76);
             text-wrap: balance;
+        }
+
+        .signal-strip {
+            margin-top: 18px;
+            display: inline-flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .signal-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 189, 92, 0.10);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
         }
 
         .status-band {
@@ -662,6 +750,11 @@
             letter-spacing: 0.22em;
         }
 
+        body.view-glasses .status-head {
+            justify-content: flex-start;
+            gap: 10px;
+        }
+
         body.view-glasses .status-card .state {
             margin-top: 10px;
             font-size: clamp(24px, 2vw, 34px);
@@ -677,6 +770,18 @@
         body.view-glasses .status-band {
             margin-top: 14px;
             gap: 8px;
+        }
+
+        body.view-glasses .signal-strip {
+            margin-top: 12px;
+            justify-content: flex-start;
+            gap: 6px;
+        }
+
+        body.view-glasses .signal-chip {
+            padding: 6px 8px;
+            font-size: 9px;
+            letter-spacing: 0.16em;
         }
 
         body.view-glasses .status-tile {
@@ -773,7 +878,8 @@
 
         body.view-glasses.quiet-hud .status-card .eyebrow,
         body.view-glasses.quiet-hud .status-card .message,
-        body.view-glasses.quiet-hud .status-band {
+        body.view-glasses.quiet-hud .status-band,
+        body.view-glasses.quiet-hud .signal-strip {
             display: none;
         }
 
@@ -912,16 +1018,16 @@
                     <button class="view-chip active" data-view="glasses" onclick="switchViewMode('glasses')">Glasses</button>
                     <button class="view-chip" data-view="demo" onclick="switchViewMode('demo')">Demo</button>
                 </div>
-                <div class="pill"><span>Mode</span><strong id="mode-val-top">reading</strong></div>
-                <div class="pill"><span>Confidence</span><strong id="confidence-val-top">MEDIUM</strong></div>
-                <div class="pill" id="difficulty-pill"><span>Difficulty</span><strong id="event-pill">CLEAR</strong></div>
+                <div class="pill"><span class="pill-led tone-calm" id="mode-led"></span><span>Mode</span><strong id="mode-val-top">reading</strong></div>
+                <div class="pill"><span class="pill-led tone-calm" id="confidence-led"></span><span>Confidence</span><strong id="confidence-val-top">MEDIUM</strong></div>
+                <div class="pill" id="difficulty-pill"><span class="pill-led tone-calm" id="difficulty-led"></span><span>Difficulty</span><strong id="event-pill">CLEAR</strong></div>
             </div>
         </header>
 
         <section class="lens-grid">
             <aside class="rail left-rail">
                 <div class="rail-card">
-                    <div class="metric-label">Behavior Alignment</div>
+                    <div class="metric-label"><span class="metric-led tone-calm" id="align-led"></span>Behavior Alignment</div>
                     <div class="metric-value"><span id="focus-val">100</span></div>
                     <div class="micro-bar"><span id="focus-bar"></span></div>
                     <div class="metric-note">Primary on-lens cue for whether current behavior still matches the study mode.</div>
@@ -929,17 +1035,17 @@
 
                 <div class="rail-stack">
                     <div class="stack-item">
-                        <div class="stack-label">Cognitive Load</div>
+                        <div class="stack-label"><span class="metric-led tone-calm" id="load-led"></span>Cognitive Load</div>
                         <div class="metric-value small"><span id="load-val">0</span></div>
                         <div class="micro-bar"><span id="load-bar"></span></div>
                     </div>
                     <div class="stack-item">
-                        <div class="stack-label">Fatigue Risk</div>
+                        <div class="stack-label"><span class="metric-led tone-calm" id="fatigue-led"></span>Fatigue Risk</div>
                         <div class="metric-value small"><span id="fatigue-val">0</span>%</div>
                         <div class="micro-bar"><span id="fatigue-bar"></span></div>
                     </div>
                     <div class="stack-item">
-                        <div class="stack-label">Stability</div>
+                        <div class="stack-label"><span class="metric-led tone-calm" id="stability-led"></span>Stability</div>
                         <div class="metric-value small"><span id="stab-val">100</span>%</div>
                         <div class="stack-note">Signal steadiness from recent posture variation.</div>
                     </div>
@@ -950,9 +1056,19 @@
                 <div class="reticle" aria-hidden="true"></div>
 
                 <div class="status-card">
-                    <div class="eyebrow">Learning State Guardian</div>
+                    <div class="status-head">
+                        <span class="state-sigil tone-calm" id="state-sigil"></span>
+                        <div class="eyebrow">Learning State Guardian</div>
+                    </div>
                     <div id="state-label" class="state">Focus Settling</div>
                     <div id="guidance-text" class="message">Keep one learning target and settle into the current mode.</div>
+
+                    <div class="signal-strip" aria-label="Compact signal summary">
+                        <div class="signal-chip"><span class="signal-dot tone-calm" id="align-dot"></span><span>A</span></div>
+                        <div class="signal-chip"><span class="signal-dot tone-calm" id="load-dot"></span><span>L</span></div>
+                        <div class="signal-chip"><span class="signal-dot tone-calm" id="fatigue-dot"></span><span>F</span></div>
+                        <div class="signal-chip"><span class="signal-dot tone-calm" id="signal-dot"></span><span>C</span></div>
+                    </div>
 
                     <div class="status-band">
                         <div class="status-tile">
@@ -974,22 +1090,22 @@
             <aside class="rail right-rail">
                 <div class="rail-stack">
                     <div class="stack-item">
-                        <div class="stack-label">Phase</div>
+                        <div class="stack-label"><span class="metric-led tone-calm" id="phase-led"></span>Phase</div>
                         <div class="metric-value small" id="phase-val">Focus</div>
                     </div>
                     <div class="stack-item">
-                        <div class="stack-label">Time Left</div>
+                        <div class="stack-label"><span class="metric-led tone-calm" id="session-led"></span>Time Left</div>
                         <div class="metric-value small" id="time-left">25:00</div>
                         <div class="micro-bar"><span id="session-bar"></span></div>
                     </div>
                     <div class="stack-item">
-                        <div class="stack-label">Load Band</div>
+                        <div class="stack-label"><span class="metric-led tone-calm" id="band-led"></span>Load Band</div>
                         <div class="metric-value small" id="load-level">LOW</div>
                     </div>
                 </div>
 
                 <div class="rail-card">
-                    <div class="metric-label">Difficulty Marker</div>
+                    <div class="metric-label"><span class="metric-led tone-calm" id="event-led"></span>Difficulty Marker</div>
                     <div class="metric-value small" id="event-val">Clear</div>
                     <div class="metric-note" id="review-val">No flagged segment yet.</div>
                 </div>
@@ -1000,6 +1116,7 @@
             <div class="command-strip">
                 <div class="hint"><b>1-4</b><span>Switch task mode</span></div>
                 <div class="hint"><b>V</b><span>Toggle HUD view</span></div>
+                <div class="hint"><b>G</b><span>Open review page</span></div>
                 <div class="hint"><b>C</b><span>Calibrate baseline</span></div>
                 <div class="hint"><b>R</b><span>Reset session</span></div>
                 <div class="hint"><b>Space</b><span>OCR capture</span></div>
@@ -1035,6 +1152,13 @@
             const el = document.getElementById(id);
             if (!el) return;
             el.style.width = `${clamp(value)}%`;
+        }
+
+        function setTone(id, tone) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.remove("tone-calm", "tone-rising", "tone-high", "tone-fatigue", "tone-signal");
+            el.classList.add(`tone-${tone}`);
         }
 
         function setModeSelection(mode) {
@@ -1104,6 +1228,53 @@
                 return;
             }
             body.classList.add("state-calm");
+        }
+
+        function stateTone(loadLevel, stateLabel, confidence) {
+            const label = String(stateLabel || "").toLowerCase();
+            const signalLow = String(confidence || "").toLowerCase() === "low" || label.includes("signal");
+            if (signalLow) return "signal";
+            if (label.includes("fatigue")) return "fatigue";
+            if (loadLevel === "high") return "high";
+            if (loadLevel === "medium") return "rising";
+            return "calm";
+        }
+
+        function alignmentTone(value) {
+            const num = Number(value) || 0;
+            if (num >= 75) return "calm";
+            if (num >= 50) return "rising";
+            return "high";
+        }
+
+        function loadTone(loadLevel) {
+            if (loadLevel === "high") return "high";
+            if (loadLevel === "medium") return "rising";
+            return "calm";
+        }
+
+        function fatigueTone(value, stateLabel) {
+            if (String(stateLabel || "").toLowerCase().includes("fatigue")) return "fatigue";
+            const num = Number(value) || 0;
+            if (num >= 65) return "fatigue";
+            if (num >= 40) return "rising";
+            return "calm";
+        }
+
+        function confidenceTone(confidence) {
+            const normalized = String(confidence || "").toLowerCase();
+            if (normalized === "low" || normalized === "warming_up") return "signal";
+            if (normalized === "medium") return "rising";
+            return "calm";
+        }
+
+        function difficultyTone(activeEvent, lastEvent) {
+            const event = activeEvent || lastEvent;
+            if (!event) return "calm";
+            const severity = String(event.severity || "").toLowerCase();
+            if (severity === "high") return "high";
+            if (severity === "medium") return "rising";
+            return "calm";
         }
 
         function compactModeLabel(mode) {
@@ -1203,6 +1374,12 @@
                 const stateLabel = session.state_label || "Focus settling";
                 const guidanceText = session.guidance || "Keep one learning target and settle into the current mode.";
                 const reasonText = d.load_reason || "Stable learning state";
+                const mainTone = stateTone(d.load_level, stateLabel, confidenceRaw);
+                const alignTone = alignmentTone(d.behavioral_alignment || d.focus_score || 0);
+                const loadBandTone = loadTone(d.load_level);
+                const fatigueRiskTone = fatigueTone(d.fatigue_risk || 0, stateLabel);
+                const signalTone = confidenceTone(confidenceRaw);
+                const diffTone = difficultyTone(activeEvent, lastEvent);
 
                 document.getElementById("focus-val").innerText = Math.round(d.behavioral_alignment || d.focus_score || 0);
                 document.getElementById("load-val").innerText = Math.round(d.cognitive_load || 0);
@@ -1239,6 +1416,23 @@
                 document.getElementById("event-val").innerText = glassesView && activeEvent ? `D${activeEvent.event_id}` : eventText;
                 document.getElementById("review-val").innerText = reviewText;
                 document.getElementById("event-pill").innerText = eventPill;
+
+                setTone("state-sigil", mainTone);
+                setTone("mode-led", mainTone);
+                setTone("confidence-led", signalTone);
+                setTone("difficulty-led", diffTone);
+                setTone("align-led", alignTone);
+                setTone("load-led", loadBandTone);
+                setTone("fatigue-led", fatigueRiskTone);
+                setTone("stability-led", alignTone);
+                setTone("phase-led", mainTone);
+                setTone("session-led", mainTone);
+                setTone("band-led", loadBandTone);
+                setTone("event-led", diffTone);
+                setTone("align-dot", alignTone);
+                setTone("load-dot", loadBandTone);
+                setTone("fatigue-dot", fatigueRiskTone);
+                setTone("signal-dot", signalTone);
 
                 setBar("focus-bar", d.behavioral_alignment || d.focus_score || 0);
                 setBar("load-bar", d.cognitive_load || 0);
@@ -1289,6 +1483,7 @@
             if (e.code === "Digit3") switchMode("note-taking");
             if (e.code === "Digit4") switchMode("review");
             if (e.code === "KeyV") switchViewMode(document.body.classList.contains("view-demo") ? "glasses" : "demo");
+            if (e.code === "KeyG") window.location.href = "/review";
         };
 
         restoreViewMode();
