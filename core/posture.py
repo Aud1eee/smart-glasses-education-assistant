@@ -79,13 +79,12 @@ class PostureEngine:
         self.signed_history.append(signed_delta)
 
         variance = float(np.var(self.history))
-        signed_trend = float(np.mean(self.signed_history[-5:]))
 
         self.current_stability = self._compute_stability(variance, profile)
         self.is_alert = self._update_alert_state(rel, profile["drift_hard"], now)
         self.behavioral_alignment = self._compute_behavioral_alignment(rel, variance, profile)
         self.behavioral_level = self._classify_behavioral_level(rel, variance, profile)
-        self.fatigue_risk = self._compute_fatigue_risk(rel, variance, signed_trend, profile, now)
+        self.fatigue_risk = self._compute_fatigue_risk(rel, variance, profile, now)
         self.fatigue_level = self._classify_band(self.fatigue_risk, medium=38, high=65)
         self.uncertainty_score = self._compute_uncertainty(variance, profile, now)
         self.confidence_level = self._classify_confidence(self.uncertainty_score)
@@ -116,6 +115,13 @@ class PostureEngine:
 
     def calibrate(self):
         self.base_pitch = self.smooth_pitch
+        self.reset_tracking(preserve_baseline=True)
+
+    def reset_tracking(self, preserve_baseline=True):
+        if preserve_baseline:
+            self.smooth_pitch = self.base_pitch
+        else:
+            self.base_pitch = self.smooth_pitch
         self.history = [0.0] * len(self.history)
         self.signed_history = [0.0] * len(self.signed_history)
         self.samples_since_reset = 0
@@ -187,7 +193,7 @@ class PostureEngine:
             return "drifting"
         return "aligned"
 
-    def _compute_fatigue_risk(self, rel, variance, signed_trend, profile, now):
+    def _compute_fatigue_risk(self, rel, variance, profile, now):
         passive_drift = rel >= profile["fatigue_drift"] and variance <= profile["fatigue_variance"]
         if passive_drift:
             if self.passive_drift_start is None:
@@ -196,14 +202,18 @@ class PostureEngine:
             self.passive_drift_start = None
 
         sustained_seconds = 0.0 if self.passive_drift_start is None else max(0.0, now - self.passive_drift_start)
-        drift_ratio = min(1.6, rel / max(profile["drift_hard"], 1.0))
-        low_motion_factor = max(
-            0.0,
-            min(1.0, 1.0 - (variance / max(profile["fatigue_variance"] * 1.8, 0.1))),
-        )
-        slump_factor = min(1.0, sustained_seconds / 6.0)
-        sign_factor = 1.0 if signed_trend >= 0 else 0.7
-        fatigue = (drift_ratio * 28.0) + (low_motion_factor * 24.0) + (slump_factor * 32.0 * sign_factor)
+        drift_floor = profile["fatigue_drift"] * 0.75
+        drift_excess = max(0.0, rel - drift_floor)
+        drift_scale = max(profile["drift_hard"] - drift_floor, 1.0)
+        drift_ratio = min(1.0, drift_excess / drift_scale)
+        low_motion_factor = 0.0
+        if passive_drift:
+            low_motion_factor = max(
+                0.0,
+                min(1.0, 1.0 - (variance / max(profile["fatigue_variance"] * 1.4, 0.1))),
+            )
+        slump_factor = min(1.0, sustained_seconds / 6.0) if passive_drift else 0.0
+        fatigue = (drift_ratio * 26.0) + (low_motion_factor * 18.0) + (slump_factor * 38.0)
         if self.is_alert:
             fatigue += 8.0
         return round(max(0.0, min(100.0, fatigue)), 1)
@@ -241,7 +251,7 @@ class PostureEngine:
         if self.fatigue_level == "high":
             return "high", "Possible fatigue slump"
         if self.uncertainty_score >= 55:
-            return "medium", "Signal warming up or mode transition"
+            return "low", "Signal warming up or mode transition"
         if self.is_alert or self.cognitive_load >= 78 or self.behavioral_level == "misaligned":
             return "high", "Sustained behavior drift"
         if self.cognitive_load >= 46 or self.behavioral_level == "drifting":

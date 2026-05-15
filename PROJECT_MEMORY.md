@@ -348,6 +348,24 @@ Verified after refactor:
   - `fatigue_risk`
   - `confidence_level`
 
+### Post-refactor algorithm fixes
+
+After a review pass, three important fixes were applied:
+
+- `reset_session` now clears posture-tracking state while preserving the current calibrated baseline
+- `fatigue_risk` now has a true zero baseline in steady posture instead of carrying a built-in positive offset
+- `uncertainty_score` no longer upgrades `load_level` to `medium`; it now stays a separate `Signal check / confidence` dimension
+
+Verified after the fix:
+
+- steady-state probe: `fatigue_risk = 0.0`, `cognitive_load = 0.0`
+- task-mode switch warm-up: `load_level = low`, `load_reason = Signal warming up or mode transition`
+- local API after overload + `reset_session`:
+  - `cognitive_load = 0.0`
+  - `fatigue_risk = 0.0`
+  - `confidence_level = warming_up`
+  - `state_label = Focus settling`
+
 ## Suggested future prompt for Codex
 
 If future context is tight, start with:

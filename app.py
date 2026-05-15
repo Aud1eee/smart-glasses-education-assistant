@@ -60,6 +60,8 @@ def _start_new_session(reset_posture=False):
     global latest_session, latest_difficulty, sample_counter, last_posture_at, current_session_id
     if reset_posture:
         posture.calibrate()
+    else:
+        posture.reset_tracking(preserve_baseline=True)
     focus_session.reset()
     difficulty_marker.reset()
     current_session_id = _build_session_id()

@@ -121,6 +121,11 @@ The meaning of these outputs is:
 - `Fatigue_Risk`: whether the learner may be entering a passive slump state
 - `Uncertainty_Score`: whether the current estimate should be interpreted cautiously
 
+The current implementation also includes two important safeguards:
+
+- `Fatigue_Risk` has a zero-like baseline in steady posture, so stable behavior is not automatically treated as tiredness
+- `Uncertainty_Score` is handled as a separate confidence dimension, rather than being directly mixed into `Load_Level`
+
 This stage is best described as a **task-mode-aware, posture-based learning-state proxy**, not a final absolute attention detector. That wording is more rigorous for the graduation project.
 
 ### 3.3 Adaptive focus regulation
