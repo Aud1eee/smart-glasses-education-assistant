@@ -81,7 +81,8 @@ Recommended structure:
   - simplified presentation layout with:
     - cleaner hero summary
     - 2-column insight strip
-    - sticky right-side spotlight / asset rail
+    - full-width spotlight under the timeline
+    - sticky right-side actions / asset rail
 
 ### Main files
 
