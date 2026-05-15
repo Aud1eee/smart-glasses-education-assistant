@@ -119,6 +119,38 @@ This blueprint separates the future system into four branches:
 - fatigue risk
 - confidence / uncertainty
 
+## 2.3 Latest judgment-method upgrade
+
+The latest posture-proxy version no longer relies only on "how large the drift is" at a single moment.
+
+It now adds two temporal features:
+
+- `drift_trend`
+  - whether posture drift is building up over the recent history window
+- `switching_index`
+  - whether the learner is repeatedly switching targets instead of holding one stable learning direction
+
+Based on these features, the algorithm now exposes a `state_hint` layer that helps distinguish different meanings behind similar load levels:
+
+- `stable`
+- `load_rising`
+- `productive_struggle`
+- `off_task_risk`
+- `fatigue_risk`
+- `signal_check`
+
+This upgrade is important because the system no longer treats every medium/high load state as a negative event.
+
+In particular:
+
+- `productive_struggle` means the learner is still behaviorally aligned, but effort is clearly elevated
+- `off_task_risk` means drift and switching are rising in a way that is more consistent with lost alignment
+
+This makes the current prototype more educationally meaningful, because it is better at separating:
+
+- "working hard on a difficult concept"
+- from "drifting away from the learning target"
+
 Its purpose is to prove that future multimodal work has already been structured at the architecture level, even though device-side signals such as gaze, eye openness, blink, and pupil-related features are not active yet in the current prototype.
 
 ## 3. Completed submodules

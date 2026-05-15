@@ -63,6 +63,9 @@ class PostureEngine:
         self.fatigue_level = "low"
         self.uncertainty_score = 35.0
         self.confidence_level = "warming_up"
+        self.drift_trend = 0.0
+        self.switching_index = 0.0
+        self.state_hint = "stable"
 
     def process(self, raw_pitch, now=None):
         now = time.time() if now is None else now
@@ -82,6 +85,8 @@ class PostureEngine:
 
         self.current_stability = self._compute_stability(variance, profile)
         self.is_alert = self._update_alert_state(rel, profile["drift_hard"], now)
+        self.drift_trend = self._compute_drift_trend(profile)
+        self.switching_index = self._compute_switching_index(profile)
         self.behavioral_alignment = self._compute_behavioral_alignment(rel, variance, profile)
         self.behavioral_level = self._classify_behavioral_level(rel, variance, profile)
         self.fatigue_risk = self._compute_fatigue_risk(rel, variance, profile, now)
@@ -89,6 +94,7 @@ class PostureEngine:
         self.uncertainty_score = self._compute_uncertainty(variance, profile, now)
         self.confidence_level = self._classify_confidence(self.uncertainty_score)
         self.cognitive_load = self._compute_cognitive_load(rel, variance, profile)
+        self.state_hint = self._classify_state_hint()
         self.focus_score = round(
             max(0.0, min(100.0, (self.behavioral_alignment * 0.65) + ((100 - self.cognitive_load) * 0.35))),
             1,
@@ -111,6 +117,9 @@ class PostureEngine:
             "fatigue_level": self.fatigue_level,
             "uncertainty_score": self.uncertainty_score,
             "confidence_level": self.confidence_level,
+            "drift_trend": self.drift_trend,
+            "switching_index": self.switching_index,
+            "state_hint": self.state_hint,
         }
 
     def calibrate(self):
@@ -140,6 +149,9 @@ class PostureEngine:
         self.fatigue_level = "low"
         self.uncertainty_score = 35.0
         self.confidence_level = "warming_up"
+        self.drift_trend = 0.0
+        self.switching_index = 0.0
+        self.state_hint = "stable"
 
     def set_task_mode(self, task_mode, now=None):
         normalized = str(task_mode or "").strip().lower()
@@ -182,8 +194,10 @@ class PostureEngine:
         drift_penalty = min(46.0, (rel / max(profile["drift_soft"], 1.0)) * 24.0)
         motion_penalty = min(34.0, (variance / max(profile["variance_soft"], 0.1)) * 18.0)
         stability_penalty = (100 - self.current_stability) * 0.18
+        switching_penalty = self.switching_index * 0.12
+        trend_penalty = self.drift_trend * 0.08
         alert_penalty = 12.0 if self.is_alert else 0.0
-        alignment = 100.0 - drift_penalty - motion_penalty - stability_penalty - alert_penalty
+        alignment = 100.0 - drift_penalty - motion_penalty - stability_penalty - switching_penalty - trend_penalty - alert_penalty
         return round(max(0.0, min(100.0, alignment)), 1)
 
     def _classify_behavioral_level(self, rel, variance, profile):
@@ -218,6 +232,52 @@ class PostureEngine:
             fatigue += 8.0
         return round(max(0.0, min(100.0, fatigue)), 1)
 
+    def _compute_drift_trend(self, profile):
+        if len(self.history) < 6:
+            return 0.0
+
+        midpoint = len(self.history) // 2
+        head_mean = float(np.mean(self.history[:midpoint]))
+        tail_mean = float(np.mean(self.history[midpoint:]))
+        drift_growth = max(0.0, tail_mean - head_mean)
+        scale = max(profile["drift_soft"] * 0.55, 1.0)
+        return round(min(100.0, (drift_growth / scale) * 100.0), 1)
+
+    def _compute_switching_index(self, profile):
+        if len(self.signed_history) < 4:
+            return 0.0
+
+        deadzone = profile["drift_soft"] * 0.22
+        normalized = []
+        for value in self.signed_history:
+            if value > deadzone:
+                normalized.append(1)
+            elif value < -deadzone:
+                normalized.append(-1)
+            else:
+                normalized.append(0)
+
+        switches = 0
+        active_pairs = 0
+        previous = None
+        for current in normalized:
+            if current == 0:
+                continue
+            if previous is not None:
+                active_pairs += 1
+                if current != previous:
+                    switches += 1
+            previous = current
+
+        if active_pairs == 0:
+            return 0.0
+
+        switch_ratio = switches / active_pairs
+        step_delta = float(np.mean(np.abs(np.diff(self.signed_history))))
+        amplitude_ratio = min(1.0, step_delta / max(profile["drift_soft"], 1.0))
+        index = (switch_ratio * 72.0) + (amplitude_ratio * 28.0)
+        return round(max(0.0, min(100.0, index)), 1)
+
     def _compute_uncertainty(self, variance, profile, now):
         warmup = max(0.0, (6 - min(self.samples_since_reset, 6)) / 6.0) * 42.0
         mode_transition = 0.0
@@ -241,10 +301,20 @@ class PostureEngine:
         motion_cost = min(34.0, (variance / max(profile["variance_hard"], 0.1)) * 24.0)
         stability_cost = (100 - self.current_stability) * 0.22
         alignment_cost = (100 - self.behavioral_alignment) * 0.18
+        trend_cost = self.drift_trend * 0.14
+        switching_cost = self.switching_index * 0.12
         fatigue_overlap = self.fatigue_risk * 0.1
-        cognitive_load = drift_cost + motion_cost + stability_cost + alignment_cost + fatigue_overlap
+        cognitive_load = drift_cost + motion_cost + stability_cost + alignment_cost + trend_cost + switching_cost + fatigue_overlap
         if self.is_alert:
             cognitive_load += 10.0
+        if (
+            self.behavioral_alignment >= 76
+            and self.fatigue_risk < 40
+            and self.uncertainty_score < 45
+            and self.switching_index < 38
+            and 35 <= cognitive_load <= 72
+        ):
+            cognitive_load *= 0.9
         return round(max(0.0, min(100.0, cognitive_load)), 1)
 
     def _classify_load_reason(self, rel, variance):
@@ -252,11 +322,33 @@ class PostureEngine:
             return "high", "Possible fatigue slump"
         if self.uncertainty_score >= 55:
             return "low", "Signal warming up or mode transition"
+        if self.state_hint == "productive_struggle":
+            return "medium", "Aligned effort is high but still stable"
         if self.is_alert or self.cognitive_load >= 78 or self.behavioral_level == "misaligned":
             return "high", "Sustained behavior drift"
         if self.cognitive_load >= 46 or self.behavioral_level == "drifting":
             return "medium", "Behavior alignment is drifting"
         return "low", "Stable learning state"
+
+    def _classify_state_hint(self):
+        if self.uncertainty_score >= 55:
+            return "signal_check"
+        if self.fatigue_risk >= 65:
+            return "fatigue_risk"
+        if self.is_alert or self.behavioral_level == "misaligned":
+            return "off_task_risk"
+        if (
+            self.behavioral_alignment >= 76
+            and self.fatigue_risk < 40
+            and self.uncertainty_score < 45
+            and self.switching_index < 38
+            and self.drift_trend < 42
+            and 35 <= self.cognitive_load <= 72
+        ):
+            return "productive_struggle"
+        if self.behavioral_level == "drifting" or self.cognitive_load >= 46:
+            return "load_rising"
+        return "stable"
 
     def _classify_band(self, value, medium, high):
         if value >= high:

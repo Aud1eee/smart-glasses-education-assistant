@@ -201,10 +201,13 @@ class DifficultyEventMarker:
 
     def _classify(self, posture_state, session_state):
         level = posture_state.get("load_level", "low")
+        state_hint = posture_state.get("state_hint", "stable")
         action = session_state.get("action", "")
         label = session_state.get("state_label") or posture_state.get("load_reason", "")
         reason = posture_state.get("load_reason", "")
 
+        if state_hint == "productive_struggle":
+            return 1, "medium", label or "Productive struggle", reason or "Aligned effort is high but still stable"
         if level == "high" or action in {"slow_down", "micro_break"}:
             return 2, "high", label or "High load", reason
         if level == "medium" or action == "regulate":
@@ -212,6 +215,8 @@ class DifficultyEventMarker:
         return 0, "low", label or "Stable focus", reason
 
     def _build_review_note(self, event):
+        if str(event.get("primary_label", "")).lower() == "productive struggle":
+            return "Review this segment as a challenge point: effort stayed aligned, so the difficulty is likely conceptual rather than pure distraction."
         if event["severity"] == "high":
             return "Review this segment first: load rose and reached a high-load state."
         return "Review this segment: sustained rising load suggests a possible difficulty point."

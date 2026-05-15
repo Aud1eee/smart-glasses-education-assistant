@@ -59,6 +59,9 @@ Recommended structure:
 - behavioral alignment scoring
 - fatigue-risk estimation
 - uncertainty / confidence scoring
+- drift-trend estimation
+- target-switching estimation
+- `productive_struggle` vs `off_task_risk` distinction
 - task-mode-aware thresholds:
   - `lecture`
   - `reading`
@@ -98,6 +101,23 @@ Recommended structure:
     - `core/multimodal_schema.py`
   - explanation API:
     - `/api/multimodal_blueprint`
+
+### Latest algorithm upgrade
+
+- the posture proxy is no longer only amplitude-based
+- current core enhancements:
+  - `drift_trend`: detects whether posture drift is building over the recent window
+  - `switching_index`: estimates frequent left-right or back-and-forth target switching from signed posture history
+  - `state_hint`: separates:
+    - `stable`
+    - `load_rising`
+    - `productive_struggle`
+    - `off_task_risk`
+    - `fatigue_risk`
+    - `signal_check`
+- `productive_struggle` is important for explanation:
+  - it means the learner is still behaviorally aligned, but effort is clearly elevated
+  - it should not be described as simple distraction
 
 ### Main files
 

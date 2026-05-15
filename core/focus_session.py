@@ -47,6 +47,8 @@ class FocusSessionEngine:
         uncertainty = float(state.get("uncertainty_score", 0))
         behavioral_level = state.get("behavioral_level", "aligned")
         task_mode = state.get("task_mode", "reading")
+        state_hint = state.get("state_hint", "stable")
+        switching_index = float(state.get("switching_index", 0))
 
         if level == "high" or fatigue_risk >= 65:
             if self.high_load_start is None:
@@ -81,6 +83,8 @@ class FocusSessionEngine:
             uncertainty,
             behavioral_level,
             task_mode,
+            state_hint,
+            switching_index,
         )
         self.last_guidance = guidance
         self.last_action = action
@@ -152,6 +156,8 @@ class FocusSessionEngine:
         uncertainty,
         behavioral_level,
         task_mode,
+        state_hint,
+        switching_index,
     ):
         if self.phase == "break":
             if fatigue_risk >= 45:
@@ -173,6 +179,19 @@ class FocusSessionEngine:
         if self.fatigue_start and now - self.fatigue_start >= self.fatigue_trigger_seconds:
             return "Fatigue risk is staying elevated. Pause briefly before continuing.", "micro_break", "Fatigue risk"
 
+        if state_hint == "productive_struggle":
+            if load >= 62:
+                return (
+                    f"Effort is high but still aligned in {task_mode}. Slow slightly and stay with the same target.",
+                    "stay_with_it",
+                    "Productive struggle",
+                )
+            return (
+                f"Challenge is rising in {task_mode}, but behavior is still aligned. Keep one target and continue.",
+                "stay_with_it",
+                "Productive struggle",
+            )
+
         if level == "low" and recent_high and self.low_load_start and (now - self.low_load_start >= 2):
             return "Recovery is working. Rebuild a steady rhythm.", "recover_focus", "Recovery"
 
@@ -183,6 +202,13 @@ class FocusSessionEngine:
             if fatigue_risk >= 45:
                 return "Fatigue is mixing with drift. Slow down and rest your eyes.", "slow_down", "Fatigue risk"
             return "Behavior drift is high. Reduce switching and keep one target.", "slow_down", "High load"
+
+        if state_hint == "off_task_risk" and switching_index >= 35:
+            return (
+                f"Target switching is high in {task_mode}. Lock onto one source before continuing.",
+                "regulate",
+                "Off-task risk",
+            )
 
         if level == "medium" or focus_score < 45 or behavioral_level == "drifting":
             return (
