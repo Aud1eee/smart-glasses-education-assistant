@@ -371,6 +371,7 @@ New HUD interaction highlights:
   - `demo` for full presentation layout
 - quiet automatic compact state during stable low-risk learning in glasses view
 - narrower edge docks and event-only difficulty emphasis for glasses view
+- compact glasses-specific state/guidance vocabulary in the live HUD
 
 Verification:
 

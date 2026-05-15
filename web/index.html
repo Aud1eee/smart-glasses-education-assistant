@@ -1052,6 +1052,10 @@
             });
         }
 
+        function currentViewMode() {
+            return document.body.classList.contains("view-demo") ? "demo" : "glasses";
+        }
+
         function switchViewMode(mode) {
             const normalized = mode === "demo" ? "demo" : "glasses";
             localStorage.setItem(VIEW_STORAGE_KEY, normalized);
@@ -1102,6 +1106,72 @@
             body.classList.add("state-calm");
         }
 
+        function compactModeLabel(mode) {
+            const map = {
+                lecture: "LECT",
+                reading: "READ",
+                "note-taking": "NOTES",
+                review: "REV",
+            };
+            return map[String(mode || "").toLowerCase()] || String(mode || "READ").toUpperCase();
+        }
+
+        function compactConfidenceLabel(confidence) {
+            const map = {
+                high: "HI",
+                medium: "MID",
+                low: "LOW",
+                warming_up: "WARM",
+            };
+            return map[String(confidence || "").toLowerCase()] || String(confidence || "MID").toUpperCase();
+        }
+
+        function compactStateLabel(label) {
+            const map = {
+                "focus settling": "Settle",
+                "stable focus": "Stable",
+                "load rising": "Load up",
+                "high load": "High load",
+                "regulate now": "Ease off",
+                "recovery": "Recover",
+                "fatigue risk": "Fatigue",
+                "signal check": "Signal",
+            };
+            return map[String(label || "").toLowerCase()] || label || "Stable";
+        }
+
+        function compactGuidanceText(label, guidance) {
+            const map = {
+                "focus settling": "Hold one target.",
+                "stable focus": "Stay steady.",
+                "load rising": "Slow the pace.",
+                "high load": "Reset briefly.",
+                "regulate now": "Ease off now.",
+                "recovery": "Re-center attention.",
+                "fatigue risk": "Take a short break.",
+                "signal check": "Check signal or pose.",
+            };
+            const compact = map[String(label || "").toLowerCase()];
+            if (compact) return compact;
+            const text = String(guidance || "Stay steady.").trim();
+            const firstSentence = text.split(/[.!?]/)[0]?.trim();
+            return firstSentence ? `${firstSentence}.` : "Stay steady.";
+        }
+
+        function compactReasonText(reason) {
+            const text = String(reason || "Stable learning state").trim();
+            if (!text) return "Stable";
+            if (text.length <= 24) return text;
+            return `${text.slice(0, 21).trim()}...`;
+        }
+
+        function compactPhaseLabel(label) {
+            const normalized = String(label || "").toLowerCase();
+            if (normalized.startsWith("break")) return "BRK";
+            if (normalized.startsWith("focus")) return "FOCUS";
+            return String(label || "FOCUS").toUpperCase();
+        }
+
         function setOcclusionState(loadLevel, stateLabel, confidence, activeEvent) {
             const label = String(stateLabel || "").toLowerCase();
             const normalizedConfidence = String(confidence || "").toLowerCase();
@@ -1127,7 +1197,12 @@
                 const activeEvent = difficulty.active_event || null;
                 const lastEvent = difficulty.last_event || null;
                 const mode = d.task_mode || "reading";
-                const confidence = String(d.confidence_level || "medium").toUpperCase();
+                const confidenceRaw = String(d.confidence_level || "medium");
+                const confidence = confidenceRaw.toUpperCase();
+                const glassesView = currentViewMode() === "glasses";
+                const stateLabel = session.state_label || "Focus settling";
+                const guidanceText = session.guidance || "Keep one learning target and settle into the current mode.";
+                const reasonText = d.load_reason || "Stable learning state";
 
                 document.getElementById("focus-val").innerText = Math.round(d.behavioral_alignment || d.focus_score || 0);
                 document.getElementById("load-val").innerText = Math.round(d.cognitive_load || 0);
@@ -1135,18 +1210,18 @@
                 document.getElementById("stab-val").innerText = Math.round(d.stability || 0);
                 document.getElementById("load-level").innerText = (d.load_level || "low").toUpperCase();
 
-                document.getElementById("mode-val-top").innerText = mode;
-                document.getElementById("mode-val-center").innerText = mode;
-                document.getElementById("confidence-val-top").innerText = confidence;
-                document.getElementById("confidence-val").innerText = confidence;
-                document.getElementById("reason-val").innerText = d.load_reason || "Stable learning state";
+                document.getElementById("mode-val-top").innerText = glassesView ? compactModeLabel(mode) : mode;
+                document.getElementById("mode-val-center").innerText = glassesView ? compactModeLabel(mode) : mode;
+                document.getElementById("confidence-val-top").innerText = glassesView ? compactConfidenceLabel(confidenceRaw) : confidence;
+                document.getElementById("confidence-val").innerText = glassesView ? compactConfidenceLabel(confidenceRaw) : confidence;
+                document.getElementById("reason-val").innerText = glassesView ? compactReasonText(reasonText) : reasonText;
 
-                document.getElementById("phase-val").innerText = session.phase_label || "Focus";
-                document.getElementById("phase-pill").innerText = (session.phase_label || "Focus").toUpperCase();
+                document.getElementById("phase-val").innerText = glassesView ? compactPhaseLabel(session.phase_label) : (session.phase_label || "Focus");
+                document.getElementById("phase-pill").innerText = glassesView ? compactPhaseLabel(session.phase_label) : (session.phase_label || "Focus").toUpperCase();
                 document.getElementById("time-left").innerText = formatTime(session.remaining_seconds);
                 document.getElementById("time-bottom").innerText = formatTime(session.remaining_seconds);
-                document.getElementById("state-label").innerText = session.state_label || "Focus settling";
-                document.getElementById("guidance-text").innerText = session.guidance || "Keep one learning target and settle into the current mode.";
+                document.getElementById("state-label").innerText = glassesView ? compactStateLabel(stateLabel) : stateLabel;
+                document.getElementById("guidance-text").innerText = glassesView ? compactGuidanceText(stateLabel, guidanceText) : guidanceText;
 
                 let eventText = "Clear";
                 let reviewText = "No flagged segment yet.";
@@ -1161,7 +1236,7 @@
                     eventPill = eventText;
                 }
 
-                document.getElementById("event-val").innerText = eventText;
+                document.getElementById("event-val").innerText = glassesView && activeEvent ? `D${activeEvent.event_id}` : eventText;
                 document.getElementById("review-val").innerText = reviewText;
                 document.getElementById("event-pill").innerText = eventPill;
 

@@ -208,6 +208,7 @@ In `Glasses view`, the HUD further reduces occlusion by:
 - hiding keyboard hint strips that are only useful during demos
 - compressing side information into narrow edge docks
 - showing difficulty emphasis only when a real event is active
+- converting long guidance text into short glasses-style status vocabulary
 
 This makes the system easier to explain as a **glasses-oriented HUD prototype** rather than a general web dashboard.
 
