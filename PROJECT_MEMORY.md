@@ -83,6 +83,14 @@ Recommended structure:
     - 2-column insight strip
     - full-width spotlight under the timeline
     - sticky right-side actions / asset rail
+- validation module with:
+  - deterministic scenario checks for `stable`, `rising`, `overload`, `recovery`
+  - end-to-end demo pipeline checks
+  - generated outputs:
+    - `exports/validation_summary.md`
+    - `exports/validation_summary.json`
+  - Windows launcher:
+    - `generate_validation_report.ps1`
 
 ### Main files
 

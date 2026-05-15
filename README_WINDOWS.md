@@ -14,6 +14,19 @@ For the full project overview, setup steps, and current scope, read `README.md` 
 `Run Focus Project` and `.\start_windows.ps1` now use **serve-only mode** by default, so the Flask HUD stays alive until you stop it with `Ctrl+C`.
 If you still want the old console menu, use the `Run Focus Project Console` launch config or run `python run.py` manually.
 
+## Validation module
+
+Run this to generate the current learning-state validation summary:
+
+```powershell
+.\generate_validation_report.ps1
+```
+
+Outputs:
+
+- `exports\validation_summary.md`
+- `exports\validation_summary.json`
+
 ## Runtime note
 
 The old Windows `.venv` currently points to a broken local Python 3.14 installation path.

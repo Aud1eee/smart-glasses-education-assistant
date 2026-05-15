@@ -53,6 +53,13 @@ Notes:
 - `Run Focus Project` and `start_windows.ps1` now default to **serve-only mode**, which keeps the Flask HUD running for browser testing.
 - if you want the original console menu for analytics scripts, use the `Run Focus Project Console` launch config or run `python run.py` manually.
 
+Validation:
+
+- run `generate_validation_report.ps1` on Windows to produce:
+  - `exports/validation_summary.md`
+  - `exports/validation_summary.json`
+- this checks four deterministic scenarios (`stable`, `rising`, `overload`, `recovery`) and the end-to-end demo pipeline against the current learning-state model.
+
 PowerShell commands also work:
 
 ```powershell

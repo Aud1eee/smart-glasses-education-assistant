@@ -68,6 +68,32 @@ The current review page is now designed as a **presentation-ready after-class fo
   - detailed event list
   - supporting report assets
 
+## 2.1 Validation and experiment layer
+
+The project now includes a **repeatable validation module** for the current learning-state algorithm.
+
+Its purpose is not to prove absolute educational truth, but to verify that the current state engine behaves consistently across known simulated scenarios.
+
+The validation layer includes:
+
+- deterministic scenario checks for:
+  - `stable`
+  - `rising`
+  - `overload`
+  - `recovery`
+- end-to-end demo pipeline checks using:
+  - `demo_study_report.csv`
+  - `demo_difficulty_events.csv`
+
+The main outputs are:
+
+- [validation_summary.md](</C:/Users/11721/Desktop/focus_project_windows/exports/validation_summary.md>)
+- [validation_summary.json](</C:/Users/11721/Desktop/focus_project_windows/exports/validation_summary.json>)
+
+The validation launcher for Windows is:
+
+- [generate_validation_report.ps1](</C:/Users/11721/Desktop/focus_project_windows/generate_validation_report.ps1>)
+
 ## 3. Completed submodules
 
 ### 3.1 Deterministic demo simulator
