@@ -271,6 +271,7 @@ class DataLogger:
             "session_options": self._build_session_options(report_df, difficulty_df),
             "summary": summary,
             "events": events,
+            "timeline": self._build_timeline(summary, session_report, events),
             "next_actions": next_actions,
             "empty": False,
         }
@@ -387,6 +388,8 @@ class DataLogger:
                 "severity_label": severity.upper(),
                 "time_window": f"{row.get('Start_Timestamp', '--')} - {row.get('End_Timestamp', '--')}",
                 "duration_seconds": round(self._safe_float(row.get("Duration_Seconds", 0)), 1),
+                "start_sample": start_sample,
+                "end_sample": end_sample,
                 "sample_window": f"{start_sample}-{end_sample}",
                 "task_mode": primary_mode,
                 "phase": phase,
@@ -404,6 +407,44 @@ class DataLogger:
             })
 
         return events
+
+    def _build_timeline(self, summary, session_report, events):
+        sample_count = int(summary.get("samples", 0))
+        if session_report.empty or sample_count <= 0:
+            return {
+                "samples": sample_count,
+                "duration_label": summary.get("duration_label", "00:00"),
+                "events": [],
+                "risk_segments": {
+                    "high_load": [],
+                    "low_confidence": [],
+                    "fatigue": [],
+                },
+            }
+
+        load_levels = session_report.get("Load_Level", pd.Series(dtype=str)).fillna("").astype(str).str.lower()
+        confidence_levels = session_report.get("Confidence_Level", pd.Series(dtype=str)).fillna("").astype(str).str.lower()
+        fatigue_risk = pd.to_numeric(session_report.get("Fatigue_Risk", pd.Series(dtype=float)), errors="coerce").fillna(0)
+
+        return {
+            "samples": sample_count,
+            "duration_label": summary.get("duration_label", "00:00"),
+            "events": [
+                {
+                    "event_id": int(event["event_id"]),
+                    "severity": event["severity"],
+                    "start_sample": int(event["start_sample"]),
+                    "end_sample": int(event["end_sample"]),
+                    "task_mode": event["task_mode"],
+                }
+                for event in events
+            ],
+            "risk_segments": {
+                "high_load": self._mask_segments(load_levels.eq("high")),
+                "low_confidence": self._mask_segments(confidence_levels.eq("low")),
+                "fatigue": self._mask_segments(fatigue_risk >= 55),
+            },
+        }
 
     def _build_next_actions(self, summary, events):
         if not events:
@@ -465,6 +506,22 @@ class DataLogger:
         if task_mode == "lecture":
             return "Replay the explanation and pause on the point where the load started to rise."
         return "Revisit this segment once and verify the key concept before continuing."
+
+    def _mask_segments(self, mask):
+        segments = []
+        start_index = None
+        bool_values = [bool(value) for value in list(mask)]
+        for index, active in enumerate(bool_values, start=1):
+            if active and start_index is None:
+                start_index = index
+            if start_index is not None and (not active or index == len(bool_values)):
+                end_index = index if active and index == len(bool_values) else index - 1
+                segments.append({
+                    "start_sample": start_index,
+                    "end_sample": end_index,
+                })
+                start_index = None
+        return segments
 
     def _mode_or_default(self, series, default):
         if series is None:

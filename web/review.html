@@ -217,6 +217,150 @@
             gap: 16px;
         }
 
+        .timeline-panel {
+            margin-top: 16px;
+            padding: 20px 22px;
+        }
+
+        .timeline-header {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: end;
+            justify-content: space-between;
+        }
+
+        .timeline-header h2 {
+            margin: 0;
+            font-size: 18px;
+            letter-spacing: 0.03em;
+        }
+
+        .timeline-header p {
+            margin: 8px 0 0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .timeline-note {
+            color: rgba(255, 242, 218, 0.72);
+            font-size: 13px;
+            text-align: right;
+        }
+
+        .timeline-shell {
+            margin-top: 16px;
+            padding: 18px;
+            border-radius: 22px;
+            border: 1px solid rgba(255, 189, 92, 0.10);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .timeline-scale {
+            display: flex;
+            justify-content: space-between;
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .timeline-track {
+            position: relative;
+            margin-top: 12px;
+            height: 28px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+        }
+
+        .timeline-base {
+            position: absolute;
+            inset: 50% 0 auto;
+            height: 2px;
+            transform: translateY(-50%);
+            background: linear-gradient(90deg, rgba(255, 189, 92, 0.16), rgba(255, 189, 92, 0.38), rgba(255, 189, 92, 0.16));
+        }
+
+        .timeline-event {
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            border: 0;
+            border-radius: 999px;
+            cursor: pointer;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #1a1108;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.10em;
+            text-transform: uppercase;
+            background: rgba(255, 211, 108, 0.88);
+            box-shadow: 0 8px 18px rgba(255, 211, 108, 0.16);
+        }
+
+        .timeline-event.high {
+            background: rgba(255, 123, 92, 0.92);
+            box-shadow: 0 8px 18px rgba(255, 123, 92, 0.18);
+        }
+
+        .timeline-event.selected {
+            outline: 2px solid rgba(255, 242, 218, 0.74);
+            outline-offset: 2px;
+        }
+
+        .timeline-lanes {
+            margin-top: 16px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .timeline-lane {
+            display: grid;
+            grid-template-columns: 118px 1fr;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .lane-label {
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .lane-track {
+            position: relative;
+            height: 16px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04);
+            overflow: hidden;
+        }
+
+        .lane-segment {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            border-radius: 999px;
+            opacity: 0.9;
+        }
+
+        .lane-segment.high-load {
+            background: linear-gradient(90deg, rgba(255, 123, 92, 0.34), rgba(255, 123, 92, 0.92));
+        }
+
+        .lane-segment.low-confidence {
+            background: linear-gradient(90deg, rgba(205, 184, 255, 0.34), rgba(205, 184, 255, 0.88));
+        }
+
+        .lane-segment.fatigue {
+            background: linear-gradient(90deg, rgba(159, 215, 255, 0.34), rgba(159, 215, 255, 0.88));
+        }
+
         .section {
             padding: 20px;
         }
@@ -245,10 +389,16 @@
             border-radius: 20px;
             border: 1px solid rgba(255, 189, 92, 0.12);
             background: rgba(255, 255, 255, 0.03);
+            transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
         }
 
         .event-card.high { border-color: rgba(255, 123, 92, 0.24); }
         .event-card.medium { border-color: rgba(255, 211, 108, 0.22); }
+        .event-card.selected {
+            border-color: rgba(255, 242, 218, 0.50);
+            transform: translateY(-2px);
+            box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22);
+        }
 
         .event-head {
             display: flex;
@@ -464,7 +614,7 @@
                 <select id="session-select" class="session-select" onchange="loadReview()"></select>
             </div>
 
-            <a class="nav-link" href="/">Back to HUD</a>
+            <a class="nav-link" id="back-link" href="/">Back to HUD</a>
         </section>
 
         <section class="panel hero">
@@ -500,6 +650,42 @@
             </div>
         </section>
 
+        <section class="panel timeline-panel">
+            <div class="timeline-header">
+                <div>
+                    <h2>Session Timeline</h2>
+                    <p>Use the timeline to see where each difficulty event sits in the full study session before reading the detailed notes below.</p>
+                </div>
+                <div class="timeline-note" id="timeline-note">Waiting for session map...</div>
+            </div>
+
+            <div class="timeline-shell">
+                <div class="timeline-scale">
+                    <span>Start</span>
+                    <span id="timeline-duration">00:00</span>
+                    <span>End</span>
+                </div>
+                <div class="timeline-track">
+                    <div class="timeline-base"></div>
+                    <div id="timeline-events"></div>
+                </div>
+                <div class="timeline-lanes">
+                    <div class="timeline-lane">
+                        <div class="lane-label">High Load</div>
+                        <div class="lane-track" id="lane-high-load"></div>
+                    </div>
+                    <div class="timeline-lane">
+                        <div class="lane-label">Low Confidence</div>
+                        <div class="lane-track" id="lane-low-confidence"></div>
+                    </div>
+                    <div class="timeline-lane">
+                        <div class="lane-label">Fatigue Rise</div>
+                        <div class="lane-track" id="lane-fatigue"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="section-grid">
             <section class="panel section">
                 <h2>Difficulty Event List</h2>
@@ -525,6 +711,10 @@
     <script>
         const params = new URLSearchParams(window.location.search);
         let activeDataset = params.get("dataset") === "demo" ? "demo" : "live";
+        let currentTimeline = null;
+        const APP_BASE_URL = window.location.protocol === "file:" ? "http://127.0.0.1:5000" : "";
+
+        document.getElementById("back-link").href = `${APP_BASE_URL}/`;
 
         function switchDataset(dataset) {
             activeDataset = dataset === "demo" ? "demo" : "live";
@@ -556,6 +746,75 @@
             document.getElementById("summary-samples").innerText = `${summary.samples || 0} samples`;
         }
 
+        function clampPercent(value) {
+            return Math.max(0, Math.min(100, value));
+        }
+
+        function sampleToPercent(sample, totalSamples) {
+            if (!totalSamples || totalSamples <= 1) return 0;
+            return clampPercent(((sample - 1) / totalSamples) * 100);
+        }
+
+        function spanToWidth(startSample, endSample, totalSamples) {
+            if (!totalSamples || totalSamples <= 0) return 0;
+            return clampPercent((((endSample - startSample) + 1) / totalSamples) * 100);
+        }
+
+        function renderRiskLane(hostId, segments, toneClass, totalSamples) {
+            const host = document.getElementById(hostId);
+            host.innerHTML = "";
+            (segments || []).forEach((segment) => {
+                const block = document.createElement("div");
+                block.className = `lane-segment ${toneClass}`;
+                block.style.left = `${sampleToPercent(segment.start_sample, totalSamples)}%`;
+                block.style.width = `${Math.max(0.8, spanToWidth(segment.start_sample, segment.end_sample, totalSamples))}%`;
+                host.appendChild(block);
+            });
+        }
+
+        function selectEvent(eventId) {
+            document.querySelectorAll(".timeline-event").forEach((block) => {
+                block.classList.toggle("selected", String(block.dataset.eventId) === String(eventId));
+            });
+            document.querySelectorAll(".event-card").forEach((card) => {
+                const active = String(card.dataset.eventId) === String(eventId);
+                card.classList.toggle("selected", active);
+                if (active) {
+                    card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                }
+            });
+        }
+
+        function renderTimeline(timeline) {
+            currentTimeline = timeline || null;
+            const totalSamples = Number(timeline?.samples || 0);
+            const durationLabel = timeline?.duration_label || "00:00";
+            const eventHost = document.getElementById("timeline-events");
+            eventHost.innerHTML = "";
+
+            document.getElementById("timeline-duration").innerText = durationLabel;
+            document.getElementById("timeline-note").innerText = totalSamples
+                ? `${totalSamples} samples mapped across ${durationLabel}`
+                : "No session map available yet.";
+
+            (timeline?.events || []).forEach((event) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = `timeline-event ${event.severity}`;
+                button.dataset.eventId = event.event_id;
+                button.innerText = `D${event.event_id}`;
+                button.title = `${event.task_mode} | samples ${event.start_sample}-${event.end_sample}`;
+                button.style.left = `${sampleToPercent(event.start_sample, totalSamples)}%`;
+                button.style.width = `${Math.max(3.6, spanToWidth(event.start_sample, event.end_sample, totalSamples))}%`;
+                button.onclick = () => selectEvent(event.event_id);
+                eventHost.appendChild(button);
+            });
+
+            renderRiskLane("lane-high-load", timeline?.risk_segments?.high_load || [], "high-load", totalSamples);
+            renderRiskLane("lane-low-confidence", timeline?.risk_segments?.low_confidence || [], "low-confidence", totalSamples);
+            renderRiskLane("lane-fatigue", timeline?.risk_segments?.fatigue || [], "fatigue", totalSamples);
+        }
+
         function renderActions(actions) {
             const host = document.getElementById("action-list");
             host.innerHTML = "";
@@ -581,6 +840,8 @@
             events.forEach((event) => {
                 const card = document.createElement("article");
                 card.className = `event-card ${event.severity}`;
+                card.dataset.eventId = event.event_id;
+                card.id = `event-card-${event.event_id}`;
                 card.innerHTML = `
                     <div class="event-head">
                         <div class="event-title">
@@ -631,8 +892,13 @@
                         </div>
                     </div>
                 `;
+                card.onclick = () => selectEvent(event.event_id);
                 host.appendChild(card);
             });
+
+            if (events.length) {
+                selectEvent(events[0].event_id);
+            }
         }
 
         function syncSessionOptions(options, selectedSessionId) {
@@ -665,13 +931,38 @@
             const query = new URLSearchParams({ dataset: activeDataset });
             if (sessionId) query.set("session_id", sessionId);
 
-            const response = await fetch(`/api/review_summary?${query.toString()}`);
-            const payload = await response.json();
+            try {
+                const response = await fetch(`${APP_BASE_URL}/api/review_summary?${query.toString()}`);
+                const payload = await response.json();
 
-            syncSessionOptions(payload.session_options, payload.session_id);
-            renderSummary(payload.summary || {});
-            renderActions(payload.next_actions || []);
-            renderEvents(payload.events || []);
+                syncSessionOptions(payload.session_options, payload.session_id);
+                renderSummary(payload.summary || {});
+                renderTimeline(payload.timeline || null);
+                renderActions(payload.next_actions || []);
+                renderEvents(payload.events || []);
+            } catch (error) {
+                document.getElementById("timeline-note").innerText = "Review API unavailable. Start the local Flask app first.";
+                document.getElementById("hero-copy").innerText =
+                    "This page can read local review data only after the Flask backend is running on http://127.0.0.1:5000.";
+                renderSummary({
+                    session_id: "--",
+                    primary_task_mode: "unknown",
+                    review_priority: "offline",
+                    difficulty_count: 0,
+                    avg_load: 0,
+                    avg_fatigue: 0,
+                    low_confidence_ratio: 0,
+                    duration_label: "00:00",
+                    samples: 0,
+                });
+                renderTimeline(null);
+                renderActions([{
+                    title: "Start local backend first",
+                    detail: "Run start_windows.ps1 or launch the Flask app in VSCode, then refresh this page.",
+                }]);
+                renderEvents([]);
+                console.error(error);
+            }
         }
 
         switchDataset(activeDataset);

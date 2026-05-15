@@ -388,6 +388,7 @@ This page is backed by `logger.build_review_payload(...)` and turns logged diffi
 
 - session summary
 - flagged event list
+- session timeline
 - missed-content risk hints
 - review notes
 - catch-up action suggestions

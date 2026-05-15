@@ -278,6 +278,7 @@ The current page provides:
 
 - session-level summary
 - difficulty-event list
+- session timeline with event positioning
 - event severity and time window
 - task-mode context
 - missed-content risk hint
