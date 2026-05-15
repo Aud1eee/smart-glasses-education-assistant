@@ -370,6 +370,7 @@ New HUD interaction highlights:
   - `glasses` for low-occlusion near-eye use
   - `demo` for full presentation layout
 - quiet automatic compact state during stable low-risk learning in glasses view
+- narrower edge docks and event-only difficulty emphasis for glasses view
 
 Verification:
 

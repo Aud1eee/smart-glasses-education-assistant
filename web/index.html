@@ -244,6 +244,11 @@
             color: var(--ink);
         }
 
+        @keyframes difficultyPulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 123, 92, 0.28); }
+            100% { box-shadow: 0 0 0 10px rgba(255, 123, 92, 0); }
+        }
+
         .pill {
             display: inline-flex;
             align-items: center;
@@ -572,6 +577,11 @@
             display: none;
         }
 
+        body.view-glasses .hud-shell {
+            padding: 14px 14px 12px;
+            gap: 12px;
+        }
+
         body.view-glasses .brand-mark {
             width: 30px;
             height: 30px;
@@ -588,9 +598,38 @@
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
         }
 
+        body.view-glasses .top-strip {
+            justify-self: center;
+            width: min(1080px, calc(100vw - 28px));
+        }
+
+        body.view-glasses .mode-cluster {
+            gap: 8px;
+            padding: 4px;
+        }
+
+        body.view-glasses .mode-chip {
+            padding: 6px 11px;
+            font-size: 11px;
+        }
+
+        body.view-glasses .quick-status {
+            gap: 8px;
+        }
+
+        body.view-glasses .pill {
+            padding: 6px 10px;
+            font-size: 11px;
+        }
+
+        body.view-glasses .pill strong {
+            font-size: 11px;
+        }
+
         body.view-glasses .lens-grid {
-            grid-template-columns: minmax(160px, 210px) 1fr minmax(180px, 220px);
-            gap: 12px;
+            grid-template-columns: minmax(112px, 148px) 1fr minmax(132px, 168px);
+            gap: 10px;
+            align-items: end;
         }
 
         body.view-glasses .lens-stage {
@@ -631,7 +670,7 @@
 
         body.view-glasses .status-card .message {
             margin-top: 10px;
-            font-size: 14px;
+            font-size: 13px;
             line-height: 1.38;
         }
 
@@ -650,36 +689,54 @@
             font-size: 15px;
         }
 
-        body.view-glasses .rail {
-            justify-content: center;
+        body.view-glasses .left-rail {
+            justify-content: end;
+            align-items: start;
+        }
+
+        body.view-glasses .right-rail {
+            justify-content: end;
+            align-items: end;
         }
 
         body.view-glasses .rail-card,
         body.view-glasses .rail-stack {
             background: rgba(12, 9, 6, 0.44);
             box-shadow: 0 16px 32px rgba(0, 0, 0, 0.14);
+            width: 100%;
         }
 
         body.view-glasses .rail-card {
-            padding: 14px 14px 12px;
+            padding: 12px 12px 10px;
         }
 
         body.view-glasses .stack-item {
-            padding: 12px 14px;
+            padding: 10px 12px;
             background: rgba(8, 6, 4, 0.76);
         }
 
+        body.view-glasses .metric-label,
+        body.view-glasses .stack-label {
+            font-size: 9px;
+            letter-spacing: 0.20em;
+        }
+
         body.view-glasses .metric-value {
-            font-size: 30px;
+            font-size: 24px;
         }
 
         body.view-glasses .metric-value.small {
-            font-size: 20px;
+            font-size: 17px;
         }
 
         body.view-glasses .metric-note,
         body.view-glasses .stack-note {
-            font-size: 12px;
+            display: none;
+        }
+
+        body.view-glasses .micro-bar {
+            margin-top: 8px;
+            height: 4px;
         }
 
         body.view-glasses .command-strip {
@@ -699,10 +756,18 @@
             font-size: 24px;
         }
 
+        body.view-glasses:not(.has-difficulty) #difficulty-pill {
+            display: none;
+        }
+
+        body.view-glasses.has-difficulty #difficulty-pill {
+            animation: difficultyPulse 1.8s ease-out infinite;
+        }
+
         body.view-glasses.quiet-hud .status-card {
-            width: min(258px, calc(100% - 16px));
-            padding: 14px 16px 13px;
-            opacity: 0.78;
+            width: min(228px, calc(100% - 16px));
+            padding: 12px 14px 11px;
+            opacity: 0.72;
             transform: translateY(-2px);
         }
 
@@ -714,12 +779,50 @@
 
         body.view-glasses.quiet-hud .status-card .state {
             margin-top: 0;
-            font-size: 20px;
+            font-size: 18px;
             letter-spacing: -0.03em;
         }
 
-        body.view-glasses.quiet-hud .rail {
+        body.view-glasses.quiet-hud .left-rail,
+        body.view-glasses.quiet-hud .right-rail {
+            opacity: 0.56;
+            transform: translateY(10px);
+        }
+
+        body.view-glasses.quiet-hud .metric-label,
+        body.view-glasses.quiet-hud .stack-label,
+        body.view-glasses.quiet-hud .micro-bar,
+        body.view-glasses.quiet-hud .phase-pill span,
+        body.view-glasses.quiet-hud .time-cluster .metric-label {
+            display: none;
+        }
+
+        body.view-glasses.quiet-hud .rail-card,
+        body.view-glasses.quiet-hud .rail-stack {
+            background: rgba(10, 8, 6, 0.28);
+            box-shadow: none;
+        }
+
+        body.view-glasses.quiet-hud .stack-item,
+        body.view-glasses.quiet-hud .rail-card {
+            padding: 8px 10px;
+        }
+
+        body.view-glasses.quiet-hud .metric-value {
+            font-size: 19px;
+        }
+
+        body.view-glasses.quiet-hud .metric-value.small {
+            font-size: 15px;
+        }
+
+        body.view-glasses.quiet-hud .bottom-strip {
+            padding: 8px 10px;
             opacity: 0.72;
+        }
+
+        body.view-glasses.quiet-hud .time-value {
+            font-size: 17px;
         }
 
         body.view-demo .command-strip {
@@ -811,12 +914,12 @@
                 </div>
                 <div class="pill"><span>Mode</span><strong id="mode-val-top">reading</strong></div>
                 <div class="pill"><span>Confidence</span><strong id="confidence-val-top">MEDIUM</strong></div>
-                <div class="pill"><span>Difficulty</span><strong id="event-pill">CLEAR</strong></div>
+                <div class="pill" id="difficulty-pill"><span>Difficulty</span><strong id="event-pill">CLEAR</strong></div>
             </div>
         </header>
 
         <section class="lens-grid">
-            <aside class="rail">
+            <aside class="rail left-rail">
                 <div class="rail-card">
                     <div class="metric-label">Behavior Alignment</div>
                     <div class="metric-value"><span id="focus-val">100</span></div>
@@ -868,7 +971,7 @@
                 </div>
             </section>
 
-            <aside class="rail">
+            <aside class="rail right-rail">
                 <div class="rail-stack">
                     <div class="stack-item">
                         <div class="stack-label">Phase</div>
@@ -1002,14 +1105,16 @@
         function setOcclusionState(loadLevel, stateLabel, confidence, activeEvent) {
             const label = String(stateLabel || "").toLowerCase();
             const normalizedConfidence = String(confidence || "").toLowerCase();
+            const hasDifficulty = Boolean(activeEvent);
             const quietState =
-                !activeEvent &&
+                !hasDifficulty &&
                 loadLevel === "low" &&
                 normalizedConfidence === "high" &&
                 !label.includes("fatigue") &&
                 !label.includes("signal") &&
                 (label.includes("stable") || label.includes("focus") || label.includes("recovery"));
 
+            document.body.classList.toggle("has-difficulty", hasDifficulty);
             document.body.classList.toggle("quiet-hud", quietState);
         }
 
