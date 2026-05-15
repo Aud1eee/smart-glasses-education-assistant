@@ -166,6 +166,16 @@ The Flask service and the HUD are connected through:
 - [app.py](</C:/Users/11721/Desktop/focus_project_windows/app.py:16>)
 - [web/index.html](</C:/Users/11721/Desktop/focus_project_windows/web/index.html:204>)
 
+The current HUD has been redesigned to better match a **Rokid-style near-eye display** rather than a desktop dashboard.
+
+The main visual principles are:
+
+- lens-first layout with a lighter center occlusion
+- warm amber monochrome accents inspired by Rokid product visuals
+- central state card for immediate guidance
+- slim left and right rails for secondary data
+- top task-mode capsules for quick switching and recognition
+
 The HUD shows:
 
 - behavior alignment / focus proxy
@@ -177,8 +187,16 @@ The HUD shows:
 - session phase and time remaining
 - task mode
 - confidence level
+- difficulty marker and review note
 
-This allows the user to understand the current study state at a glance, which is especially suitable for smart-glasses-style display.
+The redesigned layout is intended to fit the logic of smart glasses:
+
+- the center focuses on only the most important learning-state message
+- side rails reduce central visual clutter
+- confidence and task mode remain visible without blocking the main view
+- keyboard and clickable mode switching make demo interaction easier
+
+This makes the system easier to explain as a **glasses-oriented HUD prototype** rather than a general web dashboard.
 
 ### 3.5 Clean demo asset pipeline
 

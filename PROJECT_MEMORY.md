@@ -348,6 +348,31 @@ Verified after refactor:
   - `fatigue_risk`
   - `confidence_level`
 
+### HUD redesign completed
+
+The HUD in `web/index.html` has been redesigned to better fit a Rokid-style glasses display.
+
+The new interface direction is:
+
+- less like a desktop dashboard
+- more like a lens-first HUD
+- lighter central occlusion
+- amber monochrome accent inspired by Rokid product visuals
+- central state card + slim side rails + task-mode capsules
+
+New HUD interaction highlights:
+
+- clickable and keyboard-switchable task-mode chips
+- central state emphasis
+- separate confidence and difficulty indicators
+- reduced visual clutter in the middle of the view
+
+Verification:
+
+- local page HTML served successfully from Flask
+- simulator-driven `/status` updates still work with the redesigned HUD
+- Browser plugin runtime was unavailable in this environment, so final verification was done through local server fetch + API checks rather than in-app visual automation
+
 ### Post-refactor algorithm fixes
 
 After a review pass, three important fixes were applied:
