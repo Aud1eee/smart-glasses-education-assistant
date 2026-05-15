@@ -3,6 +3,7 @@ import math
 import random
 import time
 
+import bootstrap_windows_runtime  # noqa: F401
 import requests
 
 

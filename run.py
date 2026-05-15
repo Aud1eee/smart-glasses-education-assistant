@@ -4,6 +4,8 @@ import subprocess
 import sys
 import time
 
+import bootstrap_windows_runtime  # noqa: F401
+
 
 def main():
     root = os.path.dirname(os.path.abspath(__file__))
@@ -40,7 +42,11 @@ def main():
             print(" 3. Generate vocabulary difficulty chart (png)")
             print(" q. Stop system and quit")
 
-            choice = input("\nSelect an option: ").strip().lower()
+            try:
+                choice = input("\nSelect an option: ").strip().lower()
+            except EOFError:
+                print("\nNo console input available. Stopping launcher cleanly.")
+                break
 
             if choice == "1":
                 print("\n>>> Generating learning-state heatmap...")

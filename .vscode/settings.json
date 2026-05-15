@@ -1,5 +1,5 @@
 {
-  "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+  "python.defaultInterpreterPath": "C:\\Users\\11721\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
   "python.terminal.activateEnvironment": true,
   "python.analysis.extraPaths": [
     "${workspaceFolder}"

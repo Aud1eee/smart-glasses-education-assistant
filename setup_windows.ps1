@@ -1,22 +1,17 @@
 $ErrorActionPreference = "Stop"
 
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$venvPath = Join-Path $projectRoot ".venv"
-$pythonExe = Join-Path $venvPath "Scripts\python.exe"
+. (Join-Path $projectRoot "windows_runtime_common.ps1")
+$pythonExe = Get-FocusProjectPython -ProjectRoot $projectRoot
 
 Set-Location $projectRoot
 
-if (-not (Test-Path -LiteralPath $venvPath)) {
-    Write-Host "Creating Windows virtual environment..."
-    py -3 -m venv .venv
-}
+Write-FocusProjectRuntimeBanner -PythonExe $pythonExe
 
-Write-Host "Upgrading pip..."
-& $pythonExe -m pip install --upgrade pip
-
-Write-Host "Installing project requirements..."
-& $pythonExe -m pip install -r requirements.txt
+New-Item -ItemType Directory -Force -Path (Join-Path $projectRoot "data") | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $projectRoot "exports") | Out-Null
 
 Write-Host ""
-Write-Host "Windows environment is ready."
+Write-Host "Windows runtime bridge is ready."
+Write-Host "VSCode should use the bundled runtime interpreter configured in .vscode/settings.json."
 Write-Host "If OCR fails later, install Tesseract OCR for Windows and add it to PATH."

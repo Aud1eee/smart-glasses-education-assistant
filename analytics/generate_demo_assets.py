@@ -166,8 +166,11 @@ def main():
     print("\nDemo assets generated")
     print(f"- CSV: {report_path}")
     print(f"- Difficulty events: {difficulty_path}")
-    print(f"- Heatmap: {DEMO_HEATMAP_PATH}")
     if summary:
+        if summary.get("heatmap_saved"):
+            print(f"- Heatmap: {DEMO_HEATMAP_PATH}")
+        else:
+            print("- Heatmap: skipped in the current Windows runtime bridge")
         print(
             f"- Summary: {summary['samples']} samples | "
             f"align {summary['avg_alignment']} | load {summary['avg_load']} | "

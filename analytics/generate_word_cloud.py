@@ -1,8 +1,27 @@
-import pandas as pd
-import matplotlib.pyplot as plt
 import os
+import sys
+
+import pandas as pd
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
+
+import bootstrap_windows_runtime  # noqa: F401
+
+try:
+    import matplotlib.pyplot as plt
+    MATPLOTLIB_ERROR = None
+except Exception as exc:
+    plt = None
+    MATPLOTLIB_ERROR = exc
 
 def plot_vocab_analysis():
+    if plt is None:
+        print(f">>> Matplotlib unavailable in the current Windows runtime bridge: {MATPLOTLIB_ERROR}")
+        print(">>> Vocabulary chart export is skipped in this runtime.")
+        return
+
     # 路径适配：根据 run.py 调用逻辑，使用相对路径
     input_file = "../data/my_vocabulary.csv"
     output_dir = "../exports"

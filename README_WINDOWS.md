@@ -6,10 +6,20 @@ For the full project overview, setup steps, and current scope, read `README.md` 
 
 1. Open this folder in VSCode.
 2. Run `Setup Windows Environment`.
-3. Select `.venv\Scripts\python.exe`.
+3. Let VSCode use the bundled Codex runtime interpreter configured in `.vscode/settings.json`.
 4. Run `Run Focus Project`.
 5. Run `Run Motion Simulator`.
 6. Open `http://127.0.0.1:5000`.
+
+## Runtime note
+
+The old Windows `.venv` currently points to a broken local Python 3.14 installation path.
+
+To keep the Windows workflow stable, the project now uses a **Windows runtime bridge**:
+
+- scripts launch with the bundled Codex Python runtime
+- pure-Python dependencies are bridged from the legacy `.venv\Lib\site-packages`
+- plotting features that depend on incompatible binary wheels may fall back to summary-only mode
 
 ## Demo simulator modes
 
@@ -43,8 +53,8 @@ Available modes:
 Useful options:
 
 ```powershell
-.\.venv\Scripts\python.exe .\simulate_motion.py --mode presentation --loops 1
-.\.venv\Scripts\python.exe .\simulate_motion.py --mode overload --duration 8
+& "C:\Users\11721\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe" .\simulate_motion.py --mode presentation --loops 1
+& "C:\Users\11721\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe" .\simulate_motion.py --mode overload --duration 8
 ```
 
 ## Quick verification
@@ -52,7 +62,7 @@ Useful options:
 To verify the expected state labels without opening the HUD:
 
 ```powershell
-.\.venv\Scripts\python.exe .\analytics\verify_demo_states.py
+& "C:\Users\11721\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe" .\analytics\verify_demo_states.py
 ```
 
 The expected presentation progression is:

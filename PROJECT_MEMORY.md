@@ -394,6 +394,20 @@ This page is backed by `logger.build_review_payload(...)` and turns logged diffi
 
 The HUD also has a direct shortcut (`G`) to open this page during demos.
 
+### Windows runtime bridge enabled
+
+The original Windows `.venv` still stores project packages, but its Python 3.14 interpreter path is broken on this machine.
+
+To keep local VSCode and PowerShell runs stable, the project now uses:
+
+- the bundled Codex Python runtime as the active Windows interpreter
+- `bootstrap_windows_runtime.py` to bridge pure-Python dependencies from `.venv\Lib\site-packages`
+- updated PowerShell launch scripts and `.vscode/settings.json`
+
+Known limitation:
+
+- `matplotlib` from the legacy `.venv` is binary-incompatible with the bundled runtime, so Windows local chart export now falls back to summary-only mode with an explicit message instead of crashing
+
 ### Post-refactor algorithm fixes
 
 After a review pass, three important fixes were applied:

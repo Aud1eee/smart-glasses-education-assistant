@@ -43,7 +43,7 @@ The current priority is the A/B/C learning-state workflow. OCR features are kept
 
 1. Open this folder in VSCode.
 2. Run the `Setup Windows Environment` task.
-3. Select the interpreter at `.venv\Scripts\python.exe`.
+3. Use the bundled Codex Python runtime configured in `.vscode\settings.json`.
 4. Run `Run Focus Project`.
 5. Run `Run Motion Simulator` in a second terminal or launch config.
 6. Open `http://127.0.0.1:5000`.
@@ -55,6 +55,12 @@ PowerShell commands also work:
 .\start_windows.ps1
 .\start_simulator.ps1
 ```
+
+Current Windows note:
+
+- the legacy `.venv` still stores project packages, but its original Python 3.14 interpreter path is broken on this machine
+- the Windows scripts now use a bundled Codex Python runtime bridge and reuse pure-Python packages from `.venv\Lib\site-packages`
+- some binary plotting features may fall back to summary-only mode until a native Windows environment is rebuilt
 
 ## Dependencies
 

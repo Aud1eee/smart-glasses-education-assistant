@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 
+import bootstrap_windows_runtime  # noqa: F401
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
