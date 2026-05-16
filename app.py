@@ -61,6 +61,8 @@ latest_input = {
     "scene_text_score": 0.0,
     "scene_stability_score": 0.0,
     "scene_switch_rate": 0.0,
+    "study_surface_score": 0.0,
+    "scene_lock_score": 0.0,
     "blur_score": 0.0,
     "brightness_score": 0.0,
     "motion_source": "default",
@@ -97,6 +99,8 @@ def _input_snapshot(packet=None):
             "scene_text_score": 0.0,
             "scene_stability_score": 0.0,
             "scene_switch_rate": 0.0,
+            "study_surface_score": 0.0,
+            "scene_lock_score": 0.0,
             "blur_score": 0.0,
             "brightness_score": 0.0,
             "motion_source": "default",
@@ -115,6 +119,8 @@ def _input_snapshot(packet=None):
         "scene_text_score": packet.scene_text_score,
         "scene_stability_score": packet.scene_stability_score,
         "scene_switch_rate": packet.scene_switch_rate,
+        "study_surface_score": packet.study_surface_score,
+        "scene_lock_score": packet.scene_lock_score,
         "blur_score": packet.blur_score,
         "brightness_score": packet.brightness_score,
         "motion_source": packet.motion_source,
@@ -126,6 +132,7 @@ def _input_snapshot(packet=None):
 
 def _start_new_session(reset_posture=False):
     global latest_session, latest_difficulty, latest_input, sample_counter, last_posture_at, current_session_id
+    rokid_frame_adapter.reset_scene_memory()
     if reset_posture:
         posture.calibrate()
     else:
@@ -230,6 +237,8 @@ def _ingest_packet(packet):
             "scene_text_score": packet.scene_text_score,
             "scene_stability_score": packet.scene_stability_score,
             "scene_switch_rate": packet.scene_switch_rate,
+            "study_surface_score": packet.study_surface_score,
+            "scene_lock_score": packet.scene_lock_score,
             "blur_score": packet.blur_score,
             "brightness_score": packet.brightness_score,
         },
@@ -336,6 +345,8 @@ def get_status():
         "scene_text_score": posture.scene_text_score,
         "scene_stability_score": posture.scene_stability_score,
         "scene_switch_rate": posture.scene_switch_rate,
+        "study_surface_score": posture.study_surface_score,
+        "scene_lock_score": posture.scene_lock_score,
         "blur_score": posture.blur_score,
         "brightness_score": posture.brightness_score,
         "session": latest_session,

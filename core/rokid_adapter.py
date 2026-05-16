@@ -25,6 +25,8 @@ class RokidInputPacket:
     scene_text_score: Optional[float] = None
     scene_stability_score: Optional[float] = None
     scene_switch_rate: Optional[float] = None
+    study_surface_score: Optional[float] = None
+    scene_lock_score: Optional[float] = None
     blur_score: Optional[float] = None
     brightness_score: Optional[float] = None
     device_profile: str = "rokid-imu-3dof"

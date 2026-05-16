@@ -449,20 +449,20 @@ New HUD interaction highlights:
 - a frame-derived Rokid path is now also available:
   - `/api/v1/rokid/frame` for single-frame image input
   - this path now derives coarse `pitch / yaw / roll / movement` proxies from first-person **scene** cues instead of face cues
-  - active scene features include `scene_content_score / scene_text_score / scene_stability_score / scene_switch_rate / blur_score / brightness_score`
+  - active scene features include `scene_content_score / scene_text_score / scene_stability_score / scene_switch_rate / study_surface_score / scene_lock_score / blur_score / brightness_score`
   - scene quality is folded into the active uncertainty path, so blurred, low-visibility, or content-sparse frames degrade into `Signal check` instead of fake stability
   - in the current Windows bundled runtime, this path still depends on native OpenCV availability; if OpenCV is missing, the adapter stays in scaffold mode and reports `frame_unavailable` / `opencv-unavailable`
   - `start_windows.ps1` now prefers a Python runtime that can actually import `cv2`, so local app startup will choose the OpenCV-capable `.venv` when needed
 - a dedicated Rokid frame debug surface is now part of the local workflow:
   - `/rokid_debug` renders `web/rokid_debug.html`
   - it accepts upload, local-path, and demo-image probes for `/api/v1/rokid/frame`
-  - it shows live `tracking_state / tracking_confidence / pose proxy / movement / state_hint`
+  - it shows live `tracking_state / tracking_confidence / pose proxy / movement / study_surface / scene_lock / state_hint`
   - HUD now links to it with `K`, and the review page also exposes a `Rokid Debug` entry
 - a continuous Rokid frame-stream test chain is now available:
   - `stream_rokid_frames.py` continuously posts JPEG frames into `/api/v1/rokid/frame`
   - `start_rokid_frame_stream.ps1` is the Windows launcher for `image / video / camera` sources
   - it can optionally reset, warm up, calibrate, and restart a session before the measured run
-  - terminal output now shows `tracking_state / tracking_confidence / state_hint / alignment / load / fatigue` per frame
+  - terminal output now shows `tracking_state / tracking_confidence / state_hint / alignment / load / fatigue / study_surface / scene_lock` per frame
 - recent-paper rationale for the scene-driven Rokid path is now stored in:
   - `ROKID_SCENE_LOGIC_LITERATURE.md`
 - the adapter keeps the active runtime constrained to Rokid-realistic signals:

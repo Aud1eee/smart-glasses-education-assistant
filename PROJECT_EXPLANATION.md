@@ -296,6 +296,8 @@ The active scene logic now emphasizes:
 - blur and brightness quality
 - anchor stability across time
 - scene switching rate
+- study-surface confidence
+- persistent scene lock across consecutive frames
 
 This path should be described as a **scene-derived learning-state proxy**, not as precise eye tracking, native IMU telemetry, or direct face-based head-pose recovery.
 
@@ -307,7 +309,7 @@ To make this path easier to inspect during development, the system now includes 
 
 - `/rokid_debug`
 - upload, local path, and demo-image probes for `/api/v1/rokid/frame`
-- live cards for `tracking_state`, `tracking_confidence`, pose proxy, movement, and `state_hint`
+- live cards for `tracking_state`, `tracking_confidence`, pose proxy, movement, `study_surface`, `scene_lock`, and `state_hint`
 - quick navigation from the HUD (`K`) and from the review page (`Rokid Debug`)
 
 For continuous local validation, the project now also includes a **frame-stream test chain**:

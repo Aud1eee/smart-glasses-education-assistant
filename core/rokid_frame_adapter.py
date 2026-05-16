@@ -29,10 +29,16 @@ class RokidFrameAdapter:
     """
 
     def __init__(self):
+        self.reset_scene_memory()
+
+    def reset_scene_memory(self):
         self.previous_preview = None
         self.previous_hist = None
         self.previous_anchor = None
         self.previous_content_score = None
+        self.previous_surface_score = None
+        self.lock_streak = 0
+        self.scene_lock_score = 0.0
         self.last_pose = (0.0, 0.0, 0.0)
 
     def has_frame_payload(self, payload: dict[str, Any], image_bytes: Optional[bytes] = None) -> bool:
@@ -74,6 +80,8 @@ class RokidFrameAdapter:
                 scene_text_score=0.0,
                 scene_stability_score=0.0,
                 scene_switch_rate=0.0,
+                study_surface_score=0.0,
+                scene_lock_score=0.0,
                 blur_score=0.0,
                 brightness_score=0.0,
                 device_profile="rokid-video-scene-proxy",
@@ -93,15 +101,26 @@ class RokidFrameAdapter:
         feature_score = self._compute_feature_score(gray)
         text_score = self._compute_text_score(edges, feature_score, contrast_score)
         content_score = self._compute_content_score(text_score, feature_score, blur_score, contrast_score)
+        center_focus_score = self._compute_center_focus_score(edges, gray)
+        line_consistency_score = self._compute_line_consistency_score(edges)
         anchor = self._compute_anchor(edges, gray)
         scene_delta = self._compute_scene_delta(preview)
         histogram_delta = self._compute_histogram_delta(gray)
         anchor_shift = self._compute_anchor_shift(anchor, frame_shape=(frame_w, frame_h))
+        study_surface_score = self._compute_study_surface_score(
+            content_score=content_score,
+            text_score=text_score,
+            center_focus_score=center_focus_score,
+            line_consistency_score=line_consistency_score,
+            blur_score=blur_score,
+            brightness_score=brightness_score,
+        )
         scene_switch_rate = self._compute_scene_switch_rate(
             anchor_shift=anchor_shift,
             histogram_delta=histogram_delta,
             content_score=content_score,
             text_score=text_score,
+            study_surface_score=study_surface_score,
         )
         motion = explicit_motion if explicit_motion is not None else self._compute_motion_intensity(
             scene_delta=scene_delta,
@@ -112,13 +131,23 @@ class RokidFrameAdapter:
             motion=motion,
             scene_switch_rate=scene_switch_rate,
             content_score=content_score,
+            study_surface_score=study_surface_score,
             blur_score=blur_score,
+        )
+        scene_lock_score = self._compute_scene_lock_score(
+            scene_stability=scene_stability,
+            scene_switch_rate=scene_switch_rate,
+            study_surface_score=study_surface_score,
+            histogram_delta=histogram_delta,
+            anchor_shift=anchor_shift,
         )
         tracking_confidence = self._compute_tracking_confidence(
             blur_score=blur_score,
             brightness_score=brightness_score,
             content_score=content_score,
             scene_stability=scene_stability,
+            study_surface_score=study_surface_score,
+            scene_lock_score=scene_lock_score,
         )
         tracking_uncertainty = self._compute_tracking_uncertainty(
             blur_score=blur_score,
@@ -126,6 +155,8 @@ class RokidFrameAdapter:
             content_score=content_score,
             scene_stability=scene_stability,
             scene_switch_rate=scene_switch_rate,
+            study_surface_score=study_surface_score,
+            scene_lock_score=scene_lock_score,
             tracking_confidence=tracking_confidence,
         )
 
@@ -141,12 +172,16 @@ class RokidFrameAdapter:
             content_score=content_score,
             scene_stability=scene_stability,
             scene_switch_rate=scene_switch_rate,
+            study_surface_score=study_surface_score,
+            scene_lock_score=scene_lock_score,
         )
 
         self.previous_preview = preview
         self.previous_hist = self._compute_histogram(gray)
         self.previous_anchor = anchor
         self.previous_content_score = content_score
+        self.previous_surface_score = study_surface_score
+        self.scene_lock_score = scene_lock_score
         self.last_pose = (pitch, yaw, roll)
 
         return RokidInputPacket(
@@ -168,6 +203,8 @@ class RokidFrameAdapter:
             scene_text_score=round(float(text_score), 1),
             scene_stability_score=round(float(scene_stability), 1),
             scene_switch_rate=round(float(scene_switch_rate), 1),
+            study_surface_score=round(float(study_surface_score), 1),
+            scene_lock_score=round(float(scene_lock_score), 1),
             blur_score=round(float(blur_score), 1),
             brightness_score=round(float(brightness_score), 1),
             device_profile="rokid-video-scene-proxy",
@@ -196,6 +233,8 @@ class RokidFrameAdapter:
             scene_text_score=66.0,
             scene_stability_score=74.0,
             scene_switch_rate=18.0,
+            study_surface_score=78.0,
+            scene_lock_score=82.0,
             blur_score=58.0,
             brightness_score=52.0,
             device_profile="rokid-video-scene-proxy",
@@ -212,6 +251,8 @@ class RokidFrameAdapter:
                 "scene_text_score",
                 "scene_stability_score",
                 "scene_switch_rate",
+                "study_surface_score",
+                "scene_lock_score",
                 "blur_score",
                 "brightness_score",
                 "scene-derived pitch/yaw/roll proxies",
@@ -323,14 +364,23 @@ class RokidFrameAdapter:
         dy = (anchor[1] - self.previous_anchor[1]) / max(frame_h, 1)
         return min(1.0, (dx * dx + dy * dy) ** 0.5 * 3.0)
 
-    def _compute_scene_switch_rate(self, anchor_shift, histogram_delta, content_score, text_score):
+    def _compute_scene_switch_rate(self, anchor_shift, histogram_delta, content_score, text_score, study_surface_score):
         content_drop = 0.0
         if self.previous_content_score is not None and self.previous_content_score > content_score:
             content_drop = min(1.0, (self.previous_content_score - content_score) / 42.0)
         text_drop = 0.0
         if self.previous_content_score is not None and text_score < 28:
             text_drop = min(1.0, (28.0 - text_score) / 28.0)
-        score = (anchor_shift * 42.0) + (histogram_delta * 38.0) + (content_drop * 14.0) + (text_drop * 6.0)
+        surface_drop = 0.0
+        if self.previous_surface_score is not None and self.previous_surface_score > study_surface_score:
+            surface_drop = min(1.0, (self.previous_surface_score - study_surface_score) / 36.0)
+        score = (
+            (anchor_shift * 40.0)
+            + (histogram_delta * 34.0)
+            + (content_drop * 12.0)
+            + (text_drop * 6.0)
+            + (surface_drop * 8.0)
+        )
         return self._clamp(score)
 
     def _compute_motion_intensity(self, scene_delta, histogram_delta, anchor_shift):
@@ -339,19 +389,30 @@ class RokidFrameAdapter:
         motion = (scene_component * 48.0) + (histogram_component * 22.0) + (anchor_shift * 30.0)
         return round(self._clamp(motion), 1)
 
-    def _compute_scene_stability(self, motion, scene_switch_rate, content_score, blur_score):
+    def _compute_scene_stability(self, motion, scene_switch_rate, content_score, study_surface_score, blur_score):
         stability = 100.0 - (motion * 0.52) - (scene_switch_rate * 0.28)
         stability += max(0.0, content_score - 45.0) * 0.10
+        stability += max(0.0, study_surface_score - 46.0) * 0.12
         stability -= max(0.0, 20.0 - blur_score) * 0.55
         return self._clamp(stability)
 
-    def _compute_tracking_confidence(self, blur_score, brightness_score, content_score, scene_stability):
+    def _compute_tracking_confidence(
+        self,
+        blur_score,
+        brightness_score,
+        content_score,
+        scene_stability,
+        study_surface_score,
+        scene_lock_score,
+    ):
         brightness_quality = 100.0 - min(abs(brightness_score - 52.0) * 1.3, 100.0)
         quality = (
-            (blur_score * 0.30)
-            + (brightness_quality * 0.18)
-            + (content_score * 0.28)
-            + (scene_stability * 0.24)
+            (blur_score * 0.24)
+            + (brightness_quality * 0.14)
+            + (content_score * 0.20)
+            + (scene_stability * 0.18)
+            + (study_surface_score * 0.12)
+            + (scene_lock_score * 0.12)
         )
         confidence = 0.12 + (self._clamp(quality) / 100.0) * 0.84
         return max(0.08, min(0.98, confidence))
@@ -363,6 +424,8 @@ class RokidFrameAdapter:
         content_score,
         scene_stability,
         scene_switch_rate,
+        study_surface_score,
+        scene_lock_score,
         tracking_confidence,
     ):
         brightness_penalty = 0.0
@@ -373,8 +436,19 @@ class RokidFrameAdapter:
         blur_penalty = max(0.0, 22.0 - blur_score) * 1.5
         sparse_penalty = max(0.0, 24.0 - content_score) * 0.9
         stability_penalty = max(0.0, 34.0 - scene_stability) * 0.8
+        surface_penalty = max(0.0, 30.0 - study_surface_score) * 0.65
         base = (1.0 - tracking_confidence) * 52.0
-        uncertainty = base + brightness_penalty + blur_penalty + sparse_penalty + stability_penalty + (scene_switch_rate * 0.12)
+        lock_relief = min(14.0, scene_lock_score * 0.12)
+        uncertainty = (
+            base
+            + brightness_penalty
+            + blur_penalty
+            + sparse_penalty
+            + stability_penalty
+            + surface_penalty
+            + (scene_switch_rate * 0.12)
+            - lock_relief
+        )
         return self._clamp(uncertainty)
 
     def _derive_scene_pose(self, anchor, frame_shape, edges, scene_stability):
@@ -405,7 +479,16 @@ class RokidFrameAdapter:
         normalized = ((angle + 90.0) % 180.0) - 90.0
         return self._clamp(normalized * 0.18, -10.0, 10.0)
 
-    def _classify_tracking_state(self, blur_score, brightness_score, content_score, scene_stability, scene_switch_rate):
+    def _classify_tracking_state(
+        self,
+        blur_score,
+        brightness_score,
+        content_score,
+        scene_stability,
+        scene_switch_rate,
+        study_surface_score,
+        scene_lock_score,
+    ):
         if blur_score < 10.0:
             return "blurred"
         if brightness_score < 10.0 or brightness_score > 92.0:
@@ -414,9 +497,85 @@ class RokidFrameAdapter:
             return "content_sparse"
         if scene_stability < 28.0 and scene_switch_rate >= 48.0:
             return "scene_unstable"
-        if content_score >= 50.0 and scene_stability >= 46.0:
+        if study_surface_score >= 54.0 and scene_lock_score >= 58.0:
             return "scene_locked"
         return "scene_tracking"
+
+    def _compute_center_focus_score(self, edges, gray):
+        height, width = gray.shape[:2]
+        y0, y1 = int(height * 0.18), int(height * 0.82)
+        x0, x1 = int(width * 0.18), int(width * 0.82)
+        center_edges = edges[y0:y1, x0:x1]
+        center_gray = gray[y0:y1, x0:x1]
+        if center_edges.size == 0 or center_gray.size == 0:
+            return 0.0
+        center_density = float(np.mean(center_edges > 0)) * 100.0
+        global_density = float(np.mean(edges > 0)) * 100.0
+        density_gain = max(0.0, center_density - (global_density * 0.72))
+        center_contrast = self._compute_contrast_score(center_gray)
+        score = (center_density * 1.35) + (density_gain * 1.10) + (center_contrast * 0.22)
+        return self._clamp(score)
+
+    def _compute_line_consistency_score(self, edges):
+        edge_mask = edges > 0
+        if not np.any(edge_mask):
+            return 0.0
+        height, width = edges.shape[:2]
+        row_hits = np.mean(np.sum(edge_mask, axis=1) > max(6, int(width * 0.09))) * 100.0
+        col_hits = np.mean(np.sum(edge_mask, axis=0) > max(6, int(height * 0.09))) * 100.0
+        score = (row_hits * 0.62) + (col_hits * 0.38)
+        return self._clamp(score)
+
+    def _compute_study_surface_score(
+        self,
+        content_score,
+        text_score,
+        center_focus_score,
+        line_consistency_score,
+        blur_score,
+        brightness_score,
+    ):
+        brightness_quality = 100.0 - min(abs(brightness_score - 52.0) * 1.4, 100.0)
+        score = (
+            (content_score * 0.26)
+            + (text_score * 0.24)
+            + (center_focus_score * 0.20)
+            + (line_consistency_score * 0.18)
+            + (blur_score * 0.07)
+            + (brightness_quality * 0.05)
+        )
+        return self._clamp(score)
+
+    def _compute_scene_lock_score(
+        self,
+        scene_stability,
+        scene_switch_rate,
+        study_surface_score,
+        histogram_delta,
+        anchor_shift,
+    ):
+        stable_frame = (
+            study_surface_score >= 42.0
+            and scene_stability >= 38.0
+            and scene_switch_rate <= 36.0
+            and anchor_shift <= 0.18
+            and histogram_delta <= 0.24
+        )
+        if stable_frame:
+            self.lock_streak = min(self.lock_streak + 1, 12)
+        else:
+            self.lock_streak = max(0, self.lock_streak - 2)
+
+        persistence = max(0.0, 100.0 - min(100.0, histogram_delta * 180.0) - min(100.0, anchor_shift * 140.0))
+        streak_bonus = min(24.0, self.lock_streak * 2.2)
+        base = (
+            (scene_stability * 0.34)
+            + (study_surface_score * 0.34)
+            + ((100.0 - scene_switch_rate) * 0.18)
+            + (persistence * 0.14)
+        )
+        lock_score = (base * 0.78) + (self.scene_lock_score * 0.22) + streak_bonus
+        return self._clamp(lock_score)
 
     def _decay_last_pose(self, factor):
         damped_pitch = self.last_pose[0] * factor

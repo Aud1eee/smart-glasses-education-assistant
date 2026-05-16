@@ -213,6 +213,8 @@ def print_frame_line(frame_index, source_label, adapter_response, status):
     alignment = round(float(status.get("behavioral_alignment", 0) or 0))
     load = round(float(status.get("cognitive_load", 0) or 0))
     fatigue = round(float(status.get("fatigue_risk", 0) or 0))
+    surface = round(float(status.get("study_surface_score", 0) or 0))
+    lock_score = round(float(status.get("scene_lock_score", 0) or 0))
     confidence = status.get("confidence_level", "unknown")
     mode = status.get("task_mode", "reading")
     print(
@@ -220,6 +222,7 @@ def print_frame_line(frame_index, source_label, adapter_response, status):
         f"| track {tracking:<14} conf {float(track_conf):.2f} "
         f"| hint {hint:<20} "
         f"| align {alignment:>3} load {load:>3} fatigue {fatigue:>3} "
+        f"| surface {surface:>3} lock {lock_score:>3} "
         f"| confidence {confidence:<10} mode {mode}"
     )
 
@@ -231,6 +234,11 @@ def print_summary(frame_count, source, stats):
     print(f"- Tracking states: {dict(stats['tracking'])}")
     print(f"- State hints: {dict(stats['hint'])}")
     print(f"- Confidence levels: {dict(stats['confidence'])}")
+    if frame_count > 0:
+        print(f"- Average tracking confidence: {stats['tracking_conf_sum'] / frame_count:.2f}")
+        print(f"- Average study surface score: {stats['surface_sum'] / frame_count:.1f}")
+        print(f"- Average scene lock score: {stats['lock_sum'] / frame_count:.1f}")
+        print(f"- Average scene switch rate: {stats['switch_sum'] / frame_count:.1f}")
 
 
 def build_source(args):
@@ -250,6 +258,10 @@ def main():
         "tracking": Counter(),
         "hint": Counter(),
         "confidence": Counter(),
+        "tracking_conf_sum": 0.0,
+        "surface_sum": 0.0,
+        "lock_sum": 0.0,
+        "switch_sum": 0.0,
     }
     frame_count = 0
     started_at = time.time()
@@ -273,6 +285,10 @@ def main():
             stats["tracking"][adapter_response.get("tracking_state", "unknown")] += 1
             stats["hint"][status.get("state_hint", "stable")] += 1
             stats["confidence"][status.get("confidence_level", "unknown")] += 1
+            stats["tracking_conf_sum"] += float(adapter_response.get("tracking_confidence", 0) or 0.0)
+            stats["surface_sum"] += float(status.get("study_surface_score", 0) or 0.0)
+            stats["lock_sum"] += float(status.get("scene_lock_score", 0) or 0.0)
+            stats["switch_sum"] += float(status.get("scene_switch_rate", 0) or 0.0)
             print_frame_line(frame_count, source.label, adapter_response, status)
             time.sleep(max(0.01, args.interval))
     except KeyboardInterrupt:
