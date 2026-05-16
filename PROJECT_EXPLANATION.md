@@ -151,6 +151,14 @@ This makes the current prototype more educationally meaningful, because it is be
 - "working hard on a difficult concept"
 - from "drifting away from the learning target"
 
+The upgraded state semantics are no longer isolated inside the scoring function. They are now reflected in:
+
+- CSV report fields
+- heatmap summary ratios
+- review-page insight cards
+- timeline risk lanes
+- event spotlight and catch-up wording
+
 Its purpose is to prove that future multimodal work has already been structured at the architecture level, even though device-side signals such as gaze, eye openness, blink, and pupil-related features are not active yet in the current prototype.
 
 ## 3. Completed submodules

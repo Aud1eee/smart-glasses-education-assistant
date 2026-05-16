@@ -1204,12 +1204,13 @@
             }
         }
 
-        function setVisualState(loadLevel, stateLabel, confidence) {
+        function setVisualState(loadLevel, stateLabel, confidence, stateHint) {
             const body = document.body;
             body.classList.remove("state-calm", "state-rising", "state-high", "state-fatigue", "state-signal");
             const label = String(stateLabel || "").toLowerCase();
+            const hint = String(stateHint || "").toLowerCase();
             const signalLow = String(confidence || "").toLowerCase() === "low" || label.includes("signal");
-            const fatigueState = label.includes("fatigue");
+            const fatigueState = label.includes("fatigue") || hint === "fatigue_risk";
 
             if (signalLow) {
                 body.classList.add("state-signal");
@@ -1217,6 +1218,14 @@
             }
             if (fatigueState) {
                 body.classList.add("state-fatigue");
+                return;
+            }
+            if (hint === "off_task_risk") {
+                body.classList.add("state-high");
+                return;
+            }
+            if (hint === "productive_struggle") {
+                body.classList.add("state-rising");
                 return;
             }
             if (loadLevel === "high") {
@@ -1230,11 +1239,14 @@
             body.classList.add("state-calm");
         }
 
-        function stateTone(loadLevel, stateLabel, confidence) {
+        function stateTone(loadLevel, stateLabel, confidence, stateHint) {
             const label = String(stateLabel || "").toLowerCase();
+            const hint = String(stateHint || "").toLowerCase();
             const signalLow = String(confidence || "").toLowerCase() === "low" || label.includes("signal");
             if (signalLow) return "signal";
-            if (label.includes("fatigue")) return "fatigue";
+            if (label.includes("fatigue") || hint === "fatigue_risk") return "fatigue";
+            if (hint === "off_task_risk") return "high";
+            if (hint === "productive_struggle") return "rising";
             if (loadLevel === "high") return "high";
             if (loadLevel === "medium") return "rising";
             return "calm";
@@ -1302,6 +1314,8 @@
                 "focus settling": "Settle",
                 "stable focus": "Stable",
                 "load rising": "Load up",
+                "productive struggle": "Challenge",
+                "off-task risk": "Refocus",
                 "high load": "High load",
                 "regulate now": "Ease off",
                 "recovery": "Recover",
@@ -1316,6 +1330,8 @@
                 "focus settling": "Hold one target.",
                 "stable focus": "Stay steady.",
                 "load rising": "Slow the pace.",
+                "productive struggle": "Work the concept.",
+                "off-task risk": "Lock one source.",
                 "high load": "Reset briefly.",
                 "regulate now": "Ease off now.",
                 "recovery": "Re-center attention.",
@@ -1329,7 +1345,17 @@
             return firstSentence ? `${firstSentence}.` : "Stay steady.";
         }
 
-        function compactReasonText(reason) {
+        function compactReasonText(reason, stateHint) {
+            const hintMap = {
+                productive_struggle: "Aligned challenge",
+                off_task_risk: "Target drift",
+                fatigue_risk: "Fatigue drift",
+                signal_check: "Signal check",
+                load_rising: "Load rising",
+                stable: "Stable",
+            };
+            const normalizedHint = String(stateHint || "").toLowerCase();
+            if (hintMap[normalizedHint]) return hintMap[normalizedHint];
             const text = String(reason || "Stable learning state").trim();
             if (!text) return "Stable";
             if (text.length <= 24) return text;
@@ -1372,9 +1398,10 @@
                 const confidence = confidenceRaw.toUpperCase();
                 const glassesView = currentViewMode() === "glasses";
                 const stateLabel = session.state_label || "Focus settling";
+                const stateHint = d.state_hint || "stable";
                 const guidanceText = session.guidance || "Keep one learning target and settle into the current mode.";
                 const reasonText = d.load_reason || "Stable learning state";
-                const mainTone = stateTone(d.load_level, stateLabel, confidenceRaw);
+                const mainTone = stateTone(d.load_level, stateLabel, confidenceRaw, stateHint);
                 const alignTone = alignmentTone(d.behavioral_alignment || d.focus_score || 0);
                 const loadBandTone = loadTone(d.load_level);
                 const fatigueRiskTone = fatigueTone(d.fatigue_risk || 0, stateLabel);
@@ -1391,7 +1418,7 @@
                 document.getElementById("mode-val-center").innerText = glassesView ? compactModeLabel(mode) : mode;
                 document.getElementById("confidence-val-top").innerText = glassesView ? compactConfidenceLabel(confidenceRaw) : confidence;
                 document.getElementById("confidence-val").innerText = glassesView ? compactConfidenceLabel(confidenceRaw) : confidence;
-                document.getElementById("reason-val").innerText = glassesView ? compactReasonText(reasonText) : reasonText;
+                document.getElementById("reason-val").innerText = glassesView ? compactReasonText(reasonText, stateHint) : `${stateHint.replaceAll("_", " ")} | ${reasonText}`;
 
                 document.getElementById("phase-val").innerText = glassesView ? compactPhaseLabel(session.phase_label) : (session.phase_label || "Focus");
                 document.getElementById("phase-pill").innerText = glassesView ? compactPhaseLabel(session.phase_label) : (session.phase_label || "Focus").toUpperCase();
@@ -1441,7 +1468,7 @@
                 setBar("time-bar", (session.progress || 0) * 100);
 
                 setModeSelection(mode);
-                setVisualState(d.load_level, session.state_label, d.confidence_level);
+                setVisualState(d.load_level, session.state_label, d.confidence_level, stateHint);
                 setOcclusionState(d.load_level, session.state_label, d.confidence_level, activeEvent);
 
                 if (d.flashcard && d.flashcard.word) {

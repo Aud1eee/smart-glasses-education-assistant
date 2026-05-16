@@ -10,6 +10,11 @@ class DataLogger:
         "Session_ID",
         "Timestamp",
         "Relative_Pitch",
+        "Relative_Yaw",
+        "Relative_Roll",
+        "Combined_Drift",
+        "Orientation_Drift",
+        "Movement_Intensity",
         "Task_Mode",
         "Stability",
         "Is_Alert",
@@ -18,6 +23,9 @@ class DataLogger:
         "Load_Level",
         "Behavioral_Alignment",
         "Behavioral_Level",
+        "Drift_Trend",
+        "Switching_Index",
+        "State_Hint",
         "Fatigue_Risk",
         "Fatigue_Level",
         "Uncertainty_Score",
@@ -89,6 +97,11 @@ class DataLogger:
                 "Session_ID": row.get("Session_ID", "") or "legacy-session-1",
                 "Timestamp": row.get("Timestamp", ""),
                 "Relative_Pitch": row.get("Relative_Pitch", ""),
+                "Relative_Yaw": row.get("Relative_Yaw", "") or "0",
+                "Relative_Roll": row.get("Relative_Roll", "") or "0",
+                "Combined_Drift": row.get("Combined_Drift", "") or row.get("Relative_Pitch", "") or "0",
+                "Orientation_Drift": row.get("Orientation_Drift", "") or "0",
+                "Movement_Intensity": row.get("Movement_Intensity", "") or "0",
                 "Task_Mode": row.get("Task_Mode", "") or "reading",
                 "Stability": row.get("Stability", ""),
                 "Is_Alert": row.get("Is_Alert", ""),
@@ -97,6 +110,9 @@ class DataLogger:
                 "Load_Level": row.get("Load_Level", ""),
                 "Behavioral_Alignment": row.get("Behavioral_Alignment", "") or row.get("Focus_Score", ""),
                 "Behavioral_Level": row.get("Behavioral_Level", "") or "aligned",
+                "Drift_Trend": row.get("Drift_Trend", "") or "0",
+                "Switching_Index": row.get("Switching_Index", "") or "0",
+                "State_Hint": row.get("State_Hint", "") or "stable",
                 "Fatigue_Risk": row.get("Fatigue_Risk", "") or "0",
                 "Fatigue_Level": row.get("Fatigue_Level", "") or "low",
                 "Uncertainty_Score": row.get("Uncertainty_Score", "") or "35",
@@ -153,12 +169,20 @@ class DataLogger:
         pitch,
         is_alert,
         score,
+        relative_yaw=0,
+        relative_roll=0,
+        combined_drift=0,
+        orientation_drift=0,
+        movement_intensity=0,
         stability=100,
         cognitive_load=0,
         load_level="low",
         task_mode="reading",
         behavioral_alignment=100,
         behavioral_level="aligned",
+        drift_trend=0,
+        switching_index=0,
+        state_hint="stable",
         fatigue_risk=0,
         fatigue_level="low",
         uncertainty_score=35,
@@ -176,6 +200,11 @@ class DataLogger:
                 session_id or "session-unknown",
                 timestamp_text,
                 round(pitch, 2),
+                round(relative_yaw, 2),
+                round(relative_roll, 2),
+                round(combined_drift, 2),
+                round(orientation_drift, 1),
+                round(movement_intensity, 2),
                 task_mode,
                 int(stability),
                 is_alert,
@@ -184,6 +213,9 @@ class DataLogger:
                 load_level,
                 round(behavioral_alignment, 1),
                 behavioral_level,
+                round(drift_trend, 1),
+                round(switching_index, 1),
+                state_hint,
                 round(fatigue_risk, 1),
                 fatigue_level,
                 round(uncertainty_score, 1),
@@ -332,8 +364,12 @@ class DataLogger:
             "avg_alignment": 0.0,
             "avg_load": 0.0,
             "avg_fatigue": 0.0,
+            "avg_drift_trend": 0.0,
+            "avg_switching": 0.0,
             "high_load_ratio": 0.0,
             "low_confidence_ratio": 0.0,
+            "productive_struggle_ratio": 0.0,
+            "off_task_ratio": 0.0,
             "difficulty_count": 0,
             "review_priority": "clear",
         }
@@ -349,6 +385,9 @@ class DataLogger:
         primary_mode = self._mode_or_default(session_report.get("Task_Mode"), "reading")
         high_load_ratio = self._ratio((session_report.get("Load_Level") == "high").sum(), len(session_report.index))
         low_confidence_ratio = self._ratio((session_report.get("Confidence_Level") == "low").sum(), len(session_report.index))
+        state_hints = session_report.get("State_Hint", pd.Series(dtype=str)).fillna("").astype(str).str.lower()
+        productive_ratio = self._ratio((state_hints == "productive_struggle").sum(), len(session_report.index))
+        off_task_ratio = self._ratio((state_hints == "off_task_risk").sum(), len(session_report.index))
         severity_values = [str(value).lower() for value in session_events.get("Severity", pd.Series(dtype=str)).tolist()]
         review_priority = "high" if "high" in severity_values else "medium" if len(severity_values) else "clear"
 
@@ -361,8 +400,12 @@ class DataLogger:
             "avg_alignment": round(self._safe_float(session_report["Behavioral_Alignment"].mean()), 1),
             "avg_load": round(self._safe_float(session_report["Cognitive_Load"].mean()), 1),
             "avg_fatigue": round(self._safe_float(session_report["Fatigue_Risk"].mean()), 1),
+            "avg_drift_trend": round(self._safe_float(session_report.get("Drift_Trend", pd.Series(dtype=float)).mean()), 1),
+            "avg_switching": round(self._safe_float(session_report.get("Switching_Index", pd.Series(dtype=float)).mean()), 1),
             "high_load_ratio": high_load_ratio,
             "low_confidence_ratio": low_confidence_ratio,
+            "productive_struggle_ratio": productive_ratio,
+            "off_task_ratio": off_task_ratio,
             "difficulty_count": int(len(session_events.index)),
             "review_priority": review_priority,
         }
@@ -386,10 +429,13 @@ class DataLogger:
             avg_alignment = round(self._safe_float(segment.get("Behavioral_Alignment", pd.Series(dtype=float)).mean()), 1) if not segment.empty else 0.0
             avg_load = round(self._safe_float(segment.get("Cognitive_Load", pd.Series(dtype=float)).mean()), 1) if not segment.empty else 0.0
             avg_fatigue = round(self._safe_float(segment.get("Fatigue_Risk", pd.Series(dtype=float)).mean()), 1) if not segment.empty else 0.0
+            avg_drift_trend = round(self._safe_float(segment.get("Drift_Trend", pd.Series(dtype=float)).mean()), 1) if not segment.empty else 0.0
+            avg_switching = round(self._safe_float(segment.get("Switching_Index", pd.Series(dtype=float)).mean()), 1) if not segment.empty else 0.0
             low_conf_ratio = self._ratio((segment.get("Confidence_Level") == "low").sum(), len(segment.index)) if not segment.empty else 0.0
+            state_hint = self._mode_or_default(segment.get("State_Hint"), "stable")
             missed_risk = self._missed_content_risk(severity, avg_load, low_conf_ratio)
 
-            review_note = str(row.get("Review_Note", "")).strip() or self._review_action(severity, primary_mode, avg_fatigue)
+            review_note = str(row.get("Review_Note", "")).strip() or self._review_action(severity, primary_mode, avg_fatigue, state_hint)
             events.append({
                 "event_id": self._safe_int(row.get("Event_ID", 0)),
                 "severity": severity,
@@ -406,12 +452,16 @@ class DataLogger:
                 "avg_alignment": avg_alignment,
                 "avg_load": avg_load,
                 "avg_fatigue": avg_fatigue,
+                "avg_drift_trend": avg_drift_trend,
+                "avg_switching": avg_switching,
+                "state_hint": state_hint,
+                "state_hint_label": self._state_hint_label(state_hint),
                 "missed_content_risk": missed_risk,
                 "trigger_label": str(row.get("Primary_Label", "")).strip() or "Load rising",
                 "trigger_reason": str(row.get("Trigger_Reason", "")).strip() or "State change detected",
                 "guidance": str(row.get("Guidance", "")).strip() or "Review this segment carefully.",
                 "review_note": review_note,
-                "catch_up_action": self._catch_up_action(severity, primary_mode, avg_fatigue, missed_risk),
+                "catch_up_action": self._catch_up_action(severity, primary_mode, avg_fatigue, missed_risk, state_hint),
             })
 
         return events
@@ -427,12 +477,15 @@ class DataLogger:
                     "high_load": [],
                     "low_confidence": [],
                     "fatigue": [],
+                    "productive_struggle": [],
+                    "off_task": [],
                 },
             }
 
         load_levels = session_report.get("Load_Level", pd.Series(dtype=str)).fillna("").astype(str).str.lower()
         confidence_levels = session_report.get("Confidence_Level", pd.Series(dtype=str)).fillna("").astype(str).str.lower()
         fatigue_risk = pd.to_numeric(session_report.get("Fatigue_Risk", pd.Series(dtype=float)), errors="coerce").fillna(0)
+        state_hints = session_report.get("State_Hint", pd.Series(dtype=str)).fillna("").astype(str).str.lower()
 
         return {
             "samples": sample_count,
@@ -451,6 +504,8 @@ class DataLogger:
                 "high_load": self._mask_segments(load_levels.eq("high")),
                 "low_confidence": self._mask_segments(confidence_levels.eq("low")),
                 "fatigue": self._mask_segments(fatigue_risk >= 55),
+                "productive_struggle": self._mask_segments(state_hints.eq("productive_struggle")),
+                "off_task": self._mask_segments(state_hints.eq("off_task_risk")),
             },
         }
 
@@ -471,6 +526,11 @@ class DataLogger:
             actions.append({
                 "title": "Reduce fatigue before retrying",
                 "detail": "Fatigue stayed elevated in this session. Take a short break before replaying the flagged section.",
+            })
+        elif top_event.get("state_hint") == "productive_struggle":
+            actions.append({
+                "title": "Treat this as a hard concept, not just a drift",
+                "detail": "The strongest event stayed relatively aligned. Rebuild the concept slowly instead of only recalibrating posture.",
             })
 
         if summary.get("low_confidence_ratio", 0) >= 18:
@@ -526,6 +586,23 @@ class DataLogger:
             "tone": "warn" if self._safe_float(summary.get("avg_load", 0)) >= 50 else "good",
         })
 
+        struggle_value = self._safe_float(summary.get("productive_struggle_ratio", 0))
+        off_task_value = self._safe_float(summary.get("off_task_ratio", 0))
+        if struggle_value >= off_task_value:
+            insights.append({
+                "label": "Challenge type",
+                "value": "Aligned effort",
+                "detail": f"{int(round(struggle_value))}% of samples looked like productive struggle, which is more consistent with concept difficulty than simple drift.",
+                "tone": "cool" if struggle_value >= 10 else "good",
+            })
+        else:
+            insights.append({
+                "label": "Challenge type",
+                "value": "Drift pressure",
+                "detail": f"{int(round(off_task_value))}% of samples were tagged as off-task risk, suggesting switching or misalignment was more dominant.",
+                "tone": "warn" if off_task_value >= 10 else "good",
+            })
+
         fatigue_value = self._safe_float(summary.get("avg_fatigue", 0))
         insights.append({
             "label": "Fatigue drift",
@@ -566,7 +643,11 @@ class DataLogger:
             return "medium"
         return "low"
 
-    def _review_action(self, severity, task_mode, avg_fatigue):
+    def _review_action(self, severity, task_mode, avg_fatigue, state_hint="stable"):
+        if state_hint == "productive_struggle":
+            return "This looks like a genuine challenge point. Rebuild the concept slowly and check the exact reasoning step that raised the effort."
+        if state_hint == "off_task_risk":
+            return "This looks more like drift or target switching. Recenter on one source before replaying the content."
         if severity == "high" and avg_fatigue >= 45:
             return "Pause first, then replay this segment slowly with a fresh posture baseline."
         if task_mode == "note-taking":
@@ -577,7 +658,11 @@ class DataLogger:
             return "Replay this segment first and reduce the pace while following the same material."
         return "Review this segment once more and confirm the main idea before moving on."
 
-    def _catch_up_action(self, severity, task_mode, avg_fatigue, missed_risk):
+    def _catch_up_action(self, severity, task_mode, avg_fatigue, missed_risk, state_hint="stable"):
+        if state_hint == "productive_struggle":
+            return "Replay the segment slowly, keep the same target on screen, and rebuild the difficult concept step by step."
+        if state_hint == "off_task_risk":
+            return "Reduce target switching, recalibrate if needed, and replay the segment while following only one source."
         if severity == "high" and missed_risk == "high":
             return "Replay the whole segment from the start and rebuild the missing context before continuing."
         if avg_fatigue >= 45:
@@ -587,6 +672,17 @@ class DataLogger:
         if task_mode == "lecture":
             return "Replay the explanation and pause on the point where the load started to rise."
         return "Revisit this segment once and verify the key concept before continuing."
+
+    def _state_hint_label(self, state_hint):
+        mapping = {
+            "stable": "Stable",
+            "load_rising": "Load rising",
+            "productive_struggle": "Productive struggle",
+            "off_task_risk": "Off-task risk",
+            "fatigue_risk": "Fatigue risk",
+            "signal_check": "Signal check",
+        }
+        return mapping.get(str(state_hint).strip().lower(), "Stable")
 
     def _mask_segments(self, mask):
         segments = []

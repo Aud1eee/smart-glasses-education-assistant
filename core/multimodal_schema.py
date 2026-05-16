@@ -47,6 +47,9 @@ def build_multimodal_blueprint():
         "current_stage": "phase-1 posture proxy",
         "current_active_signals": [
             "pitch",
+            "yaw",
+            "roll",
+            "movement_intensity",
             "task_mode",
             "stability",
             "behavioral_alignment",
@@ -58,19 +61,19 @@ def build_multimodal_blueprint():
             {
                 "name": "behavioral_alignment",
                 "status": "active",
-                "current_signals": ["pitch", "variance", "stability", "task_mode"],
-                "future_signals": ["yaw", "roll", "gaze_target", "face_presence"],
+                "current_signals": ["pitch", "yaw", "roll", "variance", "stability", "task_mode"],
+                "future_signals": ["gaze_target", "face_presence"],
             },
             {
                 "name": "cognitive_effort",
                 "status": "proxy-active",
-                "current_signals": ["drift", "variance", "alignment_cost"],
+                "current_signals": ["drift", "variance", "alignment_cost", "switching_index", "drift_trend"],
                 "future_signals": ["pupil_feature", "blink_rate", "fixation_dwell", "reread_pattern"],
             },
             {
                 "name": "fatigue_risk",
                 "status": "active",
-                "current_signals": ["passive_drift", "low_motion_window", "sustained_slump"],
+                "current_signals": ["passive_drift", "low_motion_window", "sustained_slump", "movement_intensity"],
                 "future_signals": ["eye_openness", "blink_duration_ms", "perclos"],
             },
             {

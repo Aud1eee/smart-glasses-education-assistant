@@ -1,350 +1,350 @@
-Session_ID,Timestamp,Relative_Pitch,Task_Mode,Stability,Is_Alert,Focus_Score,Cognitive_Load,Load_Level,Behavioral_Alignment,Behavioral_Level,Fatigue_Risk,Fatigue_Level,Uncertainty_Score,Confidence_Level,Guidance,Phase,Elapsed_Seconds,Cycle_Index
-demo-session-1,00:01.00,0.04,reading,100,False,99.9,0.1,low,99.9,aligned,0.0,low,35.0,medium,Keep one learning target and settle into the current mode.,focus,0,1
-demo-session-1,00:01.12,0.04,reading,100,False,99.9,0.1,low,99.9,aligned,0.0,low,28.0,medium,Keep one learning target and settle into the current mode.,focus,0,1
-demo-session-1,00:01.24,0.11,reading,100,False,99.8,0.2,low,99.8,aligned,0.0,low,21.0,high,Keep one learning target and settle into the current mode.,focus,0,1
-demo-session-1,00:01.36,0.14,reading,100,False,99.7,0.3,low,99.7,aligned,0.0,low,14.0,high,Keep one learning target and settle into the current mode.,focus,0,1
-demo-session-1,00:01.48,0.31,reading,100,False,99.4,0.6,low,99.4,aligned,0.0,low,7.0,high,Keep one learning target and settle into the current mode.,focus,0,1
-demo-session-1,00:01.60,0.42,reading,100,False,99.2,0.8,low,99.2,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,0,1
-demo-session-1,00:01.72,0.47,reading,100,False,99.1,0.9,low,99.1,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,0,1
-demo-session-1,00:01.84,0.62,reading,100,False,98.7,1.3,low,98.7,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,0,1
-demo-session-1,00:01.96,0.64,reading,100,False,98.7,1.3,low,98.7,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,0,1
-demo-session-1,00:02.08,0.73,reading,100,False,98.5,1.5,low,98.5,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,1,1
-demo-session-1,00:02.20,0.72,reading,100,False,98.5,1.5,low,98.5,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,1,1
-demo-session-1,00:02.32,0.69,reading,100,False,98.5,1.5,low,98.5,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,1,1
-demo-session-1,00:02.44,0.72,reading,100,False,98.4,1.6,low,98.4,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,1,1
-demo-session-1,00:02.56,0.79,reading,100,False,98.3,1.7,low,98.3,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,1,1
-demo-session-1,00:02.68,0.65,reading,100,False,98.6,1.4,low,98.6,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,1,1
-demo-session-1,00:02.80,0.53,reading,100,False,98.9,1.1,low,98.9,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,1,1
-demo-session-1,00:02.92,0.48,reading,100,False,99.0,1.0,low,99.0,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,1,1
-demo-session-1,00:03.04,0.45,reading,100,False,99.1,0.9,low,99.1,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,2,1
-demo-session-1,00:03.16,0.31,reading,100,False,99.4,0.6,low,99.4,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,2,1
-demo-session-1,00:03.28,0.11,reading,100,False,99.7,0.3,low,99.7,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,2,1
-demo-session-1,00:03.40,0.05,reading,100,False,99.8,0.2,low,99.8,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,2,1
-demo-session-1,00:03.52,0.24,reading,100,False,99.4,0.6,low,99.4,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,2,1
-demo-session-1,00:03.64,0.31,reading,100,False,99.3,0.7,low,99.3,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,2,1
-demo-session-1,00:03.76,0.51,reading,100,False,98.9,1.1,low,98.9,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,2,1
-demo-session-1,00:03.88,0.71,reading,100,False,98.5,1.5,low,98.5,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,2,1
-demo-session-1,00:04.00,0.87,reading,100,False,98.2,1.8,low,98.2,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,3,1
-demo-session-1,00:04.12,0.94,reading,100,False,98.1,1.9,low,98.1,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,3,1
-demo-session-1,00:04.24,0.89,reading,100,False,98.1,1.9,low,98.1,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,3,1
-demo-session-1,00:04.36,0.97,reading,100,False,98.0,2.0,low,98.0,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,3,1
-demo-session-1,00:04.48,0.92,reading,100,False,98.0,2.0,low,98.0,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,3,1
-demo-session-1,00:04.60,0.85,reading,100,False,98.2,1.8,low,98.2,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,3,1
-demo-session-1,00:04.72,0.81,reading,100,False,98.2,1.8,low,98.2,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,3,1
-demo-session-1,00:04.84,0.71,reading,100,False,98.4,1.6,low,98.4,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,3,1
-demo-session-1,00:04.96,0.69,reading,100,False,98.5,1.5,low,98.5,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,3,1
-demo-session-1,00:05.08,0.62,reading,100,False,98.7,1.3,low,98.7,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,4,1
-demo-session-1,00:05.20,0.49,reading,100,False,99.0,1.0,low,99.0,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,4,1
-demo-session-1,00:05.32,0.24,reading,100,False,99.4,0.6,low,99.4,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,4,1
-demo-session-1,00:05.44,0.07,reading,100,False,99.7,0.3,low,99.7,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,4,1
-demo-session-1,00:05.56,0.07,reading,100,False,99.6,0.3,low,99.6,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,4,1
-demo-session-1,00:05.68,0.27,reading,100,False,99.2,0.7,low,99.2,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,4,1
-demo-session-1,00:05.80,0.42,reading,100,False,99.0,1.0,low,99.0,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,4,1
-demo-session-1,00:05.92,0.52,reading,100,False,98.8,1.2,low,98.8,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,4,1
-demo-session-1,00:06.04,0.72,reading,100,False,98.5,1.5,low,98.5,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,5,1
-demo-session-1,00:06.16,0.84,reading,100,False,98.2,1.8,low,98.2,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,5,1
-demo-session-1,00:06.28,0.84,reading,100,False,98.3,1.7,low,98.3,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,5,1
-demo-session-1,00:06.40,0.89,reading,100,False,98.1,1.9,low,98.1,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,5,1
-demo-session-1,00:06.52,0.91,reading,100,False,98.1,1.9,low,98.1,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,5,1
-demo-session-1,00:06.64,0.96,reading,100,False,98.0,2.0,low,98.0,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,5,1
-demo-session-1,00:06.76,0.94,reading,100,False,98.0,2.0,low,98.0,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,5,1
-demo-session-1,00:06.88,0.78,reading,100,False,98.3,1.7,low,98.3,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,5,1
-demo-session-1,00:07.00,0.77,reading,100,False,98.3,1.7,low,98.3,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,6,1
-demo-session-1,00:07.12,0.54,reading,100,False,98.8,1.2,low,98.8,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,6,1
-demo-session-1,00:07.24,0.38,reading,100,False,99.1,0.9,low,99.1,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,6,1
-demo-session-1,00:07.36,0.29,reading,100,False,99.3,0.7,low,99.3,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,6,1
-demo-session-1,00:07.48,0.04,reading,100,False,99.7,0.3,low,99.7,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,6,1
-demo-session-1,00:07.60,0.11,reading,100,False,99.6,0.4,low,99.6,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,6,1
-demo-session-1,00:07.72,0.35,reading,100,False,99.1,0.9,low,99.1,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,6,1
-demo-session-1,00:07.84,0.43,reading,100,False,98.9,1.0,low,98.9,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,6,1
-demo-session-1,00:07.96,0.5,reading,100,False,98.8,1.2,low,98.8,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,6,1
-demo-session-1,00:08.08,0.61,reading,100,False,98.6,1.4,low,98.6,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,7,1
-demo-session-1,00:08.20,0.64,reading,100,False,98.6,1.4,low,98.6,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,7,1
-demo-session-1,00:08.32,0.79,reading,100,False,98.3,1.7,low,98.3,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,7,1
-demo-session-1,00:08.44,0.8,reading,100,False,98.3,1.7,low,98.3,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,7,1
-demo-session-1,00:08.56,0.82,reading,100,False,98.3,1.7,low,98.3,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,7,1
-demo-session-1,00:08.68,0.82,reading,100,False,98.3,1.7,low,98.3,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,7,1
-demo-session-1,00:08.80,0.81,reading,100,False,98.3,1.7,low,98.3,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,7,1
-demo-session-1,00:08.92,0.68,reading,100,False,98.6,1.4,low,98.6,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,7,1
-demo-session-1,00:09.03,0.53,reading,100,False,98.9,1.1,low,98.9,aligned,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,8,1
-demo-session-1,00:09.15,0.47,reading,100,False,99.0,1.0,low,99.0,aligned,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,8,1
-demo-session-1,00:09.27,0.34,reading,100,False,99.3,0.7,low,99.3,aligned,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,8,1
-demo-session-1,00:09.39,0.32,reading,100,False,99.3,0.7,low,99.3,aligned,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,8,1
-demo-session-1,00:09.51,0.11,reading,100,False,99.7,0.3,low,99.7,aligned,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,8,1
-demo-session-1,00:09.63,0.07,reading,100,False,99.7,0.3,low,99.7,aligned,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,8,1
-demo-session-1,00:09.75,0.32,reading,100,False,99.2,0.8,low,99.2,aligned,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,8,1
-demo-session-1,00:09.87,0.5,reading,100,False,98.9,1.1,low,98.9,aligned,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,8,1
-demo-session-1,00:09.99,0.55,reading,100,False,98.8,1.2,low,98.8,aligned,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,8,1
-demo-session-1,00:10.11,0.63,reading,100,False,98.7,1.3,low,98.7,aligned,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,9,1
-demo-session-1,00:10.23,0.77,reading,100,False,98.4,1.6,low,98.4,aligned,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,9,1
-demo-session-1,00:10.35,0.74,reading,100,False,98.5,1.5,low,98.5,aligned,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,9,1
-demo-session-1,00:10.47,0.81,reading,100,False,98.4,1.6,low,98.4,aligned,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,9,1
-demo-session-1,00:10.59,0.79,reading,100,False,98.4,1.6,low,98.4,aligned,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,9,1
-demo-session-1,00:10.71,0.74,reading,100,False,98.5,1.5,low,98.5,aligned,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,9,1
-demo-session-1,00:10.83,0.67,reading,100,False,98.6,1.4,low,98.6,aligned,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,9,1
-demo-session-1,00:10.95,6.57,reading,90,False,79.6,20.5,low,79.6,aligned,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,9,1
-demo-session-1,00:11.07,10.61,reading,66,False,51.9,48.1,medium,51.9,drifting,0.3,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,10,1
-demo-session-1,00:11.19,13.62,reading,30,False,24.6,82.3,high,28.3,misaligned,7.1,low,9.5,high,Behavior drift is high. Reduce switching and keep one target.,focus,10,1
-demo-session-1,00:11.31,15.9,reading,0,False,13.3,96.4,high,18.6,misaligned,12.2,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,10,1
-demo-session-1,00:11.43,17.78,reading,0,False,9.9,100.0,high,15.2,misaligned,16.4,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,10,1
-demo-session-1,00:11.55,18.88,reading,0,False,8.5,100.0,high,13.1,misaligned,19.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,10,1
-demo-session-1,00:11.67,19.84,reading,0,False,7.4,100.0,high,11.4,misaligned,21.1,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,10,1
-demo-session-1,00:11.79,20.57,reading,0,False,6.5,100.0,high,10.0,misaligned,22.8,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,10,1
-demo-session-1,00:11.91,21.19,reading,0,False,5.8,100.0,high,8.9,misaligned,24.2,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,10,1
-demo-session-1,00:12.03,21.55,reading,0,False,5.3,100.0,high,8.2,misaligned,25.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,11,1
-demo-session-1,00:12.15,21.75,reading,0,False,5.1,100.0,high,7.8,misaligned,25.4,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,11,1
-demo-session-1,00:12.27,21.59,reading,0,False,5.3,100.0,high,8.2,misaligned,25.1,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,11,1
-demo-session-1,00:12.39,21.4,reading,0,False,5.5,100.0,high,8.5,misaligned,24.6,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,11,1
-demo-session-1,00:12.51,21.11,reading,0,False,5.9,100.0,high,9.0,misaligned,24.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,11,1
-demo-session-1,00:12.63,20.96,reading,17,False,8.1,100.0,high,12.4,misaligned,23.6,low,16.3,high,Behavior drift is high. Reduce switching and keep one target.,focus,11,1
-demo-session-1,00:12.75,20.73,reading,57,False,24.4,77.2,high,25.2,misaligned,23.1,low,0.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,11,1
-demo-session-1,00:12.87,20.15,reading,78,False,43.6,58.1,medium,44.5,drifting,21.8,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,11,1
-demo-session-1,00:12.99,19.62,reading,90,False,53.9,48.4,medium,55.2,drifting,30.7,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,11,1
-demo-session-1,00:13.11,19.15,reading,95,False,58.9,43.7,medium,60.3,drifting,34.3,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,12,1
-demo-session-1,00:13.23,18.75,reading,96,False,60.6,42.1,medium,62.0,drifting,35.0,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,12,1
-demo-session-1,00:13.35,18.49,reading,96,False,60.8,41.8,medium,62.2,drifting,34.9,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,12,1
-demo-session-1,00:13.47,18.32,reading,94,False,60.0,42.6,medium,61.4,drifting,34.4,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,12,1
-demo-session-1,00:13.59,18.09,reading,93,False,59.4,43.1,medium,60.8,drifting,33.6,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,12,1
-demo-session-1,00:13.71,17.86,reading,92,False,59.0,43.5,medium,60.3,drifting,33.1,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,12,1
-demo-session-1,00:13.83,17.92,reading,92,False,58.7,43.8,medium,60.1,drifting,33.8,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,12,1
-demo-session-1,00:13.95,18.03,reading,92,False,58.9,43.8,medium,60.3,drifting,35.3,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,12,1
-demo-session-1,00:14.07,18.3,reading,94,False,59.3,43.4,medium,60.8,drifting,37.5,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,13,1
-demo-session-1,00:14.19,18.75,reading,95,False,59.5,43.5,medium,61.1,drifting,40.3,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,13,1
-demo-session-1,00:14.31,19.11,reading,96,False,59.7,43.5,medium,61.4,drifting,42.8,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,13,1
-demo-session-1,00:14.43,19.45,reading,97,False,59.9,43.4,medium,61.7,drifting,45.2,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,13,1
-demo-session-1,00:14.55,19.87,reading,98,False,59.7,43.8,medium,61.6,drifting,47.4,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,13,1
-demo-session-1,00:14.67,20.31,reading,98,False,58.8,44.8,medium,60.7,drifting,49.1,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,13,1
-demo-session-1,00:14.79,20.51,reading,97,False,57.7,45.9,medium,59.7,drifting,49.8,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,13,1
-demo-session-1,00:14.91,21.05,reading,96,False,55.7,48.0,medium,57.7,drifting,50.9,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,13,1
-demo-session-1,00:15.03,21.45,reading,94,False,53.6,50.2,medium,55.6,drifting,51.3,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,14,1
-demo-session-1,00:15.15,21.81,reading,93,False,51.7,52.1,medium,53.7,drifting,51.7,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,14,1
-demo-session-1,00:15.27,22.03,reading,91,False,50.0,53.8,high,52.0,misaligned,51.8,medium,0.0,high,Fatigue is mixing with drift. Slow down and rest your eyes.,focus,14,1
-demo-session-1,00:15.39,22.02,reading,91,False,49.6,54.2,high,51.6,misaligned,52.1,medium,0.0,high,Fatigue is mixing with drift. Slow down and rest your eyes.,focus,14,1
-demo-session-1,00:15.51,21.96,reading,91,False,49.8,54.0,medium,51.9,drifting,53.0,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,14,1
-demo-session-1,00:15.63,21.72,reading,92,False,51.1,52.8,medium,53.2,drifting,54.0,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,14,1
-demo-session-1,00:15.75,21.64,reading,93,False,52.3,51.7,medium,54.5,drifting,55.6,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,14,1
-demo-session-1,00:15.87,21.25,reading,95,False,54.4,49.7,medium,56.6,drifting,56.8,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,14,1
-demo-session-1,00:15.99,20.84,reading,96,False,56.2,48.0,medium,58.4,drifting,57.6,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,14,1
-demo-session-1,00:16.11,20.47,reading,97,False,57.7,46.5,medium,59.9,drifting,58.3,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,15,1
-demo-session-1,00:16.23,20.04,reading,98,False,59.0,45.2,medium,61.2,drifting,58.4,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,15,1
-demo-session-1,00:16.35,19.67,reading,98,False,59.6,44.6,medium,61.8,drifting,58.2,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,15,1
-demo-session-1,00:16.47,19.19,reading,97,False,59.7,44.3,medium,61.9,drifting,57.2,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,15,1
-demo-session-1,00:16.59,18.73,reading,96,False,59.6,44.4,medium,61.7,drifting,55.9,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,15,1
-demo-session-1,00:16.71,18.39,reading,94,False,58.8,45.1,medium,60.9,drifting,54.6,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,15,1
-demo-session-1,00:16.83,18.09,reading,92,False,58.0,45.8,medium,60.0,drifting,53.5,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,15,1
-demo-session-1,00:16.95,17.95,reading,91,False,57.3,46.5,medium,59.3,drifting,53.1,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,15,1
-demo-session-1,00:17.07,17.75,reading,91,False,57.3,46.4,medium,59.3,drifting,53.0,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,16,1
-demo-session-1,00:17.19,17.97,reading,91,False,57.1,46.7,medium,59.2,drifting,54.5,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,16,1
-demo-session-1,00:17.31,18.1,reading,92,False,57.6,46.4,medium,59.7,drifting,56.3,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,16,1
-demo-session-1,00:17.43,18.13,reading,93,False,58.4,45.7,medium,60.6,drifting,58.0,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,16,1
-demo-session-1,00:17.55,18.31,reading,95,False,59.5,44.8,medium,61.8,drifting,60.4,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,16,1
-demo-session-1,00:17.67,18.6,reading,96,False,60.0,44.5,medium,62.4,drifting,63.0,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,16,1
-demo-session-1,00:17.79,18.96,reading,97,False,60.2,44.4,high,62.7,drifting,65.5,high,0.0,high,Fatigue is mixing with drift. Slow down and rest your eyes.,focus,16,1
-demo-session-1,00:17.91,19.26,reading,98,False,60.3,44.5,high,62.9,drifting,67.6,high,0.0,high,Fatigue is mixing with drift. Slow down and rest your eyes.,focus,16,1
-demo-session-1,00:18.03,19.88,reading,98,False,59.1,45.8,high,61.8,drifting,69.8,high,0.0,high,Fatigue is mixing with drift. Slow down and rest your eyes.,focus,17,1
-demo-session-1,00:18.15,20.48,reading,98,False,57.6,47.5,high,60.3,drifting,71.4,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,17,1
-demo-session-1,00:18.27,20.83,reading,96,False,55.7,49.4,high,58.5,drifting,72.1,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,17,1
-demo-session-1,00:18.39,21.15,reading,95,False,54.0,51.1,high,56.7,drifting,72.4,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,17,1
-demo-session-1,00:18.51,21.3,reading,94,False,52.7,52.4,high,55.4,drifting,72.5,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,17,1
-demo-session-1,00:18.63,21.42,reading,93,False,51.6,53.5,high,54.3,drifting,72.8,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,17,1
-demo-session-1,00:18.75,21.59,reading,92,False,50.6,54.5,high,53.4,drifting,73.4,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,17,1
-demo-session-1,00:18.87,21.65,reading,92,False,50.5,54.7,high,53.3,drifting,74.3,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,17,1
-demo-session-1,00:18.99,21.82,reading,92,False,50.2,55.1,high,53.1,drifting,75.6,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,17,1
-demo-session-1,00:19.11,21.6,reading,93,False,51.3,54.0,high,54.2,drifting,75.7,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,18,1
-demo-session-1,00:19.23,21.28,reading,94,False,52.9,52.4,high,55.8,drifting,75.9,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,18,1
-demo-session-1,00:19.35,21.26,reading,96,False,54.2,51.2,high,57.1,drifting,77.0,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,18,1
-demo-session-1,00:19.47,20.95,reading,97,False,55.9,49.6,high,58.8,drifting,77.3,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,18,1
-demo-session-1,00:19.59,20.46,reading,98,False,57.7,47.8,high,60.6,drifting,77.0,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,18,1
-demo-session-1,00:19.71,20.11,reading,99,False,58.9,46.5,high,61.8,drifting,76.7,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,18,1
-demo-session-1,00:19.83,19.55,reading,98,False,59.6,45.7,high,62.5,drifting,75.2,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,18,1
-demo-session-1,00:19.95,19.23,reading,98,False,59.8,45.4,high,62.6,drifting,73.9,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,18,1
-demo-session-1,00:20.07,19.07,reading,97,False,59.3,45.8,high,62.1,drifting,72.8,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,19,1
-demo-session-1,00:20.19,18.86,reading,96,False,58.9,46.1,high,61.6,drifting,71.6,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,19,1
-demo-session-1,00:20.31,18.62,reading,95,False,58.6,46.3,high,61.3,drifting,70.4,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,19,1
-demo-session-1,00:20.43,18.29,reading,94,False,58.5,46.3,high,61.1,drifting,68.9,high,0.0,high,Fatigue risk is staying elevated. Pause briefly before continuing.,focus,19,1
-demo-session-1,00:20.55,18.13,reading,93,False,58.2,46.5,high,60.8,drifting,68.1,high,0.0,high,Fatigue risk is staying elevated. Pause briefly before continuing.,focus,19,1
-demo-session-1,00:20.67,18.01,reading,93,False,58.3,46.4,high,60.9,drifting,67.6,high,0.0,high,Fatigue risk is staying elevated. Pause briefly before continuing.,focus,19,1
-demo-session-1,00:20.79,18.23,reading,94,False,58.5,46.2,high,61.1,drifting,68.6,high,0.0,high,Fatigue risk is staying elevated. Pause briefly before continuing.,focus,19,1
-demo-session-1,00:20.91,23.58,reading,90,False,45.5,59.8,high,48.3,misaligned,74.7,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,19,1
-demo-session-1,00:21.03,27.71,reading,74,False,29.6,75.2,high,32.2,misaligned,26.0,low,0.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,20,1
-demo-session-1,00:21.15,30.58,reading,46,False,6.7,100.0,high,10.3,misaligned,26.0,low,1.1,high,Behavior drift is high. Reduce switching and keep one target.,focus,20,1
-demo-session-1,00:21.27,32.73,reading,9,False,2.3,100.0,high,3.6,misaligned,26.0,low,20.8,high,Behavior drift is high. Reduce switching and keep one target.,focus,20,1
-demo-session-1,00:21.39,34.69,reading,0,False,1.3,100.0,high,2.0,misaligned,26.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,20,1
-demo-session-1,00:21.51,36.23,reading,0,False,1.3,100.0,high,2.0,misaligned,26.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,20,1
-demo-session-1,00:21.64,37.25,reading,0,False,1.3,100.0,high,2.0,misaligned,26.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,20,1
-demo-session-1,00:21.76,37.88,reading,0,False,1.3,100.0,high,2.0,misaligned,26.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,20,1
-demo-session-1,00:21.88,38.19,reading,0,True,0.0,100.0,high,0.0,misaligned,34.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,20,1
-demo-session-1,00:22.00,38.19,reading,0,True,0.0,100.0,high,0.0,misaligned,34.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,21,1
-demo-session-1,00:22.12,37.69,reading,0,True,0.0,100.0,high,0.0,misaligned,34.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,21,1
-demo-session-1,00:22.24,37.25,reading,0,True,0.0,100.0,high,0.0,misaligned,34.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,21,1
-demo-session-1,00:22.36,36.6,reading,0,True,0.0,100.0,high,0.0,misaligned,34.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,21,1
-demo-session-1,00:22.48,35.74,reading,0,True,0.0,100.0,high,0.0,misaligned,34.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,21,1
-demo-session-1,00:22.60,34.93,reading,29,True,0.0,100.0,high,0.0,misaligned,34.0,low,10.2,high,Behavior drift is high. Reduce switching and keep one target.,focus,21,1
-demo-session-1,00:22.72,34.35,reading,65,True,7.9,100.0,high,12.2,misaligned,34.0,low,0.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,21,1
-demo-session-1,00:22.84,33.84,reading,81,True,21.1,87.7,high,25.9,misaligned,34.0,low,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,21,1
-demo-session-1,00:22.96,33.7,reading,87,True,26.1,83.3,high,31.2,misaligned,42.2,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,21,1
-demo-session-1,00:23.08,33.78,reading,89,True,27.5,82.1,high,32.6,misaligned,44.2,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,22,1
-demo-session-1,00:23.20,33.68,reading,88,True,26.7,82.9,high,31.8,misaligned,44.2,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,22,1
-demo-session-1,00:23.32,34.05,reading,87,True,25.9,83.7,high,31.0,misaligned,44.2,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,22,1
-demo-session-1,00:23.44,34.55,reading,87,True,26.0,83.6,high,31.2,misaligned,45.2,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,22,1
-demo-session-1,00:23.56,35.12,reading,89,True,27.2,82.5,high,32.5,misaligned,47.1,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,22,1
-demo-session-1,00:23.68,35.45,reading,91,True,29.0,80.9,high,34.4,misaligned,49.6,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,22,1
-demo-session-1,00:23.80,35.85,reading,93,True,30.8,79.3,high,36.3,misaligned,52.2,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,22,1
-demo-session-1,00:23.92,36.34,reading,95,True,32.1,78.1,high,37.6,misaligned,54.1,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,22,1
-demo-session-1,00:24.04,36.83,reading,95,True,32.4,78.0,high,38.0,misaligned,55.2,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,23,1
-demo-session-1,00:24.16,37.29,reading,95,True,31.9,78.4,high,37.5,misaligned,55.4,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,23,1
-demo-session-1,00:24.28,37.87,reading,93,True,30.3,80.0,high,35.8,misaligned,54.6,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,23,1
-demo-session-1,00:24.40,38.39,reading,90,True,28.0,82.2,high,33.5,misaligned,53.3,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,23,1
-demo-session-1,00:24.52,38.63,reading,88,True,26.2,83.9,high,31.6,misaligned,52.4,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,23,1
-demo-session-1,00:24.64,38.44,reading,87,True,25.5,84.6,high,30.9,misaligned,52.5,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,23,1
-demo-session-1,00:24.76,38.2,reading,87,True,25.8,84.4,high,31.3,misaligned,53.7,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,23,1
-demo-session-1,00:24.88,37.87,reading,89,True,27.0,83.3,high,32.6,misaligned,55.5,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,23,1
-demo-session-1,00:25.00,37.0,reading,91,True,28.9,81.6,high,34.6,misaligned,58.2,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,24,1
-demo-session-1,00:25.12,36.46,reading,93,True,30.6,80.1,high,36.4,misaligned,60.6,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,24,1
-demo-session-1,00:25.24,36.0,reading,95,True,31.8,79.0,high,37.6,misaligned,62.4,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,24,1
-demo-session-1,00:25.36,35.43,reading,95,True,32.0,78.9,high,37.9,misaligned,63.4,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,24,1
-demo-session-1,00:25.48,34.89,reading,95,True,31.7,79.2,high,37.5,misaligned,63.7,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,24,1
-demo-session-1,00:25.60,34.32,reading,93,True,30.2,80.7,high,36.0,misaligned,63.3,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,24,1
-demo-session-1,00:25.72,33.77,reading,90,True,28.0,82.8,high,33.8,misaligned,62.0,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,24,1
-demo-session-1,00:25.84,33.8,reading,88,True,26.2,84.5,high,31.9,misaligned,61.1,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,24,1
-demo-session-1,00:25.96,33.72,reading,86,True,24.6,86.0,high,30.3,misaligned,60.4,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,24,1
-demo-session-1,00:26.08,34.12,reading,86,True,24.4,86.3,high,30.1,misaligned,60.8,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,25,1
-demo-session-1,00:26.20,34.72,reading,87,True,25.3,85.5,high,31.1,misaligned,62.5,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,25,1
-demo-session-1,00:26.32,35.08,reading,89,True,27.0,83.9,high,32.9,misaligned,65.1,high,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,25,1
-demo-session-1,00:26.44,35.58,reading,92,True,29.1,82.0,high,35.1,misaligned,67.7,high,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,25,1
-demo-session-1,00:26.56,36.45,reading,94,True,30.6,80.6,high,36.7,misaligned,69.9,high,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,25,1
-demo-session-1,00:26.68,37.13,reading,95,True,31.4,80.0,high,37.5,misaligned,71.4,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,25,1
-demo-session-1,00:26.80,37.44,reading,94,True,30.9,80.5,high,37.0,misaligned,71.8,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,25,1
-demo-session-1,00:26.92,37.7,reading,93,True,29.9,81.5,high,36.0,misaligned,71.6,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,25,1
-demo-session-1,00:27.04,37.89,reading,91,True,28.5,82.9,high,34.6,misaligned,71.1,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,26,1
-demo-session-1,00:27.16,38.37,reading,89,True,26.7,84.6,high,32.8,misaligned,70.2,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,26,1
-demo-session-1,00:27.28,38.51,reading,87,True,25.1,86.1,high,31.2,misaligned,69.5,high,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,26,1
-demo-session-1,00:27.40,38.07,reading,87,True,24.9,86.3,high,31.0,misaligned,70.0,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,26,1
-demo-session-1,00:27.52,37.9,reading,88,True,25.8,85.6,high,31.9,misaligned,71.6,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,26,1
-demo-session-1,00:27.64,37.62,reading,90,True,27.2,84.3,high,33.4,misaligned,73.8,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,26,1
-demo-session-1,00:27.76,36.99,reading,92,True,29.2,82.5,high,35.5,misaligned,76.5,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,26,1
-demo-session-1,00:27.88,36.16,reading,94,True,30.9,81.0,high,37.3,misaligned,78.9,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,26,1
-demo-session-1,00:28.00,35.49,reading,95,True,31.6,80.4,high,38.0,misaligned,80.3,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,27,1
-demo-session-1,00:28.12,34.64,reading,95,True,31.2,80.8,high,37.6,misaligned,80.7,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,27,1
-demo-session-1,00:28.24,33.91,reading,93,True,29.5,82.4,high,35.9,misaligned,79.8,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,27,1
-demo-session-1,00:28.36,33.9,reading,90,True,27.3,84.5,high,33.7,misaligned,78.7,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,27,1
-demo-session-1,00:28.48,33.77,reading,88,True,25.6,86.2,high,31.9,misaligned,77.7,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,27,1
-demo-session-1,00:28.60,33.73,reading,86,True,24.0,87.7,high,30.3,misaligned,77.1,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,27,1
-demo-session-1,00:28.72,34.1,reading,86,True,23.7,88.0,high,30.0,misaligned,77.4,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,27,1
-demo-session-1,00:28.84,34.31,reading,86,True,23.9,87.9,high,30.2,misaligned,78.4,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,27,1
-demo-session-1,00:28.96,34.94,reading,88,True,25.3,86.6,high,31.7,misaligned,80.6,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,27,1
-demo-session-1,00:29.08,35.61,reading,90,True,27.2,84.9,high,33.7,misaligned,82.5,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,28,1
-demo-session-1,00:29.20,35.98,reading,92,True,28.8,83.4,high,35.4,misaligned,84.0,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,28,1
-demo-session-1,00:29.32,36.47,reading,94,True,30.2,82.1,high,36.8,misaligned,85.2,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,28,1
-demo-session-1,00:29.44,36.99,reading,95,True,30.9,81.4,high,37.5,misaligned,85.8,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,28,1
-demo-session-1,00:29.56,37.42,reading,94,True,30.4,81.9,high,37.0,misaligned,85.4,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,28,1
-demo-session-1,00:29.68,37.95,reading,92,True,28.8,83.4,high,35.4,misaligned,84.0,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,28,1
-demo-session-1,00:29.80,38.09,reading,90,True,27.2,84.9,high,33.7,misaligned,82.4,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,28,1
-demo-session-1,00:29.92,38.18,reading,89,True,26.0,86.0,high,32.4,misaligned,81.1,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,28,1
-demo-session-1,00:30.04,37.91,reading,88,True,25.7,86.3,high,32.1,misaligned,81.0,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,29,1
-demo-session-1,00:30.16,37.94,reading,89,True,26.1,85.9,high,32.5,misaligned,81.3,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,29,1
-demo-session-1,00:30.28,37.42,reading,90,True,27.2,84.9,high,33.7,misaligned,82.5,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,29,1
-demo-session-1,00:30.40,36.85,reading,92,True,29.0,83.2,high,35.6,misaligned,84.2,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,29,1
-demo-session-1,00:30.52,36.29,reading,94,True,30.6,81.8,high,37.2,misaligned,85.6,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,29,1
-demo-session-1,00:30.64,35.85,reading,96,True,31.9,80.5,high,38.5,misaligned,86.8,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,29,1
-demo-session-1,00:30.76,35.11,reading,96,True,32.0,80.4,high,38.7,misaligned,87.0,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,29,1
-demo-session-1,00:30.88,34.75,reading,95,True,31.3,81.1,high,37.9,misaligned,86.3,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,29,1
-demo-session-1,00:31.00,34.23,reading,94,True,30.0,82.2,high,36.6,misaligned,85.0,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,30,1
-demo-session-1,00:31.12,33.91,reading,91,True,28.2,84.0,high,34.7,misaligned,83.4,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,30,1
-demo-session-1,00:31.24,33.77,reading,89,True,26.5,85.5,high,33.0,misaligned,81.9,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,30,1
-demo-session-1,00:31.36,33.55,reading,88,True,25.4,86.6,high,31.8,misaligned,80.6,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,30,1
-demo-session-1,00:31.48,33.83,reading,88,True,25.2,86.7,high,31.6,misaligned,80.4,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,30,1
-demo-session-1,00:31.60,34.12,reading,89,True,26.0,86.0,high,32.4,misaligned,81.1,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,30,1
-demo-session-1,00:31.72,34.48,reading,90,True,27.2,84.9,high,33.7,misaligned,82.5,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,30,1
-demo-session-1,00:31.84,35.41,reading,92,True,28.8,83.4,high,35.4,misaligned,84.0,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,30,1
-demo-session-1,00:31.96,35.94,reading,94,True,30.5,81.8,high,37.1,misaligned,85.6,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,30,1
-demo-session-1,00:32.08,36.65,reading,95,True,31.3,81.1,high,37.9,misaligned,86.3,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,31,1
-demo-session-1,00:32.20,37.41,reading,94,True,30.6,81.7,high,37.2,misaligned,85.7,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,31,1
-demo-session-1,00:32.32,37.92,reading,93,True,29.3,82.9,high,35.8,misaligned,84.3,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,31,1
-demo-session-1,00:32.44,38.14,reading,90,True,27.3,84.8,high,33.8,misaligned,82.6,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,31,1
-demo-session-1,00:32.56,38.32,reading,88,True,25.5,86.5,high,31.9,misaligned,80.7,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,31,1
-demo-session-1,00:32.68,38.32,reading,86,True,23.9,87.9,high,30.3,misaligned,79.3,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,31,1
-demo-session-1,00:32.80,38.25,reading,85,True,23.2,88.6,high,29.6,misaligned,78.7,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,31,1
-demo-session-1,00:32.92,27.28,reading,66,True,10.8,94.2,high,13.5,misaligned,34.0,low,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,31,1
-demo-session-1,00:33.04,19.78,reading,2,False,7.7,100.0,high,11.8,misaligned,21.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,32,1
-demo-session-1,00:33.16,14.52,reading,0,False,16.1,93.5,high,21.2,misaligned,9.1,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,32,1
-demo-session-1,00:33.28,10.91,reading,0,False,23.1,85.9,high,27.9,misaligned,0.9,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,32,1
-demo-session-1,00:33.40,8.55,reading,0,False,27.4,81.4,high,32.2,misaligned,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,32,1
-demo-session-1,00:33.52,6.89,reading,0,False,30.5,78.3,high,35.3,misaligned,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,32,1
-demo-session-1,00:33.64,5.79,reading,0,False,32.6,76.2,high,37.3,misaligned,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,32,1
-demo-session-1,00:33.76,5.09,reading,0,False,33.9,74.9,high,38.6,misaligned,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,32,1
-demo-session-1,00:33.88,4.67,reading,0,False,34.7,74.1,high,39.4,misaligned,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,32,1
-demo-session-1,00:34.00,4.27,reading,0,False,35.4,73.4,high,40.1,misaligned,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,33,1
-demo-session-1,00:34.12,4.04,reading,0,False,35.8,73.0,high,40.5,misaligned,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,33,1
-demo-session-1,00:34.24,3.84,reading,0,False,36.2,72.6,high,40.9,misaligned,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,33,1
-demo-session-1,00:34.36,3.69,reading,0,False,36.5,72.3,high,41.2,misaligned,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,33,1
-demo-session-1,00:34.48,3.6,reading,0,False,36.7,72.1,high,41.4,misaligned,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,33,1
-demo-session-1,00:34.60,3.44,reading,0,False,37.0,71.8,high,41.7,misaligned,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,33,1
-demo-session-1,00:34.72,3.3,reading,10,False,39.3,69.0,medium,43.7,drifting,0.0,low,19.8,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,33,1
-demo-session-1,00:34.84,3.14,reading,58,False,59.0,40.7,medium,58.9,drifting,0.0,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,33,1
-demo-session-1,00:34.96,3.08,reading,80,False,77.7,22.2,low,77.7,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,33,1
-demo-session-1,00:35.08,2.91,reading,90,False,86.3,13.7,low,86.3,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,34,1
-demo-session-1,00:35.20,2.77,reading,95,False,90.5,9.5,low,90.5,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,34,1
-demo-session-1,00:35.32,2.62,reading,97,False,92.5,7.5,low,92.5,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,34,1
-demo-session-1,00:35.44,2.29,reading,98,False,93.9,6.2,low,93.9,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,34,1
-demo-session-1,00:35.56,2.06,reading,98,False,94.5,5.6,low,94.5,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,34,1
-demo-session-1,00:35.68,1.94,reading,98,False,94.8,5.3,low,94.8,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,34,1
-demo-session-1,00:35.80,1.77,reading,98,False,95.1,5.0,low,95.1,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,34,1
-demo-session-1,00:35.92,1.44,reading,98,False,95.5,4.5,low,95.5,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,34,1
-demo-session-1,00:36.03,1.16,reading,98,False,95.8,4.1,low,95.8,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,35,1
-demo-session-1,00:36.15,1.01,reading,97,False,95.8,4.2,low,95.8,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,35,1
-demo-session-1,00:36.27,0.8,reading,97,False,96.0,4.0,low,96.0,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,35,1
-demo-session-1,00:36.39,0.68,reading,97,False,96.1,3.9,low,96.1,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,35,1
-demo-session-1,00:36.51,0.56,reading,97,False,96.3,3.7,low,96.3,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,35,1
-demo-session-1,00:36.63,0.63,reading,97,False,96.3,3.7,low,96.3,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,35,1
-demo-session-1,00:36.75,0.72,reading,97,False,96.3,3.7,low,96.3,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,35,1
-demo-session-1,00:36.87,0.85,reading,98,False,96.6,3.4,low,96.6,aligned,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,35,1
-demo-session-1,00:36.99,0.8,reading,98,False,97.0,3.0,low,97.0,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,35,1
-demo-session-1,00:37.11,0.95,reading,99,False,97.2,2.8,low,97.2,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,36,1
-demo-session-1,00:37.23,1.09,reading,99,False,97.2,2.8,low,97.2,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,36,1
-demo-session-1,00:37.35,1.13,reading,99,False,97.3,2.8,low,97.3,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,36,1
-demo-session-1,00:37.47,1.4,reading,100,False,97.1,2.9,low,97.1,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,36,1
-demo-session-1,00:37.59,1.68,reading,100,False,96.6,3.4,low,96.6,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,36,1
-demo-session-1,00:37.71,1.76,reading,99,False,96.2,3.9,low,96.2,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,36,1
-demo-session-1,00:37.83,2.06,reading,99,False,95.5,4.6,low,95.5,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,36,1
-demo-session-1,00:37.95,2.19,reading,99,False,95.0,5.0,low,95.0,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,36,1
-demo-session-1,00:38.07,2.37,reading,99,False,94.5,5.5,low,94.5,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,37,1
-demo-session-1,00:38.19,2.67,reading,98,False,93.5,6.6,low,93.5,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,37,1
-demo-session-1,00:38.31,2.88,reading,98,False,92.9,7.2,low,92.9,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,37,1
-demo-session-1,00:38.43,2.91,reading,98,False,92.7,7.3,low,92.7,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,37,1
-demo-session-1,00:38.55,3.02,reading,98,False,92.4,7.6,low,92.4,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,37,1
-demo-session-1,00:38.67,3.13,reading,97,False,92.0,8.1,low,92.0,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,37,1
-demo-session-1,00:38.79,3.18,reading,98,False,92.2,7.9,low,92.2,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,37,1
-demo-session-1,00:38.91,3.17,reading,98,False,92.3,7.7,low,92.3,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,37,1
-demo-session-1,00:39.03,3.18,reading,98,False,92.5,7.6,low,92.5,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,38,1
-demo-session-1,00:39.15,3.25,reading,98,False,92.6,7.5,low,92.6,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,38,1
-demo-session-1,00:39.27,3.1,reading,99,False,93.3,6.8,low,93.3,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,38,1
-demo-session-1,00:39.39,3.08,reading,99,False,93.5,6.6,low,93.5,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,38,1
-demo-session-1,00:39.51,2.99,reading,99,False,93.9,6.2,low,93.9,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,38,1
-demo-session-1,00:39.63,2.77,reading,100,False,94.6,5.4,low,94.6,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,38,1
-demo-session-1,00:39.75,2.63,reading,100,False,95.0,5.1,low,95.0,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,38,1
-demo-session-1,00:39.87,2.53,reading,100,False,95.2,4.9,low,95.2,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,38,1
-demo-session-1,00:39.99,2.37,reading,100,False,95.4,4.6,low,95.4,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,38,1
-demo-session-1,00:40.11,2.08,reading,100,False,95.8,4.2,low,95.8,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,39,1
-demo-session-1,00:40.23,2.04,reading,99,False,95.6,4.5,low,95.6,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,39,1
-demo-session-1,00:40.35,1.9,reading,99,False,95.7,4.3,low,95.7,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,39,1
-demo-session-1,00:40.47,1.79,reading,99,False,95.8,4.2,low,95.8,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,39,1
-demo-session-1,00:40.59,1.45,reading,99,False,96.2,3.8,low,96.2,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,39,1
-demo-session-1,00:40.71,1.22,reading,98,False,96.3,3.8,low,96.3,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,39,1
-demo-session-1,00:40.83,0.96,reading,98,False,96.5,3.5,low,96.5,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,39,1
-demo-session-1,00:40.95,0.94,reading,98,False,96.5,3.5,low,96.5,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,39,1
-demo-session-1,00:41.07,0.79,reading,98,False,96.7,3.3,low,96.7,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,40,1
-demo-session-1,00:41.19,0.64,reading,98,False,96.9,3.1,low,96.9,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,40,1
-demo-session-1,00:41.31,0.62,reading,98,False,97.0,3.0,low,97.0,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,40,1
-demo-session-1,00:41.43,0.74,reading,98,False,96.9,3.1,low,96.9,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,40,1
-demo-session-1,00:41.55,0.84,reading,98,False,96.9,3.1,low,96.9,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,40,1
-demo-session-1,00:41.67,0.8,reading,99,False,97.4,2.6,low,97.4,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,40,1
-demo-session-1,00:41.79,0.8,reading,99,False,97.6,2.4,low,97.6,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,40,1
-demo-session-1,00:41.91,1.04,reading,99,False,97.3,2.7,low,97.3,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,40,1
-demo-session-1,00:42.03,1.18,reading,99,False,97.2,2.8,low,97.2,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,41,1
-demo-session-1,00:42.15,1.37,reading,100,False,97.2,2.8,low,97.2,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,41,1
-demo-session-1,00:42.27,1.43,reading,100,False,97.2,2.9,low,97.2,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,41,1
-demo-session-1,00:42.39,1.53,reading,100,False,97.0,3.0,low,97.0,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,41,1
-demo-session-1,00:42.51,1.81,reading,100,False,96.3,3.7,low,96.3,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,41,1
-demo-session-1,00:42.63,2.01,reading,99,False,95.6,4.5,low,95.6,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,41,1
-demo-session-1,00:42.75,2.13,reading,99,False,95.2,4.8,low,95.2,aligned,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,41,1
+Session_ID,Timestamp,Relative_Pitch,Relative_Yaw,Relative_Roll,Combined_Drift,Orientation_Drift,Movement_Intensity,Task_Mode,Stability,Is_Alert,Focus_Score,Cognitive_Load,Load_Level,Behavioral_Alignment,Behavioral_Level,Drift_Trend,Switching_Index,State_Hint,Fatigue_Risk,Fatigue_Level,Uncertainty_Score,Confidence_Level,Guidance,Phase,Elapsed_Seconds,Cycle_Index
+demo-session-1,00:01.00,0.04,0.0,0.0,0.04,0.1,0.04,reading,100,False,99.9,0.2,low,99.9,aligned,0.1,0.0,stable,0.0,low,35.0,medium,Keep one learning target and settle into the current mode.,focus,0,1
+demo-session-1,00:01.12,0.04,0.0,0.0,0.04,0.1,0.01,reading,100,False,99.9,0.1,low,99.9,aligned,0.1,0.0,stable,0.0,low,28.0,medium,Keep one learning target and settle into the current mode.,focus,0,1
+demo-session-1,00:01.24,0.11,0.0,0.0,0.11,0.3,0.15,reading,100,False,99.6,0.5,low,99.6,aligned,0.3,0.0,stable,0.0,low,21.0,high,Keep one learning target and settle into the current mode.,focus,0,1
+demo-session-1,00:01.36,0.14,0.0,0.0,0.14,0.4,0.03,reading,100,False,99.6,0.5,low,99.6,aligned,0.6,0.0,stable,0.0,low,14.0,high,Keep one learning target and settle into the current mode.,focus,0,1
+demo-session-1,00:01.48,0.31,0.0,0.0,0.31,0.9,0.16,reading,100,False,98.9,1.2,low,99.0,aligned,1.1,0.0,stable,0.0,low,7.0,high,Keep one learning target and settle into the current mode.,focus,0,1
+demo-session-1,00:01.60,0.42,0.0,0.0,0.42,1.2,0.12,reading,100,False,98.7,1.5,low,98.8,aligned,1.9,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,0,1
+demo-session-1,00:01.72,0.47,0.0,0.0,0.47,1.4,0.05,reading,100,False,98.5,1.7,low,98.6,aligned,2.7,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,0,1
+demo-session-1,00:01.84,0.62,0.0,0.0,0.62,1.8,0.15,reading,100,False,97.9,2.4,low,98.1,aligned,3.8,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,0,1
+demo-session-1,00:01.96,0.64,0.0,0.0,0.64,1.9,0.02,reading,100,False,97.9,2.4,low,98.1,aligned,4.7,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,0,1
+demo-session-1,00:02.08,0.73,0.0,0.0,0.73,2.1,0.1,reading,100,False,97.5,2.9,low,97.7,aligned,5.9,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,1,1
+demo-session-1,00:02.20,0.72,0.0,0.0,0.72,2.1,0.02,reading,100,False,97.5,2.9,low,97.7,aligned,6.7,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,1,1
+demo-session-1,00:02.32,0.69,0.0,0.0,0.69,2.0,0.02,reading,100,False,97.5,3.0,low,97.7,aligned,7.4,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,1,1
+demo-session-1,00:02.44,0.72,0.0,0.0,0.72,2.1,0.03,reading,100,False,97.4,3.1,low,97.6,aligned,7.5,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,1,1
+demo-session-1,00:02.56,0.79,0.0,0.0,0.79,2.3,0.07,reading,100,False,97.2,3.3,low,97.4,aligned,7.3,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,1,1
+demo-session-1,00:02.68,0.65,0.0,0.0,0.65,1.9,0.14,reading,100,False,97.5,2.9,low,97.7,aligned,6.7,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,1,1
+demo-session-1,00:02.80,0.53,0.0,0.0,0.53,1.5,0.12,reading,100,False,97.9,2.4,low,98.1,aligned,5.3,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,1,1
+demo-session-1,00:02.92,0.48,0.0,0.0,0.48,1.4,0.05,reading,100,False,98.4,1.9,low,98.5,aligned,3.9,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,1,1
+demo-session-1,00:03.04,0.45,0.0,0.0,0.45,1.3,0.02,reading,100,False,98.7,1.5,low,98.8,aligned,2.1,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,2,1
+demo-session-1,00:03.16,0.31,0.0,0.0,0.31,0.9,0.15,reading,100,False,99.1,1.0,low,99.1,aligned,0.3,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,2,1
+demo-session-1,00:03.28,0.11,0.0,0.0,0.11,0.3,0.19,reading,100,False,99.5,0.6,low,99.5,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,2,1
+demo-session-1,00:03.40,0.05,0.0,0.0,0.05,0.1,0.06,reading,100,False,99.7,0.3,low,99.7,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,2,1
+demo-session-1,00:03.52,0.24,0.0,0.0,0.24,0.7,0.29,reading,100,False,99.0,1.1,low,99.0,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,2,1
+demo-session-1,00:03.64,0.31,0.0,0.0,0.31,0.9,0.07,reading,100,False,99.1,1.0,low,99.1,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,2,1
+demo-session-1,00:03.76,0.51,0.0,0.0,0.51,1.5,0.2,reading,100,False,98.5,1.6,low,98.5,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,2,1
+demo-session-1,00:03.88,0.71,0.0,0.0,0.71,2.1,0.2,reading,100,False,98.0,2.1,low,98.1,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,2,1
+demo-session-1,00:04.00,0.87,0.0,0.0,0.87,2.5,0.16,reading,100,False,97.7,2.4,low,97.8,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,3,1
+demo-session-1,00:04.12,0.94,0.0,0.0,0.94,2.8,0.08,reading,100,False,97.6,2.5,low,97.7,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,3,1
+demo-session-1,00:04.24,0.89,0.0,0.0,0.89,2.6,0.06,reading,100,False,97.6,2.6,low,97.7,aligned,1.3,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,3,1
+demo-session-1,00:04.36,0.97,0.0,0.0,0.97,2.8,0.08,reading,100,False,97.1,3.3,low,97.3,aligned,4.4,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,3,1
+demo-session-1,00:04.48,0.92,0.0,0.0,0.92,2.7,0.05,reading,100,False,97.0,3.4,low,97.2,aligned,6.4,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,3,1
+demo-session-1,00:04.60,0.85,0.0,0.0,0.85,2.5,0.08,reading,100,False,97.0,3.5,low,97.2,aligned,7.7,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,3,1
+demo-session-1,00:04.72,0.81,0.0,0.0,0.81,2.4,0.04,reading,100,False,97.0,3.5,low,97.3,aligned,8.2,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,3,1
+demo-session-1,00:04.84,0.71,0.0,0.0,0.71,2.1,0.11,reading,100,False,97.2,3.3,low,97.5,aligned,7.7,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,3,1
+demo-session-1,00:04.96,0.69,0.0,0.0,0.69,2.0,0.02,reading,100,False,97.5,2.8,low,97.7,aligned,6.3,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,3,1
+demo-session-1,00:05.08,0.62,0.0,0.0,0.62,1.8,0.07,reading,100,False,98.0,2.3,low,98.1,aligned,4.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,4,1
+demo-session-1,00:05.20,0.49,0.0,0.0,0.49,1.4,0.13,reading,100,False,98.4,1.7,low,98.5,aligned,1.7,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,4,1
+demo-session-1,00:05.32,0.24,0.0,0.0,0.24,0.7,0.24,reading,100,False,99.1,1.0,low,99.1,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,4,1
+demo-session-1,00:05.44,0.07,0.0,0.0,0.07,0.2,0.17,reading,100,False,99.5,0.6,low,99.5,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,4,1
+demo-session-1,00:05.56,0.07,0.0,0.0,0.07,0.2,0.14,reading,100,False,99.4,0.6,low,99.4,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,4,1
+demo-session-1,00:05.68,0.27,0.0,0.0,0.27,0.8,0.2,reading,100,False,98.9,1.2,low,98.9,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,4,1
+demo-session-1,00:05.80,0.42,0.0,0.0,0.42,1.2,0.15,reading,100,False,98.7,1.4,low,98.7,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,4,1
+demo-session-1,00:05.92,0.52,0.0,0.0,0.52,1.5,0.1,reading,100,False,98.5,1.6,low,98.5,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,4,1
+demo-session-1,00:06.04,0.72,0.0,0.0,0.72,2.1,0.19,reading,100,False,97.9,2.2,low,98.0,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,5,1
+demo-session-1,00:06.16,0.84,0.0,0.0,0.84,2.5,0.13,reading,100,False,97.7,2.4,low,97.8,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,5,1
+demo-session-1,00:06.28,0.84,0.0,0.0,0.84,2.5,0.01,reading,100,False,97.9,2.2,low,98.0,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,5,1
+demo-session-1,00:06.40,0.89,0.0,0.0,0.89,2.6,0.06,reading,100,False,97.7,2.5,low,97.8,aligned,0.7,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,5,1
+demo-session-1,00:06.52,0.91,0.0,0.0,0.91,2.7,0.01,reading,100,False,97.4,2.9,low,97.5,aligned,3.7,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,5,1
+demo-session-1,00:06.64,0.96,0.0,0.0,0.96,2.8,0.06,reading,100,False,97.0,3.4,low,97.2,aligned,5.8,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,5,1
+demo-session-1,00:06.76,0.94,0.0,0.0,0.94,2.7,0.03,reading,100,False,96.9,3.6,low,97.1,aligned,7.2,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,5,1
+demo-session-1,00:06.88,0.78,0.0,0.0,0.78,2.3,0.15,reading,100,False,97.0,3.5,low,97.3,aligned,7.9,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,5,1
+demo-session-1,00:07.00,0.77,0.0,0.0,0.77,2.3,0.01,reading,100,False,97.3,3.2,low,97.5,aligned,7.5,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,6,1
+demo-session-1,00:07.12,0.54,0.0,0.0,0.54,1.6,0.24,reading,100,False,97.7,2.7,low,97.9,aligned,5.8,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,6,1
+demo-session-1,00:07.24,0.38,0.0,0.0,0.38,1.1,0.16,reading,100,False,98.4,1.8,low,98.5,aligned,3.4,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,6,1
+demo-session-1,00:07.36,0.29,0.0,0.0,0.29,0.8,0.09,reading,100,False,99.1,1.0,low,99.1,aligned,0.7,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,6,1
+demo-session-1,00:07.48,0.04,0.0,0.0,0.04,0.1,0.24,reading,100,False,99.4,0.6,low,99.4,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,6,1
+demo-session-1,00:07.60,0.11,0.0,0.0,0.11,0.3,0.15,reading,100,False,99.3,0.7,low,99.3,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,6,1
+demo-session-1,00:07.72,0.35,0.0,0.0,0.35,1.0,0.25,reading,100,False,98.7,1.4,low,98.7,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,6,1
+demo-session-1,00:07.84,0.43,0.0,0.0,0.43,1.3,0.08,reading,100,False,98.7,1.4,low,98.7,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,6,1
+demo-session-1,00:07.96,0.5,0.0,0.0,0.5,1.5,0.07,reading,100,False,98.6,1.5,low,98.6,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,6,1
+demo-session-1,00:08.08,0.61,0.0,0.0,0.61,1.8,0.11,reading,100,False,98.3,1.8,low,98.3,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,7,1
+demo-session-1,00:08.20,0.64,0.0,0.0,0.64,1.9,0.03,reading,100,False,98.4,1.7,low,98.4,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,7,1
+demo-session-1,00:08.32,0.79,0.0,0.0,0.79,2.3,0.14,reading,100,False,97.9,2.2,low,97.9,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,7,1
+demo-session-1,00:08.44,0.8,0.0,0.0,0.8,2.4,0.02,reading,100,False,98.0,2.1,low,98.1,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,7,1
+demo-session-1,00:08.56,0.82,0.0,0.0,0.82,2.4,0.02,reading,100,False,97.7,2.5,low,97.8,aligned,2.8,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,7,1
+demo-session-1,00:08.68,0.82,0.0,0.0,0.82,2.4,0.01,reading,100,False,97.5,2.8,low,97.7,aligned,4.5,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,7,1
+demo-session-1,00:08.80,0.81,0.0,0.0,0.81,2.4,0.01,reading,100,False,97.4,3.0,low,97.6,aligned,5.8,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,7,1
+demo-session-1,00:08.92,0.68,0.0,0.0,0.68,2.0,0.13,reading,100,False,97.5,2.9,low,97.7,aligned,6.2,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,7,1
+demo-session-1,00:09.03,0.53,0.0,0.0,0.53,1.5,0.15,reading,100,False,97.9,2.5,low,98.1,aligned,5.6,0.0,stable,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,8,1
+demo-session-1,00:09.15,0.47,0.0,0.0,0.47,1.4,0.06,reading,100,False,98.3,2.0,low,98.4,aligned,4.6,0.0,stable,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,8,1
+demo-session-1,00:09.27,0.34,0.0,0.0,0.34,1.0,0.13,reading,100,False,98.7,1.5,low,98.8,aligned,2.4,0.0,stable,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,8,1
+demo-session-1,00:09.39,0.32,0.0,0.0,0.32,0.9,0.02,reading,100,False,99.2,0.9,low,99.2,aligned,0.1,0.0,stable,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,8,1
+demo-session-1,00:09.51,0.11,0.0,0.0,0.11,0.3,0.2,reading,100,False,99.4,0.7,low,99.4,aligned,0.0,0.0,stable,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,8,1
+demo-session-1,00:09.63,0.07,0.0,0.0,0.07,0.2,0.18,reading,100,False,99.5,0.6,low,99.5,aligned,0.0,0.0,stable,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,8,1
+demo-session-1,00:09.75,0.32,0.0,0.0,0.32,0.9,0.25,reading,100,False,98.8,1.3,low,98.9,aligned,0.0,0.0,stable,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,8,1
+demo-session-1,00:09.87,0.5,0.0,0.0,0.5,1.5,0.18,reading,100,False,98.5,1.6,low,98.5,aligned,0.0,0.0,stable,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,8,1
+demo-session-1,00:09.99,0.55,0.0,0.0,0.55,1.6,0.05,reading,100,False,98.6,1.5,low,98.6,aligned,0.0,0.0,stable,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,8,1
+demo-session-1,00:10.11,0.63,0.0,0.0,0.63,1.8,0.08,reading,100,False,98.4,1.7,low,98.4,aligned,0.0,0.0,stable,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,9,1
+demo-session-1,00:10.23,0.77,0.0,0.0,0.77,2.2,0.14,reading,100,False,98.0,2.1,low,98.0,aligned,0.0,0.0,stable,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,9,1
+demo-session-1,00:10.35,0.74,0.0,0.0,0.74,2.2,0.03,reading,100,False,98.2,1.9,low,98.2,aligned,0.0,0.0,stable,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,9,1
+demo-session-1,00:10.47,0.81,0.0,0.0,0.81,2.4,0.07,reading,100,False,97.8,2.3,low,97.9,aligned,1.2,0.0,stable,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,9,1
+demo-session-1,00:10.59,0.79,0.0,0.0,0.79,2.3,0.02,reading,100,False,97.7,2.6,low,97.8,aligned,3.9,0.0,stable,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,9,1
+demo-session-1,00:10.71,0.74,0.0,0.0,0.74,2.2,0.04,reading,100,False,97.6,2.8,low,97.8,aligned,5.4,0.0,stable,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,9,1
+demo-session-1,00:10.83,0.67,0.0,0.0,0.67,2.0,0.07,reading,100,False,97.7,2.7,low,97.9,aligned,5.7,0.0,stable,0.0,low,0.0,high,Behavior is aligned and stable. Continue this rhythm.,focus,9,1
+demo-session-1,00:10.95,6.57,0.0,0.0,6.57,19.2,5.9,reading,90,False,68.0,34.9,medium,69.5,drifting,16.1,0.0,load_rising,0.0,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,9,1
+demo-session-1,00:11.07,10.61,0.0,0.0,10.61,31.1,4.04,reading,66,False,38.8,64.8,high,40.8,misaligned,32.9,4.7,off_task_risk,0.2,low,0.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,10,1
+demo-session-1,00:11.19,13.62,0.0,0.0,13.62,39.9,3.01,reading,30,False,10.2,100.0,high,15.7,misaligned,54.5,5.9,off_task_risk,7.1,low,9.5,high,Behavior drift is high. Reduce switching and keep one target.,focus,10,1
+demo-session-1,00:11.31,15.9,0.0,0.0,15.9,46.6,2.28,reading,0,False,2.7,100.0,high,4.1,misaligned,79.8,6.8,off_task_risk,12.2,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,10,1
+demo-session-1,00:11.43,17.78,0.0,0.0,17.78,52.1,1.87,reading,0,False,0.0,100.0,high,0.0,misaligned,100.0,7.5,off_task_risk,16.5,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,10,1
+demo-session-1,00:11.55,18.88,0.0,0.0,18.88,53.3,1.11,reading,0,False,0.0,100.0,high,0.0,misaligned,100.0,7.9,off_task_risk,18.9,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,10,1
+demo-session-1,00:11.67,19.84,0.0,0.0,19.84,53.3,0.96,reading,0,False,0.0,100.0,high,0.0,misaligned,100.0,8.2,off_task_risk,21.1,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,10,1
+demo-session-1,00:11.79,20.57,0.0,0.0,20.57,53.3,0.73,reading,0,False,0.0,100.0,high,0.0,misaligned,100.0,8.5,off_task_risk,22.8,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,10,1
+demo-session-1,00:11.91,21.19,0.0,0.0,21.19,53.3,0.62,reading,0,False,0.0,100.0,high,0.0,misaligned,100.0,8.7,off_task_risk,24.2,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,10,1
+demo-session-1,00:12.03,21.55,0.0,0.0,21.55,53.3,0.37,reading,0,False,0.0,100.0,high,0.0,misaligned,100.0,8.8,off_task_risk,25.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,11,1
+demo-session-1,00:12.15,21.75,0.0,0.0,21.75,53.3,0.2,reading,0,False,0.0,100.0,high,0.0,misaligned,100.0,8.9,off_task_risk,25.4,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,11,1
+demo-session-1,00:12.27,21.59,0.0,0.0,21.59,53.3,0.17,reading,0,False,0.0,100.0,high,0.0,misaligned,100.0,8.9,off_task_risk,25.1,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,11,1
+demo-session-1,00:12.39,21.4,0.0,0.0,21.4,53.3,0.19,reading,0,False,0.0,100.0,high,0.0,misaligned,100.0,9.0,off_task_risk,24.6,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,11,1
+demo-session-1,00:12.51,21.11,0.0,0.0,21.11,53.3,0.29,reading,0,False,0.0,100.0,high,0.0,misaligned,100.0,9.1,off_task_risk,24.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,11,1
+demo-session-1,00:12.63,20.96,0.0,0.0,20.96,53.3,0.15,reading,17,False,0.0,100.0,high,0.0,misaligned,91.2,8.4,off_task_risk,23.6,low,16.3,high,Behavior drift is high. Reduce switching and keep one target.,focus,11,1
+demo-session-1,00:12.75,20.73,0.0,0.0,20.73,53.3,0.23,reading,57,False,10.1,96.7,high,13.8,misaligned,63.5,6.3,off_task_risk,23.1,low,0.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,11,1
+demo-session-1,00:12.87,20.15,0.0,0.0,20.15,53.3,0.59,reading,78,False,31.6,74.3,high,34.7,misaligned,40.6,5.0,off_task_risk,21.8,low,0.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,11,1
+demo-session-1,00:12.99,19.62,0.0,0.0,19.62,53.3,0.53,reading,90,False,44.0,61.5,medium,47.0,drifting,21.4,4.0,load_rising,30.7,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,11,1
+demo-session-1,00:13.11,19.15,0.0,0.0,19.15,53.3,0.46,reading,95,False,50.9,54.1,medium,53.6,drifting,5.1,3.3,load_rising,34.3,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,12,1
+demo-session-1,00:13.23,18.75,0.0,0.0,18.75,53.3,0.41,reading,96,False,53.2,51.5,medium,55.8,drifting,0.0,2.8,load_rising,35.0,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,12,1
+demo-session-1,00:13.35,18.49,0.0,0.0,18.49,53.3,0.26,reading,96,False,53.7,51.0,medium,56.3,drifting,0.0,2.5,load_rising,34.9,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,12,1
+demo-session-1,00:13.47,18.32,0.0,0.0,18.32,53.3,0.17,reading,94,False,53.1,51.6,medium,55.6,drifting,0.0,2.1,load_rising,34.4,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,12,1
+demo-session-1,00:13.59,18.09,0.0,0.0,18.09,53.0,0.23,reading,93,False,52.5,52.1,medium,55.0,drifting,0.0,2.0,load_rising,33.7,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,12,1
+demo-session-1,00:13.71,17.86,0.0,0.0,17.86,52.3,0.22,reading,92,False,52.2,52.3,medium,54.6,drifting,0.0,1.8,load_rising,33.1,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,12,1
+demo-session-1,00:13.83,17.92,0.0,0.0,17.92,52.5,0.06,reading,92,False,52.2,52.4,medium,54.6,drifting,0.0,1.7,load_rising,33.8,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,12,1
+demo-session-1,00:13.95,18.03,0.0,0.0,18.03,52.8,0.11,reading,92,False,52.2,52.5,medium,54.7,drifting,0.0,1.7,load_rising,35.3,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,12,1
+demo-session-1,00:14.07,18.3,0.0,0.0,18.3,53.3,0.26,reading,94,False,52.4,52.4,medium,55.0,drifting,0.0,1.7,load_rising,37.5,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,13,1
+demo-session-1,00:14.19,18.75,0.0,0.0,18.75,53.3,0.45,reading,95,False,52.3,52.8,medium,55.0,drifting,0.0,1.8,load_rising,40.3,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,13,1
+demo-session-1,00:14.31,19.11,0.0,0.0,19.11,53.3,0.36,reading,96,False,52.6,52.7,medium,55.4,drifting,0.0,1.9,load_rising,42.8,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,13,1
+demo-session-1,00:14.43,19.45,0.0,0.0,19.45,53.3,0.34,reading,97,False,52.8,52.6,medium,55.7,drifting,0.0,1.9,load_rising,45.2,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,13,1
+demo-session-1,00:14.55,19.87,0.0,0.0,19.87,53.3,0.41,reading,98,False,52.5,53.1,medium,55.5,drifting,0.0,2.0,load_rising,47.4,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,13,1
+demo-session-1,00:14.67,20.31,0.0,0.0,20.31,53.3,0.44,reading,98,False,51.0,55.0,medium,54.2,drifting,5.0,1.9,load_rising,49.1,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,13,1
+demo-session-1,00:14.79,20.51,0.0,0.0,20.51,53.3,0.2,reading,97,False,49.5,56.9,medium,52.9,drifting,12.9,1.8,load_rising,49.8,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,13,1
+demo-session-1,00:14.91,21.05,0.0,0.0,21.05,53.3,0.54,reading,96,False,46.2,60.6,medium,49.9,drifting,20.4,1.8,load_rising,50.9,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,13,1
+demo-session-1,00:15.03,21.45,0.0,0.0,21.45,53.3,0.4,reading,94,False,43.5,63.6,medium,47.4,drifting,26.8,1.8,load_rising,51.3,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,14,1
+demo-session-1,00:15.15,21.81,0.0,0.0,21.81,53.3,0.35,reading,93,False,41.2,66.2,medium,45.2,drifting,31.7,1.9,load_rising,51.7,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,14,1
+demo-session-1,00:15.27,22.03,0.0,0.0,22.03,53.3,0.23,reading,91,False,39.2,68.3,high,43.3,misaligned,35.2,1.9,off_task_risk,51.8,medium,0.0,high,Fatigue is mixing with drift. Slow down and rest your eyes.,focus,14,1
+demo-session-1,00:15.39,22.02,0.0,0.0,22.02,53.3,0.01,reading,91,False,39.0,68.6,high,43.1,misaligned,37.0,1.8,off_task_risk,52.1,medium,0.0,high,Fatigue is mixing with drift. Slow down and rest your eyes.,focus,14,1
+demo-session-1,00:15.51,21.96,0.0,0.0,21.96,53.3,0.06,reading,91,False,39.2,68.4,medium,43.3,drifting,36.6,1.8,load_rising,53.0,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,14,1
+demo-session-1,00:15.63,21.72,0.0,0.0,21.72,53.3,0.23,reading,92,False,40.5,67.1,medium,44.6,drifting,34.3,1.8,load_rising,54.0,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,14,1
+demo-session-1,00:15.75,21.64,0.0,0.0,21.64,53.3,0.08,reading,93,False,42.2,65.4,medium,46.3,drifting,31.3,1.8,load_rising,55.6,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,14,1
+demo-session-1,00:15.87,21.25,0.0,0.0,21.25,53.3,0.39,reading,95,False,44.5,63.0,medium,48.5,drifting,26.2,1.8,load_rising,56.8,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,14,1
+demo-session-1,00:15.99,20.84,0.0,0.0,20.84,53.3,0.41,reading,96,False,46.9,60.3,medium,50.8,drifting,19.7,1.8,load_rising,57.6,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,14,1
+demo-session-1,00:16.11,20.47,0.0,0.0,20.47,53.3,0.38,reading,97,False,49.3,57.6,medium,53.0,drifting,12.0,1.8,load_rising,58.3,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,15,1
+demo-session-1,00:16.23,20.04,0.0,0.0,20.04,53.3,0.43,reading,98,False,51.4,55.1,medium,54.9,drifting,3.3,1.9,load_rising,58.4,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,15,1
+demo-session-1,00:16.35,19.67,0.0,0.0,19.67,53.3,0.37,reading,98,False,52.4,53.8,medium,55.8,drifting,0.0,1.8,load_rising,58.2,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,15,1
+demo-session-1,00:16.47,19.19,0.0,0.0,19.19,53.3,0.48,reading,97,False,52.4,53.8,medium,55.8,drifting,0.0,1.9,load_rising,57.3,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,15,1
+demo-session-1,00:16.59,18.73,0.0,0.0,18.73,53.3,0.46,reading,96,False,52.3,53.8,medium,55.6,drifting,0.0,1.9,load_rising,55.9,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,15,1
+demo-session-1,00:16.71,18.39,0.0,0.0,18.39,53.3,0.34,reading,94,False,51.7,54.3,medium,54.9,drifting,0.0,1.9,load_rising,54.7,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,15,1
+demo-session-1,00:16.83,18.09,0.0,0.0,18.09,53.0,0.3,reading,92,False,51.0,54.9,medium,54.1,drifting,0.0,1.8,load_rising,53.5,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,15,1
+demo-session-1,00:16.95,17.95,0.0,0.0,17.95,52.6,0.13,reading,91,False,50.6,55.2,medium,53.7,drifting,0.0,1.8,load_rising,53.1,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,15,1
+demo-session-1,00:17.07,17.75,0.0,0.0,17.75,52.0,0.2,reading,91,False,50.6,55.1,medium,53.7,drifting,0.0,1.8,load_rising,53.0,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,16,1
+demo-session-1,00:17.19,17.97,0.0,0.0,17.97,52.6,0.21,reading,91,False,50.2,55.6,medium,53.4,drifting,0.0,1.9,load_rising,54.5,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,16,1
+demo-session-1,00:17.31,18.1,0.0,0.0,18.1,53.0,0.13,reading,92,False,50.8,55.2,medium,54.1,drifting,0.0,1.9,load_rising,56.3,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,16,1
+demo-session-1,00:17.43,18.13,0.0,0.0,18.13,53.1,0.03,reading,93,False,51.8,54.3,medium,55.1,drifting,0.0,1.8,load_rising,58.0,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,16,1
+demo-session-1,00:17.55,18.31,0.0,0.0,18.31,53.3,0.18,reading,95,False,52.6,53.7,medium,56.0,drifting,0.0,1.8,load_rising,60.4,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,16,1
+demo-session-1,00:17.67,18.6,0.0,0.0,18.6,53.3,0.29,reading,96,False,53.0,53.6,medium,56.5,drifting,0.0,1.8,load_rising,63.0,medium,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,16,1
+demo-session-1,00:17.79,18.96,0.0,0.0,18.96,53.3,0.36,reading,97,False,53.1,53.7,high,56.7,drifting,0.0,1.7,fatigue_risk,65.5,high,0.0,high,Fatigue is mixing with drift. Slow down and rest your eyes.,focus,16,1
+demo-session-1,00:17.91,19.26,0.0,0.0,19.26,53.3,0.31,reading,98,False,53.3,53.6,high,57.0,drifting,0.0,1.7,fatigue_risk,67.6,high,0.0,high,Fatigue is mixing with drift. Slow down and rest your eyes.,focus,16,1
+demo-session-1,00:18.03,19.88,0.0,0.0,19.88,53.3,0.61,reading,98,False,51.5,55.6,high,55.4,drifting,1.6,1.8,fatigue_risk,69.8,high,0.0,high,Fatigue is mixing with drift. Slow down and rest your eyes.,focus,17,1
+demo-session-1,00:18.15,20.48,0.0,0.0,20.48,53.3,0.61,reading,98,False,49.1,58.5,high,53.2,drifting,9.4,1.9,fatigue_risk,71.4,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,17,1
+demo-session-1,00:18.27,20.83,0.0,0.0,20.83,53.3,0.34,reading,96,False,46.9,61.1,high,51.2,drifting,16.3,1.8,fatigue_risk,72.1,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,17,1
+demo-session-1,00:18.39,21.15,0.0,0.0,21.15,53.3,0.33,reading,95,False,44.5,63.8,high,49.0,drifting,22.8,1.8,fatigue_risk,72.4,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,17,1
+demo-session-1,00:18.51,21.3,0.0,0.0,21.3,53.3,0.14,reading,94,False,42.8,65.7,high,47.4,drifting,28.2,1.7,fatigue_risk,72.5,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,17,1
+demo-session-1,00:18.63,21.42,0.0,0.0,21.42,53.3,0.13,reading,93,False,41.4,67.3,high,46.1,drifting,32.1,1.7,fatigue_risk,72.8,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,17,1
+demo-session-1,00:18.75,21.59,0.0,0.0,21.59,53.3,0.17,reading,92,False,40.1,68.8,high,44.9,drifting,34.7,1.7,fatigue_risk,73.4,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,17,1
+demo-session-1,00:18.87,21.65,0.0,0.0,21.65,53.3,0.05,reading,92,False,40.1,68.9,high,44.9,drifting,35.8,1.6,fatigue_risk,74.3,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,17,1
+demo-session-1,00:18.99,21.82,0.0,0.0,21.82,53.3,0.17,reading,92,False,39.7,69.4,high,44.6,drifting,35.4,1.6,fatigue_risk,75.6,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,17,1
+demo-session-1,00:19.11,21.6,0.0,0.0,21.6,53.3,0.22,reading,93,False,41.0,68.0,high,45.8,drifting,32.6,1.6,fatigue_risk,75.7,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,18,1
+demo-session-1,00:19.23,21.28,0.0,0.0,21.28,53.3,0.32,reading,94,False,42.9,65.9,high,47.7,drifting,28.0,1.7,fatigue_risk,75.9,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,18,1
+demo-session-1,00:19.35,21.26,0.0,0.0,21.26,53.3,0.02,reading,96,False,45.2,63.3,high,49.8,drifting,22.5,1.7,fatigue_risk,77.0,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,18,1
+demo-session-1,00:19.47,20.95,0.0,0.0,20.95,53.3,0.31,reading,97,False,47.1,61.2,high,51.6,drifting,16.5,1.7,fatigue_risk,77.3,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,18,1
+demo-session-1,00:19.59,20.46,0.0,0.0,20.46,53.3,0.5,reading,98,False,49.3,58.7,high,53.6,drifting,9.9,1.7,fatigue_risk,77.0,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,18,1
+demo-session-1,00:19.71,20.11,0.0,0.0,20.11,53.3,0.35,reading,99,False,51.5,56.1,high,55.6,drifting,2.7,1.7,fatigue_risk,76.7,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,18,1
+demo-session-1,00:19.83,19.55,0.0,0.0,19.55,53.3,0.56,reading,98,False,52.3,55.2,high,56.3,drifting,0.0,1.7,fatigue_risk,75.2,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,18,1
+demo-session-1,00:19.95,19.23,0.0,0.0,19.23,53.3,0.32,reading,98,False,52.8,54.5,high,56.7,drifting,0.0,1.6,fatigue_risk,73.9,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,18,1
+demo-session-1,00:20.07,19.07,0.0,0.0,19.07,53.3,0.15,reading,97,False,52.6,54.6,high,56.4,drifting,0.0,1.5,fatigue_risk,72.8,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,19,1
+demo-session-1,00:20.19,18.86,0.0,0.0,18.86,53.3,0.21,reading,96,False,52.1,55.0,high,55.9,drifting,0.0,1.5,fatigue_risk,71.6,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,19,1
+demo-session-1,00:20.31,18.62,0.0,0.0,18.62,53.3,0.24,reading,95,False,51.7,55.3,high,55.5,drifting,0.0,1.5,fatigue_risk,70.4,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,19,1
+demo-session-1,00:20.43,18.29,0.0,0.0,18.29,53.3,0.33,reading,94,False,51.5,55.4,high,55.2,drifting,0.0,1.6,fatigue_risk,68.9,high,0.0,high,Fatigue risk is staying elevated. Pause briefly before continuing.,focus,19,1
+demo-session-1,00:20.55,18.13,0.0,0.0,18.13,53.1,0.16,reading,93,False,51.4,55.4,high,55.1,drifting,0.0,1.6,fatigue_risk,68.1,high,0.0,high,Fatigue risk is staying elevated. Pause briefly before continuing.,focus,19,1
+demo-session-1,00:20.67,18.01,0.0,0.0,18.01,52.8,0.12,reading,93,False,51.7,55.1,high,55.3,drifting,0.0,1.6,fatigue_risk,67.6,high,0.0,high,Fatigue risk is staying elevated. Pause briefly before continuing.,focus,19,1
+demo-session-1,00:20.79,18.23,0.0,0.0,18.23,53.3,0.22,reading,94,False,51.6,55.2,high,55.3,drifting,0.0,1.7,fatigue_risk,68.6,high,0.0,high,Fatigue risk is staying elevated. Pause briefly before continuing.,focus,19,1
+demo-session-1,00:20.91,23.58,0.0,0.0,23.58,53.3,5.35,reading,90,False,31.7,76.8,high,36.3,misaligned,0.0,3.8,fatigue_risk,74.7,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,19,1
+demo-session-1,00:21.03,27.71,0.0,0.0,27.71,53.3,4.13,reading,74,False,17.0,90.9,high,21.2,misaligned,1.2,5.4,off_task_risk,26.0,low,0.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,20,1
+demo-session-1,00:21.15,30.58,0.0,0.0,30.58,53.3,2.88,reading,46,False,0.0,100.0,high,0.0,misaligned,26.5,6.6,off_task_risk,26.0,low,1.1,high,Behavior drift is high. Reduce switching and keep one target.,focus,20,1
+demo-session-1,00:21.27,32.73,0.0,0.0,32.73,53.3,2.15,reading,9,False,0.0,100.0,high,0.0,misaligned,55.8,7.3,off_task_risk,26.0,low,20.8,high,Behavior drift is high. Reduce switching and keep one target.,focus,20,1
+demo-session-1,00:21.39,34.69,0.0,0.0,34.69,53.3,1.96,reading,0,False,0.0,100.0,high,0.0,misaligned,88.9,7.9,off_task_risk,26.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,20,1
+demo-session-1,00:21.51,36.23,0.0,0.0,36.23,53.3,1.54,reading,0,False,0.0,100.0,high,0.0,misaligned,100.0,8.4,off_task_risk,26.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,20,1
+demo-session-1,00:21.64,37.25,0.0,0.0,37.25,53.3,1.02,reading,0,False,0.0,100.0,high,0.0,misaligned,100.0,8.6,off_task_risk,26.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,20,1
+demo-session-1,00:21.76,37.88,0.0,0.0,37.88,53.3,0.62,reading,0,False,0.0,100.0,high,0.0,misaligned,100.0,8.8,off_task_risk,26.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,20,1
+demo-session-1,00:21.88,38.19,0.0,0.0,38.19,53.3,0.32,reading,0,True,0.0,100.0,high,0.0,misaligned,100.0,8.8,off_task_risk,34.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,20,1
+demo-session-1,00:22.00,38.19,0.0,0.0,38.19,53.3,0.0,reading,0,True,0.0,100.0,high,0.0,misaligned,100.0,8.7,off_task_risk,34.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,21,1
+demo-session-1,00:22.12,37.69,0.0,0.0,37.69,53.3,0.5,reading,0,True,0.0,100.0,high,0.0,misaligned,100.0,8.8,off_task_risk,34.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,21,1
+demo-session-1,00:22.24,37.25,0.0,0.0,37.25,53.3,0.44,reading,0,True,0.0,100.0,high,0.0,misaligned,100.0,8.9,off_task_risk,34.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,21,1
+demo-session-1,00:22.36,36.6,0.0,0.0,36.6,53.3,0.65,reading,0,True,0.0,100.0,high,0.0,misaligned,100.0,9.1,off_task_risk,34.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,21,1
+demo-session-1,00:22.48,35.74,0.0,0.0,35.74,53.3,0.86,reading,0,True,0.0,100.0,high,0.0,misaligned,100.0,9.4,off_task_risk,34.0,low,22.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,21,1
+demo-session-1,00:22.60,34.93,0.0,0.0,34.93,53.3,0.81,reading,29,True,0.0,100.0,high,0.0,misaligned,73.2,9.0,off_task_risk,34.0,low,10.2,high,Behavior drift is high. Reduce switching and keep one target.,focus,21,1
+demo-session-1,00:22.72,34.35,0.0,0.0,34.35,53.3,0.58,reading,65,True,1.4,100.0,high,2.2,misaligned,38.5,7.2,off_task_risk,34.0,low,0.0,high,Behavior drift is high. Reduce switching and keep one target.,focus,21,1
+demo-session-1,00:22.84,33.84,0.0,0.0,33.84,53.3,0.51,reading,81,True,12.2,99.3,high,18.4,misaligned,9.9,5.8,off_task_risk,34.0,low,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,21,1
+demo-session-1,00:22.96,33.7,0.0,0.0,33.7,53.3,0.15,reading,87,True,18.9,92.7,high,25.1,misaligned,0.0,4.8,off_task_risk,42.2,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,21,1
+demo-session-1,00:23.08,33.78,0.0,0.0,33.78,53.3,0.09,reading,89,True,20.4,91.2,high,26.7,misaligned,0.0,4.0,off_task_risk,44.2,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,22,1
+demo-session-1,00:23.20,33.68,0.0,0.0,33.68,53.3,0.1,reading,88,True,19.6,92.0,high,25.9,misaligned,0.0,3.2,off_task_risk,44.2,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,22,1
+demo-session-1,00:23.32,34.05,0.0,0.0,34.05,53.3,0.36,reading,87,True,18.6,93.1,high,24.9,misaligned,0.0,2.8,off_task_risk,44.2,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,22,1
+demo-session-1,00:23.44,34.55,0.0,0.0,34.55,53.3,0.5,reading,87,True,18.6,93.2,high,24.9,misaligned,0.0,2.6,off_task_risk,45.2,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,22,1
+demo-session-1,00:23.56,35.12,0.0,0.0,35.12,53.3,0.57,reading,89,True,19.8,92.1,high,26.2,misaligned,0.0,2.6,off_task_risk,47.1,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,22,1
+demo-session-1,00:23.68,35.45,0.0,0.0,35.45,53.3,0.33,reading,91,True,21.8,90.2,high,28.3,misaligned,0.0,2.7,off_task_risk,49.6,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,22,1
+demo-session-1,00:23.80,35.85,0.0,0.0,35.85,53.3,0.4,reading,93,True,23.6,88.7,high,30.2,misaligned,0.0,2.8,off_task_risk,52.2,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,22,1
+demo-session-1,00:23.92,36.34,0.0,0.0,36.34,53.3,0.49,reading,95,True,24.7,87.7,high,31.4,misaligned,0.0,2.8,off_task_risk,54.1,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,22,1
+demo-session-1,00:24.04,36.83,0.0,0.0,36.83,53.3,0.49,reading,95,True,24.2,88.7,high,31.1,misaligned,7.4,2.8,off_task_risk,55.2,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,23,1
+demo-session-1,00:24.16,37.29,0.0,0.0,37.29,53.3,0.45,reading,95,True,22.5,90.9,high,29.7,misaligned,19.5,2.7,off_task_risk,55.4,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,23,1
+demo-session-1,00:24.28,37.87,0.0,0.0,37.87,53.3,0.58,reading,93,True,19.6,94.2,high,27.1,misaligned,29.6,2.6,off_task_risk,54.6,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,23,1
+demo-session-1,00:24.40,38.39,0.0,0.0,38.39,53.3,0.53,reading,90,True,16.7,97.5,high,24.3,misaligned,37.1,2.5,off_task_risk,53.3,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,23,1
+demo-session-1,00:24.52,38.63,0.0,0.0,38.63,53.3,0.24,reading,88,True,14.8,99.4,high,22.4,misaligned,41.7,2.4,off_task_risk,52.4,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,23,1
+demo-session-1,00:24.64,38.44,0.0,0.0,38.44,53.3,0.19,reading,87,True,14.0,100.0,high,21.6,misaligned,43.7,2.3,off_task_risk,52.5,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,23,1
+demo-session-1,00:24.76,38.2,0.0,0.0,38.2,53.3,0.24,reading,87,True,14.2,100.0,high,21.9,misaligned,43.5,2.3,off_task_risk,53.7,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,23,1
+demo-session-1,00:24.88,37.87,0.0,0.0,37.87,53.3,0.33,reading,89,True,15.5,98.9,high,23.3,misaligned,41.0,2.4,off_task_risk,55.5,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,23,1
+demo-session-1,00:25.00,37.0,0.0,0.0,37.0,53.3,0.87,reading,91,True,17.3,97.1,high,25.1,misaligned,35.0,2.7,off_task_risk,58.2,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,24,1
+demo-session-1,00:25.12,36.46,0.0,0.0,36.46,53.3,0.54,reading,93,True,20.3,93.9,high,27.9,misaligned,27.1,2.8,off_task_risk,60.6,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,24,1
+demo-session-1,00:25.24,36.0,0.0,0.0,36.0,53.3,0.46,reading,95,True,22.7,91.1,high,30.1,misaligned,17.2,2.7,off_task_risk,62.4,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,24,1
+demo-session-1,00:25.36,35.43,0.0,0.0,35.43,53.3,0.57,reading,95,True,23.9,89.4,high,31.1,misaligned,5.5,2.8,off_task_risk,63.4,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,24,1
+demo-session-1,00:25.48,34.89,0.0,0.0,34.89,53.3,0.53,reading,95,True,24.2,88.9,high,31.2,misaligned,0.0,2.8,off_task_risk,63.7,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,24,1
+demo-session-1,00:25.60,34.32,0.0,0.0,34.32,53.3,0.58,reading,93,True,22.7,90.3,high,29.7,misaligned,0.0,2.9,off_task_risk,63.3,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,24,1
+demo-session-1,00:25.72,33.77,0.0,0.0,33.77,53.3,0.55,reading,90,True,20.5,92.4,high,27.5,misaligned,0.0,2.9,off_task_risk,62.0,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,24,1
+demo-session-1,00:25.84,33.8,0.0,0.0,33.8,53.3,0.03,reading,88,True,19.4,93.3,high,26.2,misaligned,0.0,2.7,off_task_risk,61.1,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,24,1
+demo-session-1,00:25.96,33.72,0.0,0.0,33.72,53.3,0.08,reading,86,True,17.8,94.9,high,24.6,misaligned,0.0,2.6,off_task_risk,60.4,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,24,1
+demo-session-1,00:26.08,34.12,0.0,0.0,34.12,53.3,0.4,reading,86,True,17.1,95.6,high,24.0,misaligned,0.0,2.5,off_task_risk,60.8,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,25,1
+demo-session-1,00:26.20,34.72,0.0,0.0,34.72,53.3,0.6,reading,87,True,17.7,95.2,high,24.7,misaligned,0.0,2.6,off_task_risk,62.6,medium,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,25,1
+demo-session-1,00:26.32,35.08,0.0,0.0,35.08,53.3,0.36,reading,89,True,19.9,93.2,high,26.9,misaligned,0.0,2.6,fatigue_risk,65.1,high,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,25,1
+demo-session-1,00:26.44,35.58,0.0,0.0,35.58,53.3,0.5,reading,92,True,21.7,91.6,high,28.8,misaligned,0.0,2.7,fatigue_risk,67.7,high,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,25,1
+demo-session-1,00:26.56,36.45,0.0,0.0,36.45,53.3,0.87,reading,94,True,22.7,90.8,high,30.0,misaligned,0.0,3.0,fatigue_risk,69.9,high,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,25,1
+demo-session-1,00:26.68,37.13,0.0,0.0,37.13,53.3,0.68,reading,95,True,23.7,89.9,high,31.0,misaligned,0.0,3.1,fatigue_risk,71.4,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,25,1
+demo-session-1,00:26.80,37.44,0.0,0.0,37.44,53.3,0.31,reading,94,True,22.8,91.1,high,30.3,misaligned,8.1,2.9,fatigue_risk,71.8,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,25,1
+demo-session-1,00:26.92,37.7,0.0,0.0,37.7,53.3,0.26,reading,93,True,20.6,93.9,high,28.4,misaligned,20.5,2.8,fatigue_risk,71.6,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,25,1
+demo-session-1,00:27.04,37.89,0.0,0.0,37.89,53.3,0.19,reading,91,True,18.2,96.7,high,26.2,misaligned,30.9,2.6,fatigue_risk,71.1,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,26,1
+demo-session-1,00:27.16,38.37,0.0,0.0,38.37,53.3,0.47,reading,89,True,15.3,100.0,high,23.5,misaligned,38.7,2.6,fatigue_risk,70.2,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,26,1
+demo-session-1,00:27.28,38.51,0.0,0.0,38.51,53.3,0.14,reading,87,True,14.2,100.0,high,21.9,misaligned,44.3,2.4,fatigue_risk,69.5,high,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,26,1
+demo-session-1,00:27.40,38.07,0.0,0.0,38.07,53.3,0.44,reading,87,True,13.7,100.0,high,21.1,misaligned,46.1,2.4,fatigue_risk,70.0,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,26,1
+demo-session-1,00:27.52,37.9,0.0,0.0,37.9,53.3,0.17,reading,88,True,14.7,100.0,high,22.6,misaligned,43.3,2.3,fatigue_risk,71.6,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,26,1
+demo-session-1,00:27.64,37.62,0.0,0.0,37.62,53.3,0.28,reading,90,True,16.2,99.2,high,24.5,misaligned,37.5,2.4,fatigue_risk,73.8,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,26,1
+demo-session-1,00:27.76,36.99,0.0,0.0,36.99,53.3,0.62,reading,92,True,18.5,96.8,high,26.8,misaligned,29.3,2.6,fatigue_risk,76.5,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,26,1
+demo-session-1,00:27.88,36.16,0.0,0.0,36.16,53.3,0.83,reading,94,True,21.0,94.1,high,29.1,misaligned,19.4,2.7,fatigue_risk,78.9,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,26,1
+demo-session-1,00:28.00,35.49,0.0,0.0,35.49,53.3,0.67,reading,95,True,22.9,91.7,high,30.8,misaligned,8.9,2.8,fatigue_risk,80.3,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,27,1
+demo-session-1,00:28.12,34.64,0.0,0.0,34.64,53.3,0.84,reading,95,True,23.3,90.9,high,31.0,misaligned,0.0,3.0,fatigue_risk,80.7,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,27,1
+demo-session-1,00:28.24,33.91,0.0,0.0,33.91,53.3,0.74,reading,93,True,21.7,92.4,high,29.3,misaligned,0.0,3.0,fatigue_risk,79.8,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,27,1
+demo-session-1,00:28.36,33.9,0.0,0.0,33.9,53.3,0.01,reading,90,True,20.6,93.3,high,28.1,misaligned,0.0,2.7,fatigue_risk,78.7,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,27,1
+demo-session-1,00:28.48,33.77,0.0,0.0,33.77,53.3,0.13,reading,88,True,18.6,95.2,high,26.1,misaligned,0.0,2.5,fatigue_risk,77.7,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,27,1
+demo-session-1,00:28.60,33.73,0.0,0.0,33.73,53.3,0.04,reading,86,True,17.3,96.5,high,24.7,misaligned,0.0,2.4,fatigue_risk,77.1,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,27,1
+demo-session-1,00:28.72,34.1,0.0,0.0,34.1,53.3,0.37,reading,86,True,16.4,97.4,high,23.9,misaligned,0.0,2.5,fatigue_risk,77.4,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,27,1
+demo-session-1,00:28.84,34.31,0.0,0.0,34.31,53.3,0.21,reading,86,True,16.8,97.0,high,24.3,misaligned,0.0,2.4,fatigue_risk,78.4,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,27,1
+demo-session-1,00:28.96,34.94,0.0,0.0,34.94,53.3,0.63,reading,88,True,17.7,96.4,high,25.3,misaligned,0.0,2.5,fatigue_risk,80.6,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,27,1
+demo-session-1,00:29.08,35.61,0.0,0.0,35.61,53.3,0.67,reading,90,True,19.6,94.7,high,27.3,misaligned,0.0,2.7,fatigue_risk,82.5,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,28,1
+demo-session-1,00:29.20,35.98,0.0,0.0,35.98,53.3,0.37,reading,92,True,21.6,92.7,high,29.3,misaligned,0.0,2.7,fatigue_risk,84.0,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,28,1
+demo-session-1,00:29.32,36.47,0.0,0.0,36.47,53.3,0.49,reading,94,True,22.8,91.6,high,30.5,misaligned,0.0,2.8,fatigue_risk,85.2,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,28,1
+demo-session-1,00:29.44,36.99,0.0,0.0,36.99,53.3,0.52,reading,95,True,23.0,91.7,high,30.9,misaligned,4.0,2.9,fatigue_risk,85.8,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,28,1
+demo-session-1,00:29.56,37.42,0.0,0.0,37.42,53.3,0.43,reading,94,True,21.2,94.0,high,29.4,misaligned,17.0,2.8,fatigue_risk,85.4,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,28,1
+demo-session-1,00:29.68,37.95,0.0,0.0,37.95,53.3,0.52,reading,92,True,18.4,97.3,high,26.9,misaligned,27.8,2.7,fatigue_risk,84.0,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,28,1
+demo-session-1,00:29.80,38.09,0.0,0.0,38.09,53.3,0.15,reading,90,True,16.3,99.6,high,24.9,misaligned,36.8,2.5,fatigue_risk,82.4,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,28,1
+demo-session-1,00:29.92,38.18,0.0,0.0,38.18,53.3,0.08,reading,89,True,15.2,100.0,high,23.4,misaligned,41.8,2.1,fatigue_risk,81.1,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,28,1
+demo-session-1,00:30.04,37.91,0.0,0.0,37.91,53.3,0.26,reading,88,True,14.8,100.0,high,22.8,misaligned,42.5,2.0,fatigue_risk,81.0,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,29,1
+demo-session-1,00:30.16,37.94,0.0,0.0,37.94,53.3,0.03,reading,89,True,15.3,100.0,high,23.6,misaligned,41.7,2.0,fatigue_risk,81.3,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,29,1
+demo-session-1,00:30.28,37.42,0.0,0.0,37.42,53.3,0.52,reading,90,True,15.9,100.0,high,24.5,misaligned,38.0,2.2,fatigue_risk,82.5,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,29,1
+demo-session-1,00:30.40,36.85,0.0,0.0,36.85,53.3,0.56,reading,92,True,18.2,97.7,high,26.8,misaligned,31.2,2.4,fatigue_risk,84.2,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,29,1
+demo-session-1,00:30.52,36.29,0.0,0.0,36.29,53.3,0.57,reading,94,True,20.7,94.9,high,29.1,misaligned,22.6,2.5,fatigue_risk,85.6,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,29,1
+demo-session-1,00:30.64,35.85,0.0,0.0,35.85,53.3,0.44,reading,96,True,23.3,91.8,high,31.5,misaligned,11.7,2.5,fatigue_risk,86.8,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,29,1
+demo-session-1,00:30.76,35.11,0.0,0.0,35.11,53.3,0.74,reading,96,True,24.2,90.4,high,32.1,misaligned,0.2,2.6,fatigue_risk,87.0,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,29,1
+demo-session-1,00:30.88,34.75,0.0,0.0,34.75,53.3,0.36,reading,95,True,24.1,90.4,high,31.9,misaligned,0.0,2.5,fatigue_risk,86.3,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,29,1
+demo-session-1,00:31.00,34.23,0.0,0.0,34.23,53.3,0.52,reading,94,True,22.7,91.7,high,30.4,misaligned,0.0,2.5,fatigue_risk,85.0,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,30,1
+demo-session-1,00:31.12,33.91,0.0,0.0,33.91,53.3,0.32,reading,91,True,21.0,93.3,high,28.7,misaligned,0.0,2.4,fatigue_risk,83.4,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,30,1
+demo-session-1,00:31.24,33.77,0.0,0.0,33.77,53.3,0.14,reading,89,True,19.7,94.5,high,27.3,misaligned,0.0,2.3,fatigue_risk,81.9,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,30,1
+demo-session-1,00:31.36,33.55,0.0,0.0,33.55,53.3,0.22,reading,88,True,18.3,95.7,high,25.9,misaligned,0.0,2.2,fatigue_risk,80.6,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,30,1
+demo-session-1,00:31.48,33.83,0.0,0.0,33.83,53.3,0.28,reading,88,True,18.2,95.8,high,25.7,misaligned,0.0,2.1,fatigue_risk,80.5,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,30,1
+demo-session-1,00:31.60,34.12,0.0,0.0,34.12,53.3,0.29,reading,89,True,18.8,95.2,high,26.4,misaligned,0.0,2.2,fatigue_risk,81.1,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,30,1
+demo-session-1,00:31.72,34.48,0.0,0.0,34.48,53.3,0.36,reading,90,True,20.1,94.1,high,27.7,misaligned,0.0,2.3,fatigue_risk,82.5,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,30,1
+demo-session-1,00:31.84,35.41,0.0,0.0,35.41,53.3,0.93,reading,92,True,20.9,93.5,high,28.7,misaligned,0.0,2.6,fatigue_risk,84.0,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,30,1
+demo-session-1,00:31.96,35.94,0.0,0.0,35.94,53.3,0.53,reading,94,True,23.0,91.5,high,30.8,misaligned,0.0,2.8,fatigue_risk,85.6,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,30,1
+demo-session-1,00:32.08,36.65,0.0,0.0,36.65,53.3,0.72,reading,95,True,23.6,91.0,high,31.4,misaligned,0.0,2.8,fatigue_risk,86.3,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,31,1
+demo-session-1,00:32.20,37.41,0.0,0.0,37.41,53.3,0.76,reading,94,True,22.4,92.4,high,30.3,misaligned,4.6,2.9,fatigue_risk,85.7,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,31,1
+demo-session-1,00:32.32,37.92,0.0,0.0,37.92,53.3,0.5,reading,93,True,20.0,95.2,high,28.2,misaligned,17.7,2.9,fatigue_risk,84.3,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,31,1
+demo-session-1,00:32.44,38.14,0.0,0.0,38.14,53.3,0.22,reading,90,True,17.1,98.5,high,25.5,misaligned,29.3,2.8,fatigue_risk,82.6,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,31,1
+demo-session-1,00:32.56,38.32,0.0,0.0,38.32,53.3,0.18,reading,88,True,14.9,100.0,high,22.9,misaligned,38.6,2.6,fatigue_risk,80.7,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,31,1
+demo-session-1,00:32.68,38.32,0.0,0.0,38.32,53.3,0.0,reading,86,True,13.7,100.0,high,21.0,misaligned,45.9,2.4,fatigue_risk,79.3,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,31,1
+demo-session-1,00:32.80,38.25,0.0,0.0,38.25,53.3,0.07,reading,85,True,13.0,100.0,high,20.0,misaligned,48.5,2.3,fatigue_risk,78.7,high,0.0,high,Possible fatigue slump detected. Take a short recovery pause.,focus,31,1
+demo-session-1,00:32.92,27.28,0.0,0.0,27.28,53.3,10.97,reading,66,True,0.0,100.0,high,0.0,misaligned,29.3,6.7,off_task_risk,34.0,low,0.0,high,High strain detected. Pause briefly and mark this segment.,focus,31,1
+demo-session-1,00:33.04,19.78,0.0,0.0,19.78,53.3,7.5,reading,2,False,0.0,100.0,high,0.0,misaligned,0.0,9.8,off_task_risk,21.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,32,1
+demo-session-1,00:33.16,14.52,0.0,0.0,14.52,42.5,5.26,reading,0,False,6.0,100.0,high,9.3,misaligned,0.0,11.9,off_task_risk,9.1,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,32,1
+demo-session-1,00:33.28,10.91,0.0,0.0,10.91,31.9,3.61,reading,0,False,12.8,98.3,high,18.8,misaligned,0.0,13.3,off_task_risk,0.9,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,32,1
+demo-session-1,00:33.40,8.55,0.0,0.0,8.55,25.1,2.35,reading,0,False,19.6,90.9,high,25.2,misaligned,0.0,14.1,off_task_risk,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,32,1
+demo-session-1,00:33.52,6.89,0.0,0.0,6.89,20.2,1.66,reading,0,False,24.1,86.0,high,29.6,misaligned,0.0,14.6,off_task_risk,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,32,1
+demo-session-1,00:33.64,5.79,0.0,0.0,5.79,16.9,1.11,reading,0,False,27.3,82.6,high,32.6,misaligned,0.0,14.7,off_task_risk,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,32,1
+demo-session-1,00:33.76,5.09,0.0,0.0,5.09,14.9,0.69,reading,0,False,29.3,80.4,high,34.5,misaligned,0.0,14.8,off_task_risk,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,32,1
+demo-session-1,00:33.88,4.67,0.0,0.0,4.67,13.7,0.42,reading,0,False,30.6,79.0,high,35.8,misaligned,0.0,14.6,off_task_risk,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,32,1
+demo-session-1,00:34.00,4.27,0.0,0.0,4.27,12.5,0.4,reading,0,False,31.6,78.0,high,36.7,misaligned,0.0,14.5,off_task_risk,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,33,1
+demo-session-1,00:34.12,4.04,0.0,0.0,4.04,11.8,0.23,reading,0,False,32.3,77.2,high,37.4,misaligned,0.0,14.4,off_task_risk,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,33,1
+demo-session-1,00:34.24,3.84,0.0,0.0,3.84,11.3,0.2,reading,0,False,32.7,76.7,high,37.8,misaligned,0.0,14.4,off_task_risk,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,33,1
+demo-session-1,00:34.36,3.69,0.0,0.0,3.69,10.8,0.15,reading,0,False,33.1,76.3,high,38.2,misaligned,0.0,14.4,off_task_risk,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,33,1
+demo-session-1,00:34.48,3.6,0.0,0.0,3.6,10.5,0.09,reading,0,False,33.4,76.0,high,38.5,misaligned,0.0,14.5,off_task_risk,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,33,1
+demo-session-1,00:34.60,3.44,0.0,0.0,3.44,10.1,0.16,reading,0,False,33.9,75.5,high,38.9,misaligned,0.0,13.2,off_task_risk,0.0,low,22.0,high,High strain detected. Pause briefly and mark this segment.,focus,33,1
+demo-session-1,00:34.72,3.3,0.0,0.0,3.3,9.7,0.14,reading,10,False,36.7,72.1,high,41.5,misaligned,0.0,9.1,off_task_risk,0.0,low,19.8,high,High strain detected. Pause briefly and mark this segment.,focus,33,1
+demo-session-1,00:34.84,3.14,0.0,0.0,3.14,9.2,0.16,reading,58,False,57.0,43.3,medium,57.1,drifting,0.0,6.3,load_rising,0.0,low,0.0,high,Behavior alignment is drifting in reading. Reduce switching and keep one target.,focus,33,1
+demo-session-1,00:34.96,3.08,0.0,0.0,3.08,9.0,0.06,reading,80,False,76.0,24.4,low,76.2,aligned,0.0,4.3,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,33,1
+demo-session-1,00:35.08,2.91,0.0,0.0,2.91,8.5,0.16,reading,90,False,84.7,15.7,low,84.9,aligned,0.0,3.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,34,1
+demo-session-1,00:35.20,2.77,0.0,0.0,2.77,8.1,0.14,reading,95,False,89.1,11.3,low,89.3,aligned,0.0,2.2,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,34,1
+demo-session-1,00:35.32,2.62,0.0,0.0,2.62,7.7,0.15,reading,97,False,91.2,9.2,low,91.4,aligned,0.0,1.6,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,34,1
+demo-session-1,00:35.44,2.29,0.0,0.0,2.29,6.7,0.33,reading,98,False,92.4,7.9,low,92.6,aligned,0.0,1.4,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,34,1
+demo-session-1,00:35.56,2.06,0.0,0.0,2.06,6.0,0.23,reading,98,False,93.3,7.0,low,93.4,aligned,0.0,1.2,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,34,1
+demo-session-1,00:35.68,1.94,0.0,0.0,1.94,5.7,0.13,reading,98,False,93.8,6.5,low,93.9,aligned,0.0,1.1,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,34,1
+demo-session-1,00:35.80,1.77,0.0,0.0,1.77,5.2,0.17,reading,98,False,94.1,6.2,low,94.2,aligned,0.0,1.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,34,1
+demo-session-1,00:35.92,1.44,0.0,0.0,1.44,4.2,0.33,reading,98,False,94.5,5.8,low,94.6,aligned,0.0,1.1,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,34,1
+demo-session-1,00:36.03,1.16,0.0,0.0,1.16,3.4,0.28,reading,98,False,94.9,5.2,low,95.0,aligned,0.0,1.1,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,35,1
+demo-session-1,00:36.15,1.01,0.0,0.0,1.01,3.0,0.15,reading,97,False,95.1,5.1,low,95.2,aligned,0.0,1.1,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,35,1
+demo-session-1,00:36.27,0.8,0.0,0.0,0.8,2.3,0.21,reading,97,False,95.3,4.8,low,95.4,aligned,0.0,1.1,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,35,1
+demo-session-1,00:36.39,0.68,0.0,0.0,0.68,2.0,0.12,reading,97,False,95.6,4.5,low,95.7,aligned,0.0,1.1,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,35,1
+demo-session-1,00:36.51,0.56,0.0,0.0,0.56,1.6,0.12,reading,97,False,95.9,4.2,low,95.9,aligned,0.0,1.1,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,35,1
+demo-session-1,00:36.63,0.63,0.0,0.0,0.63,1.8,0.07,reading,97,False,95.8,4.3,low,95.9,aligned,0.0,1.1,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,35,1
+demo-session-1,00:36.75,0.72,0.0,0.0,0.72,2.1,0.1,reading,97,False,95.9,4.2,low,96.0,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,35,1
+demo-session-1,00:36.87,0.85,0.0,0.0,0.85,2.5,0.13,reading,98,False,96.1,4.0,low,96.2,aligned,0.0,0.0,stable,0.0,low,0.0,high,Keep one learning target and settle into the current mode.,focus,35,1
+demo-session-1,00:36.99,0.8,0.0,0.0,0.8,2.3,0.05,reading,98,False,96.6,3.5,low,96.7,aligned,0.0,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,35,1
+demo-session-1,00:37.11,0.95,0.0,0.0,0.95,2.8,0.15,reading,99,False,96.7,3.4,low,96.8,aligned,0.0,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,36,1
+demo-session-1,00:37.23,1.09,0.0,0.0,1.09,3.2,0.15,reading,99,False,96.6,3.6,low,96.7,aligned,0.0,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,36,1
+demo-session-1,00:37.35,1.13,0.0,0.0,1.13,3.3,0.04,reading,99,False,96.8,3.3,low,96.9,aligned,0.0,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,36,1
+demo-session-1,00:37.47,1.4,0.0,0.0,1.4,4.1,0.27,reading,100,False,96.3,3.9,low,96.4,aligned,0.0,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,36,1
+demo-session-1,00:37.59,1.68,0.0,0.0,1.68,4.9,0.28,reading,100,False,95.4,5.0,low,95.6,aligned,2.5,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,36,1
+demo-session-1,00:37.71,1.76,0.0,0.0,1.76,5.1,0.08,reading,99,False,94.9,5.7,low,95.2,aligned,5.8,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,36,1
+demo-session-1,00:37.83,2.06,0.0,0.0,2.06,6.0,0.3,reading,99,False,93.5,7.3,low,93.9,aligned,8.5,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,36,1
+demo-session-1,00:37.95,2.19,0.0,0.0,2.19,6.4,0.14,reading,99,False,92.8,8.0,low,93.3,aligned,11.4,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,36,1
+demo-session-1,00:38.07,2.37,0.0,0.0,2.37,6.9,0.18,reading,99,False,92.0,9.0,low,92.5,aligned,13.5,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,37,1
+demo-session-1,00:38.19,2.67,0.0,0.0,2.67,7.8,0.3,reading,98,False,90.5,10.7,low,91.1,aligned,15.5,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,37,1
+demo-session-1,00:38.31,2.88,0.0,0.0,2.88,8.4,0.21,reading,98,False,89.7,11.5,low,90.4,aligned,17.4,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,37,1
+demo-session-1,00:38.43,2.91,0.0,0.0,2.91,8.5,0.03,reading,98,False,89.5,11.7,low,90.2,aligned,18.5,1.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,37,1
+demo-session-1,00:38.55,3.02,0.0,0.0,3.02,8.8,0.11,reading,98,False,89.1,12.2,low,89.8,aligned,18.9,1.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,37,1
+demo-session-1,00:38.67,3.13,0.0,0.0,3.13,9.2,0.11,reading,97,False,88.5,12.9,low,89.3,aligned,19.5,1.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,37,1
+demo-session-1,00:38.79,3.18,0.0,0.0,3.18,9.3,0.04,reading,98,False,88.8,12.5,low,89.5,aligned,19.0,1.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,37,1
+demo-session-1,00:38.91,3.17,0.0,0.0,3.17,9.3,0.01,reading,98,False,89.1,12.2,low,89.8,aligned,18.2,0.9,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,37,1
+demo-session-1,00:39.03,3.18,0.0,0.0,3.18,9.3,0.01,reading,98,False,89.4,11.8,low,90.1,aligned,17.0,0.9,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,38,1
+demo-session-1,00:39.15,3.25,0.0,0.0,3.25,9.5,0.08,reading,98,False,89.6,11.6,low,90.3,aligned,15.0,0.9,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,38,1
+demo-session-1,00:39.27,3.1,0.0,0.0,3.1,9.1,0.15,reading,99,False,90.5,10.5,low,91.1,aligned,12.4,0.8,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,38,1
+demo-session-1,00:39.39,3.08,0.0,0.0,3.08,9.0,0.02,reading,99,False,91.2,9.7,low,91.7,aligned,10.3,0.7,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,38,1
+demo-session-1,00:39.51,2.99,0.0,0.0,2.99,8.8,0.09,reading,99,False,91.8,9.0,low,92.2,aligned,7.7,0.7,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,38,1
+demo-session-1,00:39.63,2.77,0.0,0.0,2.77,8.1,0.22,reading,100,False,92.8,7.9,low,93.1,aligned,4.9,0.7,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,38,1
+demo-session-1,00:39.75,2.63,0.0,0.0,2.63,7.7,0.14,reading,100,False,93.6,6.9,low,93.8,aligned,2.0,0.7,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,38,1
+demo-session-1,00:39.87,2.53,0.0,0.0,2.53,7.4,0.1,reading,100,False,94.1,6.3,low,94.3,aligned,0.0,0.6,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,38,1
+demo-session-1,00:39.99,2.37,0.0,0.0,2.37,6.9,0.16,reading,100,False,94.3,6.0,low,94.5,aligned,0.0,0.6,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,38,1
+demo-session-1,00:40.11,2.08,0.0,0.0,2.08,6.1,0.29,reading,100,False,94.6,5.7,low,94.8,aligned,0.0,0.6,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,39,1
+demo-session-1,00:40.23,2.04,0.0,0.0,2.04,6.0,0.04,reading,99,False,94.7,5.6,low,94.9,aligned,0.0,0.6,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,39,1
+demo-session-1,00:40.35,1.9,0.0,0.0,1.9,5.6,0.14,reading,99,False,94.8,5.5,low,94.9,aligned,0.0,0.7,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,39,1
+demo-session-1,00:40.47,1.79,0.0,0.0,1.79,5.2,0.11,reading,99,False,95.0,5.3,low,95.1,aligned,0.0,0.7,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,39,1
+demo-session-1,00:40.59,1.45,0.0,0.0,1.45,4.3,0.34,reading,99,False,95.2,5.1,low,95.3,aligned,0.0,0.8,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,39,1
+demo-session-1,00:40.71,1.22,0.0,0.0,1.22,3.6,0.24,reading,98,False,95.4,4.8,low,95.5,aligned,0.0,0.9,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,39,1
+demo-session-1,00:40.83,0.96,0.0,0.0,0.96,2.8,0.25,reading,98,False,95.7,4.4,low,95.8,aligned,0.0,1.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,39,1
+demo-session-1,00:40.95,0.94,0.0,0.0,0.94,2.7,0.02,reading,98,False,96.0,4.1,low,96.1,aligned,0.0,0.9,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,39,1
+demo-session-1,00:41.07,0.79,0.0,0.0,0.79,2.3,0.15,reading,98,False,96.1,4.0,low,96.1,aligned,0.0,1.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,40,1
+demo-session-1,00:41.19,0.64,0.0,0.0,0.64,1.9,0.14,reading,98,False,96.5,3.6,low,96.6,aligned,0.0,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,40,1
+demo-session-1,00:41.31,0.62,0.0,0.0,0.62,1.8,0.02,reading,98,False,96.8,3.3,low,96.8,aligned,0.0,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,40,1
+demo-session-1,00:41.43,0.74,0.0,0.0,0.74,2.2,0.12,reading,98,False,96.5,3.6,low,96.6,aligned,0.0,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,40,1
+demo-session-1,00:41.55,0.84,0.0,0.0,0.84,2.4,0.09,reading,98,False,96.5,3.6,low,96.6,aligned,0.0,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,40,1
+demo-session-1,00:41.67,0.8,0.0,0.0,0.8,2.4,0.03,reading,99,False,97.1,3.0,low,97.1,aligned,0.0,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,40,1
+demo-session-1,00:41.79,0.8,0.0,0.0,0.8,2.3,0.0,reading,99,False,97.3,2.8,low,97.4,aligned,0.0,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,40,1
+demo-session-1,00:41.91,1.04,0.0,0.0,1.04,3.0,0.24,reading,99,False,96.6,3.5,low,96.7,aligned,0.0,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,40,1
+demo-session-1,00:42.03,1.18,0.0,0.0,1.18,3.5,0.14,reading,99,False,96.6,3.6,low,96.7,aligned,0.0,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,41,1
+demo-session-1,00:42.15,1.37,0.0,0.0,1.37,4.0,0.19,reading,100,False,96.5,3.7,low,96.6,aligned,0.0,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,41,1
+demo-session-1,00:42.27,1.43,0.0,0.0,1.43,4.2,0.06,reading,100,False,96.5,3.8,low,96.6,aligned,1.1,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,41,1
+demo-session-1,00:42.39,1.53,0.0,0.0,1.53,4.5,0.1,reading,100,False,95.9,4.5,low,96.1,aligned,3.9,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,41,1
+demo-session-1,00:42.51,1.81,0.0,0.0,1.81,5.3,0.29,reading,100,False,94.6,6.0,low,94.9,aligned,6.4,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,41,1
+demo-session-1,00:42.63,2.01,0.0,0.0,2.01,5.9,0.2,reading,99,False,93.7,7.0,low,94.1,aligned,8.8,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,41,1
+demo-session-1,00:42.75,2.13,0.0,0.0,2.13,6.2,0.12,reading,99,False,93.1,7.7,low,93.6,aligned,11.4,0.0,stable,0.0,low,0.0,high,Recovery is working. Rebuild a steady rhythm.,focus,41,1

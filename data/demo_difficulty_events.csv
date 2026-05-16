@@ -1,2 +1,2 @@
 Session_ID,Event_ID,Start_Timestamp,End_Timestamp,Start_Sample,End_Sample,Duration_Seconds,Severity,Peak_Load,Min_Focus,Peak_Pitch,Lowest_Stability,Primary_Label,Trigger_Reason,Guidance,Review_Note,Sample_Count
-demo-session-1,1,00:11.07,00:38.07,85,310,27.0,high,100.0,0.0,38.6,0.0,Load rising,Behavior alignment is drifting,Behavior alignment is drifting in reading. Reduce switching and keep one target.,Review this segment first: load rose and reached a high-load state.,213
+demo-session-1,1,00:10.95,00:38.07,84,310,27.1,high,100.0,0.0,38.6,0.0,Load rising,Behavior alignment is drifting,Behavior alignment is drifting in reading. Reduce switching and keep one target.,Review this segment first: load rose and reached a high-load state.,214

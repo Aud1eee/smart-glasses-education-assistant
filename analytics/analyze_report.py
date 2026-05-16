@@ -57,6 +57,9 @@ def analyze(
     medium_load = (df["Cognitive_Load"] >= 45) & ~high_load
     fatigue_high = df["Fatigue_Risk"] >= 60
     low_confidence = (df["Uncertainty_Score"] >= 55) | df["Confidence_Level"].isin(["low", "warming_up"])
+    productive_struggle = df["State_Hint"].eq("productive_struggle")
+    off_task_risk = df["State_Hint"].eq("off_task_risk")
+    fatigue_hint = df["State_Hint"].eq("fatigue_risk") | fatigue_high
     drift_risk = (
         (df["Behavioral_Alignment"] < 72)
         | df["Behavioral_Level"].isin(["drifting", "misaligned"])
@@ -66,9 +69,13 @@ def analyze(
     avg_focus = df["Focus_Score"].mean()
     avg_load = df["Cognitive_Load"].mean()
     avg_fatigue = df["Fatigue_Risk"].mean()
+    avg_switching = df["Switching_Index"].mean()
+    avg_drift_trend = df["Drift_Trend"].mean()
     high_load_ratio = high_load.mean() * 100
     low_conf_ratio = low_confidence.mean() * 100
     drift_ratio = drift_risk.mean() * 100
+    productive_ratio = productive_struggle.mean() * 100
+    off_task_ratio = off_task_risk.mean() * 100
     session_offsets = _build_session_offsets(df)
     events_df = _load_events(events_path, session_offsets)
     event_count = 0 if events_df is None else len(events_df)
@@ -80,8 +87,12 @@ def analyze(
     print(f"- Average focus proxy: {avg_focus:.1f}/100")
     print(f"- Average cognitive load: {avg_load:.1f}/100")
     print(f"- Average fatigue risk: {avg_fatigue:.1f}/100")
+    print(f"- Average switching index: {avg_switching:.1f}/100")
+    print(f"- Average drift trend: {avg_drift_trend:.1f}/100")
     print(f"- Drift-risk ratio: {drift_ratio:.1f}%")
     print(f"- High-load ratio: {high_load_ratio:.1f}%")
+    print(f"- Productive-struggle ratio: {productive_ratio:.1f}%")
+    print(f"- Off-task ratio: {off_task_ratio:.1f}%")
     print(f"- Low-confidence ratio: {low_conf_ratio:.1f}%")
     print(f"- Task modes present: {task_modes}")
     if event_count:
@@ -97,11 +108,13 @@ def analyze(
             100 - df["Behavioral_Alignment"].to_numpy(),
             df["Cognitive_Load"].to_numpy(),
             df["Fatigue_Risk"].to_numpy(),
+            (productive_struggle.astype(int) * 100).to_numpy(),
+            (off_task_risk.astype(int) * 100).to_numpy(),
         ])
 
         plt.style.use("dark_background")
         fig = plt.figure(figsize=(14, 9), constrained_layout=True)
-        gs = fig.add_gridspec(4, 1, height_ratios=[1.45, 0.72, 0.95, 1.05], hspace=0.26)
+        gs = fig.add_gridspec(4, 1, height_ratios=[1.45, 0.92, 0.95, 1.05], hspace=0.26)
 
         ax1 = fig.add_subplot(gs[0])
         ax1.plot(x, df["Behavioral_Alignment"], color="#00ff9d", linewidth=1.9, label="Behavioral alignment")
@@ -109,27 +122,30 @@ def analyze(
         ax1.plot(x, 100 - df["Fatigue_Risk"], color="#53b3ff", linewidth=1.15, alpha=0.9, label="Fatigue comfort")
         ax1.fill_between(x, 0, df["Behavioral_Alignment"], color="#00ff9d", alpha=0.10)
         _shade_segments(ax1, high_load, color="#ff3158", alpha=0.14)
+        _shade_segments(ax1, productive_struggle, color="#52d6ff", alpha=0.10)
+        _shade_segments(ax1, off_task_risk, color="#ff9f43", alpha=0.10)
         _shade_segments(ax1, low_confidence, color="#8a8f9d", alpha=0.12)
         _draw_event_overlays(ax1, events_df)
         ax1.set_ylim(0, 105)
         ax1.set_ylabel("Score")
         ax1.set_title(
             f"{title_prefix} | Align {avg_alignment:.1f} | Load {avg_load:.1f} | "
-            f"Fatigue {avg_fatigue:.1f} | Low-conf {low_conf_ratio:.1f}% | Events {event_count}"
+            f"Fatigue {avg_fatigue:.1f} | Struggle {productive_ratio:.1f}% | Off-task {off_task_ratio:.1f}% | Events {event_count}"
         )
         ax1.legend(loc="upper right")
         ax1.grid(axis="y", linestyle="--", alpha=0.18)
 
         ax2 = fig.add_subplot(gs[1], sharex=ax1)
         ax2.imshow(risk_matrix, aspect="auto", cmap="RdYlGn_r", vmin=0, vmax=100)
-        ax2.set_yticks([0, 1, 2])
-        ax2.set_yticklabels(["Align risk", "Load", "Fatigue"])
+        ax2.set_yticks([0, 1, 2, 3, 4])
+        ax2.set_yticklabels(["Align risk", "Load", "Fatigue", "Struggle", "Off-task"])
         ax2.set_title("Risk Heat Bands", loc="left", fontsize=10, color="#d8fff0")
         _shade_segments(ax2, low_confidence, color="#8a8f9d", alpha=0.10)
 
         ax3 = fig.add_subplot(gs[2], sharex=ax1)
         ax3.plot(x, df["Uncertainty_Score"], color="#d28cff", linewidth=1.45, label="Uncertainty score")
         ax3.plot(x, df["Stability"], color="#d8fff0", linewidth=1.15, alpha=0.82, label="Stability")
+        ax3.plot(x, df["Switching_Index"], color="#ffb347", linewidth=1.0, alpha=0.72, label="Switching index")
         _shade_segments(ax3, low_confidence, color="#8a8f9d", alpha=0.12)
         _draw_mode_spans(ax3, df["Task_Mode"].tolist())
         ax3.set_ylim(0, 105)
@@ -140,10 +156,13 @@ def analyze(
 
         ax4 = fig.add_subplot(gs[3], sharex=ax1)
         ax4.plot(x, df["Relative_Pitch"], color="#8fd3ff", linewidth=1.35, label="Pitch delta")
+        ax4.plot(x, df["Combined_Drift"], color="#ffd36c", linewidth=1.05, alpha=0.9, label="Combined drift")
         ax4.plot(x, df["Stability"], color="#8ef6d4", linewidth=1.0, alpha=0.55, label="Stability")
         ax4.scatter(x[medium_load], df.loc[medium_load, "Relative_Pitch"], color="#ffcc00", s=12, label="Medium load")
         ax4.scatter(x[high_load], df.loc[high_load, "Relative_Pitch"], color="#ff3158", s=16, label="High load")
-        ax4.scatter(x[fatigue_high], df.loc[fatigue_high, "Relative_Pitch"], color="#53b3ff", s=20, marker="x", label="Fatigue risk")
+        ax4.scatter(x[productive_struggle], df.loc[productive_struggle, "Relative_Pitch"], color="#52d6ff", s=18, marker="o", label="Productive struggle")
+        ax4.scatter(x[off_task_risk], df.loc[off_task_risk, "Relative_Pitch"], color="#ff9f43", s=18, marker="s", label="Off-task risk")
+        ax4.scatter(x[fatigue_hint], df.loc[fatigue_hint, "Relative_Pitch"], color="#53b3ff", s=20, marker="x", label="Fatigue risk")
         _draw_event_overlays(ax4, events_df, show_labels=False)
         ax4.set_ylabel("Motion")
         ax4.set_xlabel("Timeline samples")
@@ -163,8 +182,12 @@ def analyze(
         "avg_focus": round(avg_focus, 1),
         "avg_load": round(avg_load, 1),
         "avg_fatigue": round(avg_fatigue, 1),
+        "avg_switching": round(avg_switching, 1),
+        "avg_drift_trend": round(avg_drift_trend, 1),
         "drift_ratio": round(drift_ratio, 1),
         "high_load_ratio": round(high_load_ratio, 1),
+        "productive_ratio": round(productive_ratio, 1),
+        "off_task_ratio": round(off_task_ratio, 1),
         "low_conf_ratio": round(low_conf_ratio, 1),
         "difficulty_event_count": event_count,
         "heatmap_saved": heatmap_saved,
@@ -183,10 +206,18 @@ def _normalize_schema(df):
         "Task_Mode": "reading",
         "Behavioral_Alignment": np.nan,
         "Behavioral_Level": "aligned",
+        "Drift_Trend": 0,
+        "Switching_Index": 0,
+        "State_Hint": "stable",
         "Fatigue_Risk": 0,
         "Fatigue_Level": "low",
         "Uncertainty_Score": 35,
         "Confidence_Level": "medium",
+        "Relative_Yaw": 0,
+        "Relative_Roll": 0,
+        "Combined_Drift": np.nan,
+        "Orientation_Drift": 0,
+        "Movement_Intensity": 0,
     }
 
     for column, default in defaults.items():
@@ -200,11 +231,20 @@ def _normalize_schema(df):
     df["Stability"] = pd.to_numeric(df["Stability"], errors="coerce").fillna(100 - df["Relative_Pitch"]).clip(0, 100)
     df["Behavioral_Alignment"] = pd.to_numeric(df["Behavioral_Alignment"], errors="coerce")
     df["Behavioral_Alignment"] = df["Behavioral_Alignment"].fillna(df["Focus_Score"]).clip(0, 100)
+    df["Drift_Trend"] = pd.to_numeric(df["Drift_Trend"], errors="coerce").fillna(0).clip(0, 100)
+    df["Switching_Index"] = pd.to_numeric(df["Switching_Index"], errors="coerce").fillna(0).clip(0, 100)
     df["Fatigue_Risk"] = pd.to_numeric(df["Fatigue_Risk"], errors="coerce").fillna(0).clip(0, 100)
     df["Uncertainty_Score"] = pd.to_numeric(df["Uncertainty_Score"], errors="coerce").fillna(35).clip(0, 100)
+    df["Relative_Yaw"] = pd.to_numeric(df["Relative_Yaw"], errors="coerce").fillna(0)
+    df["Relative_Roll"] = pd.to_numeric(df["Relative_Roll"], errors="coerce").fillna(0)
+    df["Combined_Drift"] = pd.to_numeric(df["Combined_Drift"], errors="coerce")
+    df["Combined_Drift"] = df["Combined_Drift"].fillna(df["Relative_Pitch"]).clip(0, 100)
+    df["Orientation_Drift"] = pd.to_numeric(df["Orientation_Drift"], errors="coerce").fillna(0).clip(0, 100)
+    df["Movement_Intensity"] = pd.to_numeric(df["Movement_Intensity"], errors="coerce").fillna(0).clip(0, 100)
     df["Task_Mode"] = df["Task_Mode"].fillna("reading").astype(str).str.strip().str.lower()
     df["Behavioral_Level"] = df["Behavioral_Level"].fillna("aligned").astype(str).str.strip().str.lower()
     df["Confidence_Level"] = df["Confidence_Level"].fillna("medium").astype(str).str.strip().str.lower()
+    df["State_Hint"] = df["State_Hint"].fillna("stable").astype(str).str.strip().str.lower()
     return df
 
 

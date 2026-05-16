@@ -456,6 +456,14 @@
             background: linear-gradient(90deg, rgba(159, 215, 255, 0.34), rgba(159, 215, 255, 0.88));
         }
 
+        .lane-segment.productive {
+            background: linear-gradient(90deg, rgba(82, 214, 255, 0.34), rgba(82, 214, 255, 0.88));
+        }
+
+        .lane-segment.off-task {
+            background: linear-gradient(90deg, rgba(255, 159, 67, 0.34), rgba(255, 159, 67, 0.90));
+        }
+
         .section {
             padding: 20px;
         }
@@ -643,6 +651,16 @@
         .tone-low {
             background: var(--good);
             box-shadow: 0 0 14px rgba(143, 240, 200, 0.20);
+        }
+
+        .badge.productive .badge-dot {
+            background: #52d6ff;
+            box-shadow: 0 0 14px rgba(82, 214, 255, 0.20);
+        }
+
+        .badge.off-task .badge-dot {
+            background: #ff9f43;
+            box-shadow: 0 0 14px rgba(255, 159, 67, 0.20);
         }
 
         .event-title strong {
@@ -894,6 +912,14 @@
                         <div class="lane-track" id="lane-high-load"></div>
                     </div>
                     <div class="timeline-lane">
+                        <div class="lane-label">Aligned Struggle</div>
+                        <div class="lane-track" id="lane-productive"></div>
+                    </div>
+                    <div class="timeline-lane">
+                        <div class="lane-label">Off-task Drift</div>
+                        <div class="lane-track" id="lane-off-task"></div>
+                    </div>
+                    <div class="timeline-lane">
                         <div class="lane-label">Low Confidence</div>
                         <div class="lane-track" id="lane-low-confidence"></div>
                     </div>
@@ -979,13 +1005,16 @@
             currentSummary = summary || {};
             const priority = String(summary.review_priority || "clear").toLowerCase();
             const eventCount = Number(summary.difficulty_count || 0);
+            const productiveRatio = Number(summary.productive_struggle_ratio || 0);
+            const offTaskRatio = Number(summary.off_task_ratio || 0);
             document.getElementById("summary-session").innerText = summary.session_id || "--";
             document.getElementById("summary-mode").innerText = `Task mode: ${titleCase(summary.primary_task_mode || "unknown")}`;
             document.getElementById("summary-priority").innerText = String(summary.review_priority || "clear").toUpperCase();
             document.getElementById("summary-priority-echo").innerText = String(summary.review_priority || "clear").toUpperCase();
             document.getElementById("summary-events").innerText = `${summary.difficulty_count || 0} flagged events`;
             document.getElementById("summary-load").innerText = `${Math.round(summary.avg_load || 0)} / ${Math.round(summary.avg_fatigue || 0)}`;
-            document.getElementById("summary-signal").innerText = `Low-confidence ratio: ${formatPercent(summary.low_confidence_ratio)}`;
+            document.getElementById("summary-signal").innerText =
+                `Low-conf ${formatPercent(summary.low_confidence_ratio)} | Struggle ${formatPercent(productiveRatio)} | Off-task ${formatPercent(offTaskRatio)}`;
             document.getElementById("summary-duration").innerText = summary.duration_label || "00:00";
             document.getElementById("summary-samples").innerText = `${summary.samples || 0} samples`;
 
@@ -994,9 +1023,15 @@
                 document.getElementById("hero-copy").innerText =
                     "This session captured a sustained high-difficulty stretch. Use the event spotlight and heatmap below to recover the missing context before starting a new study block.";
             } else if (priority === "medium" && eventCount > 0) {
-                document.getElementById("hero-title").innerText = "Targeted recap should be enough";
-                document.getElementById("hero-copy").innerText =
-                    "A moderate difficulty segment was detected. Review that window once, verify the key concept, and then continue with the next task.";
+                if (productiveRatio >= offTaskRatio) {
+                    document.getElementById("hero-title").innerText = "This looked more like a hard concept than pure drift";
+                    document.getElementById("hero-copy").innerText =
+                        "The strongest segment stayed relatively aligned while effort rose. Treat it as a concept challenge: replay the same target slowly and rebuild the reasoning step by step.";
+                } else {
+                    document.getElementById("hero-title").innerText = "Targeted recap with a steadier target should be enough";
+                    document.getElementById("hero-copy").innerText =
+                        "A moderate difficulty segment was detected, and drift pressure was more visible than aligned effort. Recenter on one source, then replay that window once before continuing.";
+                }
             } else {
                 document.getElementById("hero-title").innerText = "Session stayed mostly clear";
                 document.getElementById("hero-copy").innerText =
@@ -1078,12 +1113,20 @@
                         <strong>${titleCase(event.task_mode)}</strong>
                     </div>
                     <div class="meta-item">
+                        <span>Type</span>
+                        <strong>${event.state_hint_label || "Stable"}</strong>
+                    </div>
+                    <div class="meta-item">
                         <span>Peak / Fatigue</span>
                         <strong>${Math.round(event.peak_load)} / ${Math.round(event.avg_fatigue)}</strong>
                     </div>
                     <div class="meta-item">
                         <span>Missed Risk</span>
                         <strong>${String(event.missed_content_risk || "low").toUpperCase()}</strong>
+                    </div>
+                    <div class="meta-item">
+                        <span>Trend / Switch</span>
+                        <strong>${Math.round(event.avg_drift_trend || 0)} / ${Math.round(event.avg_switching || 0)}</strong>
                     </div>
                 </div>
                 <div class="event-actions">
@@ -1174,6 +1217,8 @@
             });
 
             renderRiskLane("lane-high-load", timeline?.risk_segments?.high_load || [], "high-load", totalSamples);
+            renderRiskLane("lane-productive", timeline?.risk_segments?.productive_struggle || [], "productive", totalSamples);
+            renderRiskLane("lane-off-task", timeline?.risk_segments?.off_task || [], "off-task", totalSamples);
             renderRiskLane("lane-low-confidence", timeline?.risk_segments?.low_confidence || [], "low-confidence", totalSamples);
             renderRiskLane("lane-fatigue", timeline?.risk_segments?.fatigue || [], "fatigue", totalSamples);
         }
@@ -1216,9 +1261,15 @@
                                 <span>${event.severity_label}</span>
                             </div>
                         </div>
-                        <div class="badge ${event.missed_content_risk}">
-                            <span class="badge-dot"></span>
-                            <span>Missed-content ${event.missed_content_risk}</span>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+                            <div class="badge ${event.state_hint === "productive_struggle" ? "productive" : event.state_hint === "off_task_risk" ? "off-task" : event.missed_content_risk}">
+                                <span class="badge-dot"></span>
+                                <span>${event.state_hint_label || "Stable"}</span>
+                            </div>
+                            <div class="badge ${event.missed_content_risk}">
+                                <span class="badge-dot"></span>
+                                <span>Missed-content ${event.missed_content_risk}</span>
+                            </div>
                         </div>
                     </div>
 
@@ -1238,6 +1289,14 @@
                         <div class="meta-item">
                             <span>Min Focus</span>
                             <strong>${Math.round(event.min_focus)}</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>Trend</span>
+                            <strong>${Math.round(event.avg_drift_trend || 0)}</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>Switching</span>
+                            <strong>${Math.round(event.avg_switching || 0)}</strong>
                         </div>
                     </div>
 

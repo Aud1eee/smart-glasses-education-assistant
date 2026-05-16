@@ -108,6 +108,7 @@ Recommended structure:
 - current core enhancements:
   - `drift_trend`: detects whether posture drift is building over the recent window
   - `switching_index`: estimates frequent left-right or back-and-forth target switching from signed posture history
+  - optional `yaw / roll / movement_intensity` inputs can now strengthen the same judgment path when Rokid-side signals are available
   - `state_hint`: separates:
     - `stable`
     - `load_rising`
@@ -118,6 +119,17 @@ Recommended structure:
 - `productive_struggle` is important for explanation:
   - it means the learner is still behaviorally aligned, but effort is clearly elevated
   - it should not be described as simple distraction
+- this upgrade stays inside realistic Rokid-side constraints:
+  - posture / head pose
+  - movement intensity
+  - task context
+  - time-window logic
+- the upgraded state model is now also threaded into:
+  - CSV logging schema
+  - review summary payload
+  - session timeline lanes
+  - event cards / spotlight copy
+  - heatmap summary statistics
 
 ### Main files
 

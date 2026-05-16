@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-15 16:33:37",
+  "generated_at": "2026-05-16 16:49:42",
   "overall_passed": true,
   "scenario_results": [
     {
@@ -8,9 +8,9 @@
       "dominant_state": "Focus settling",
       "tail_dominant_state": "Focus settling",
       "dominant_action": "continue",
-      "avg_load": 1.2,
-      "avg_focus": 98.8,
-      "avg_alignment": 98.8,
+      "avg_load": 2.0,
+      "avg_focus": 98.2,
+      "avg_alignment": 98.3,
       "avg_fatigue": 0.0,
       "high_load_ratio": 0.0,
       "low_conf_ratio": 0.0,
@@ -41,13 +41,13 @@
         {
           "metric": "avg_load",
           "expected": "<= 15",
-          "observed": 1.2,
+          "observed": 2.0,
           "passed": true
         },
         {
           "metric": "avg_focus",
           "expected": ">= 90",
-          "observed": 98.8,
+          "observed": 98.2,
           "passed": true
         }
       ],
@@ -59,18 +59,17 @@
       "dominant_state": "Load rising",
       "tail_dominant_state": "Fatigue risk",
       "dominant_action": "regulate",
-      "avg_load": 55.2,
-      "avg_focus": 49.3,
-      "avg_alignment": 51.8,
+      "avg_load": 64.6,
+      "avg_focus": 41.1,
+      "avg_alignment": 44.2,
       "avg_fatigue": 50.4,
-      "high_load_ratio": 16.9,
+      "high_load_ratio": 20.5,
       "low_conf_ratio": 0.0,
       "final_state": "Fatigue risk",
       "final_action": "micro_break",
       "state_counts": {
-        "Focus settling": 1,
-        "Load rising": 42,
-        "High load": 14,
+        "Load rising": 41,
+        "High load": 16,
         "Fatigue risk": 26
       },
       "tail_state_counts": {
@@ -82,7 +81,7 @@
         {
           "metric": "state_counts",
           "expected": "Load rising",
-          "observed": "Fatigue risk, Focus settling, High load, Load rising",
+          "observed": "Fatigue risk, High load, Load rising",
           "passed": true
         },
         {
@@ -100,13 +99,13 @@
         {
           "metric": "avg_load",
           "expected": "40 - 70",
-          "observed": 55.2,
+          "observed": 64.6,
           "passed": true
         },
         {
           "metric": "avg_focus",
           "expected": "<= 65",
-          "observed": 49.3,
+          "observed": 41.1,
           "passed": true
         }
       ],
@@ -118,19 +117,18 @@
       "dominant_state": "Fatigue risk",
       "tail_dominant_state": "Fatigue risk",
       "dominant_action": "slow_down",
-      "avg_load": 85.7,
-      "avg_focus": 23.4,
-      "avg_alignment": 28.3,
+      "avg_load": 95.0,
+      "avg_focus": 16.0,
+      "avg_alignment": 21.8,
       "avg_fatigue": 59.5,
       "high_load_ratio": 98.8,
       "low_conf_ratio": 0.0,
       "final_state": "Fatigue risk",
       "final_action": "micro_break",
       "state_counts": {
-        "Load rising": 1,
-        "High load": 17,
-        "Fatigue risk": 54,
-        "Regulate now": 11
+        "High load": 18,
+        "Fatigue risk": 53,
+        "Regulate now": 12
       },
       "tail_state_counts": {
         "Regulate now": 6,
@@ -153,13 +151,13 @@
         {
           "metric": "avg_load",
           "expected": ">= 75",
-          "observed": 85.7,
+          "observed": 95.0,
           "passed": true
         },
         {
           "metric": "avg_focus",
           "expected": "<= 40",
-          "observed": 23.4,
+          "observed": 16.0,
           "passed": true
         },
         {
@@ -177,9 +175,9 @@
       "dominant_state": "Focus settling",
       "tail_dominant_state": "Focus settling",
       "dominant_action": "continue",
-      "avg_load": 5.0,
-      "avg_focus": 95.1,
-      "avg_alignment": 95.1,
+      "avg_load": 7.3,
+      "avg_focus": 93.4,
+      "avg_alignment": 93.7,
       "avg_fatigue": 0.0,
       "high_load_ratio": 0.0,
       "low_conf_ratio": 0.0,
@@ -210,13 +208,13 @@
         {
           "metric": "avg_load",
           "expected": "<= 15",
-          "observed": 5.0,
+          "observed": 7.3,
           "passed": true
         },
         {
           "metric": "avg_focus",
           "expected": ">= 85",
-          "observed": 95.1,
+          "observed": 93.4,
           "passed": true
         }
       ],
@@ -225,12 +223,16 @@
   ],
   "demo_summary": {
     "samples": 349,
-    "avg_alignment": 63.9,
-    "avg_focus": 61.7,
-    "avg_load": 42.6,
+    "avg_alignment": 59.7,
+    "avg_focus": 56.8,
+    "avg_load": 48.5,
     "avg_fatigue": 30.6,
-    "drift_ratio": 57.0,
-    "high_load_ratio": 36.7,
+    "avg_switching": 2.4,
+    "avg_drift_trend": 14.2,
+    "drift_ratio": 57.3,
+    "high_load_ratio": 37.5,
+    "productive_ratio": 0.0,
+    "off_task_ratio": 22.3,
     "low_conf_ratio": 0.0,
     "difficulty_event_count": 1,
     "heatmap_saved": false
@@ -246,14 +248,14 @@
     {
       "metric": "avg_alignment",
       "expected": "55 - 75",
-      "observed": 63.9,
+      "observed": 59.7,
       "passed": true,
       "note": "Average behavioral alignment should stay in a realistic mid-high range."
     },
     {
       "metric": "avg_load",
       "expected": "30 - 55",
-      "observed": 42.6,
+      "observed": 48.5,
       "passed": true,
       "note": "Average load should show both stable and stressed segments."
     },
@@ -267,14 +269,14 @@
     {
       "metric": "drift_ratio",
       "expected": "40 - 70",
-      "observed": 57.0,
+      "observed": 57.3,
       "passed": true,
       "note": "Drift-risk ratio should reflect a mixed session rather than a perfectly stable trace."
     },
     {
       "metric": "high_load_ratio",
       "expected": "25 - 55",
-      "observed": 36.7,
+      "observed": 37.5,
       "passed": true,
       "note": "High-load ratio should stay concentrated instead of filling the whole session."
     },

@@ -100,7 +100,12 @@ def handle_posture():
     sample_counter += 1
     last_posture_at = datetime.now()
     timestamp_text = datetime.now().strftime("%H:%M:%S")
-    res = posture.process(data.get("pitch", 0))
+    res = posture.process(
+        data.get("pitch", 0),
+        raw_yaw=data.get("yaw", 0),
+        raw_roll=data.get("roll", 0),
+        motion_intensity=data.get("motion_intensity"),
+    )
     latest_session = focus_session.update(res)
     latest_difficulty = difficulty_marker.update(
         res,
@@ -113,12 +118,20 @@ def handle_posture():
         pitch=res["relative_pitch"],
         is_alert=res["is_alert"],
         score=res["focus_score"],
+        relative_yaw=res.get("relative_yaw", 0),
+        relative_roll=res.get("relative_roll", 0),
+        combined_drift=res.get("combined_drift", res["relative_pitch"]),
+        orientation_drift=res.get("orientation_drift", 0),
+        movement_intensity=res.get("movement_intensity", 0),
         stability=res["stability"],
         cognitive_load=res["cognitive_load"],
         load_level=res["load_level"],
         task_mode=res["task_mode"],
         behavioral_alignment=res["behavioral_alignment"],
         behavioral_level=res["behavioral_level"],
+        drift_trend=res.get("drift_trend", 0),
+        switching_index=res.get("switching_index", 0),
+        state_hint=res.get("state_hint", "stable"),
         fatigue_risk=res["fatigue_risk"],
         fatigue_level=res["fatigue_level"],
         uncertainty_score=res["uncertainty_score"],
@@ -167,6 +180,11 @@ def get_status():
     latest_session = focus_session.snapshot()
     data = {
         "rel_pitch": round(abs(posture.smooth_pitch - posture.base_pitch), 1),
+        "rel_yaw": round(abs(posture.smooth_yaw - posture.base_yaw), 1),
+        "rel_roll": round(abs(posture.smooth_roll - posture.base_roll), 1),
+        "combined_drift": round(posture.combined_drift, 1),
+        "orientation_drift": posture.orientation_drift,
+        "movement_intensity": posture.movement_intensity,
         "stability": posture.current_stability,
         "is_alert": posture.is_alert,
         "focus_score": posture.focus_score,
