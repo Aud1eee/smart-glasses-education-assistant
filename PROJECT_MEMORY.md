@@ -442,6 +442,7 @@ New HUD interaction highlights:
 - narrower edge docks and event-only difficulty emphasis for glasses view
 - compact glasses-specific state/guidance vocabulary in the live HUD
 - dot-based icon language for the live glasses HUD state summary
+- lightweight Rokid sensor summary pill in the top strip for `yaw / roll / movement` without adding central occlusion
 
 Verification:
 

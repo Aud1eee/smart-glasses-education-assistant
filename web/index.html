@@ -325,6 +325,42 @@
             font-weight: 700;
         }
 
+        .sensor-pill {
+            gap: 10px;
+        }
+
+        .sensor-label {
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .sensor-readings {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sensor-readings span {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 5px;
+        }
+
+        .sensor-readings b {
+            color: rgba(255, 242, 218, 0.52);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+
+        .sensor-readings strong {
+            font-size: 12px;
+            font-weight: 700;
+        }
+
         .lens-grid {
             min-height: 0;
             display: grid;
@@ -714,6 +750,28 @@
             font-size: 11px;
         }
 
+        body.view-glasses .sensor-pill {
+            gap: 8px;
+            padding-right: 11px;
+        }
+
+        body.view-glasses .sensor-label {
+            display: none;
+        }
+
+        body.view-glasses .sensor-readings {
+            gap: 8px;
+        }
+
+        body.view-glasses .sensor-readings b {
+            font-size: 9px;
+            letter-spacing: 0.16em;
+        }
+
+        body.view-glasses .sensor-readings strong {
+            font-size: 11px;
+        }
+
         body.view-glasses .lens-grid {
             grid-template-columns: minmax(112px, 148px) 1fr minmax(132px, 168px);
             gap: 10px;
@@ -1021,6 +1079,15 @@
                 <div class="pill"><span class="pill-led tone-calm" id="mode-led"></span><span>Mode</span><strong id="mode-val-top">reading</strong></div>
                 <div class="pill"><span class="pill-led tone-calm" id="confidence-led"></span><span>Confidence</span><strong id="confidence-val-top">MEDIUM</strong></div>
                 <div class="pill" id="difficulty-pill"><span class="pill-led tone-calm" id="difficulty-led"></span><span>Difficulty</span><strong id="event-pill">CLEAR</strong></div>
+                <div class="pill sensor-pill" id="rokid-sensor-pill" aria-label="Rokid motion summary">
+                    <span class="pill-led tone-calm" id="sensor-led"></span>
+                    <span class="sensor-label">Rokid</span>
+                    <div class="sensor-readings">
+                        <span><b>Y</b><strong id="yaw-val-top">+0°</strong></span>
+                        <span><b>R</b><strong id="roll-val-top">+0°</strong></span>
+                        <span><b>M</b><strong id="move-val-top">STILL</strong></span>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -1280,6 +1347,16 @@
             return "calm";
         }
 
+        function sensorTone(confidence, combinedDrift, movementIntensity) {
+            const normalized = String(confidence || "").toLowerCase();
+            if (normalized === "low" || normalized === "warming_up") return "signal";
+            const drift = Math.abs(Number(combinedDrift) || 0);
+            const movement = Number(movementIntensity) || 0;
+            if (drift >= 18 || movement >= 62) return "high";
+            if (drift >= 9 || movement >= 28) return "rising";
+            return "calm";
+        }
+
         function difficultyTone(activeEvent, lastEvent) {
             const event = activeEvent || lastEvent;
             if (!event) return "calm";
@@ -1369,6 +1446,22 @@
             return String(label || "FOCUS").toUpperCase();
         }
 
+        function formatSignedAngle(value) {
+            const num = Math.round(Number(value) || 0);
+            const sign = num > 0 ? "+" : num < 0 ? "-" : "";
+            return `${sign}${Math.abs(num)}°`;
+        }
+
+        function movementSummary(value, compact = false) {
+            const num = Math.max(0, Math.round(Number(value) || 0));
+            if (compact) {
+                if (num >= 62) return "HIGH";
+                if (num >= 28) return "SHIFT";
+                return "STILL";
+            }
+            return `${num}%`;
+        }
+
         function setOcclusionState(loadLevel, stateLabel, confidence, activeEvent) {
             const label = String(stateLabel || "").toLowerCase();
             const normalizedConfidence = String(confidence || "").toLowerCase();
@@ -1406,6 +1499,7 @@
                 const loadBandTone = loadTone(d.load_level);
                 const fatigueRiskTone = fatigueTone(d.fatigue_risk || 0, stateLabel);
                 const signalTone = confidenceTone(confidenceRaw);
+                const rokidTone = sensorTone(d.confidence_level, d.combined_drift, d.movement_intensity);
                 const diffTone = difficultyTone(activeEvent, lastEvent);
 
                 document.getElementById("focus-val").innerText = Math.round(d.behavioral_alignment || d.focus_score || 0);
@@ -1419,6 +1513,9 @@
                 document.getElementById("confidence-val-top").innerText = glassesView ? compactConfidenceLabel(confidenceRaw) : confidence;
                 document.getElementById("confidence-val").innerText = glassesView ? compactConfidenceLabel(confidenceRaw) : confidence;
                 document.getElementById("reason-val").innerText = glassesView ? compactReasonText(reasonText, stateHint) : `${stateHint.replaceAll("_", " ")} | ${reasonText}`;
+                document.getElementById("yaw-val-top").innerText = formatSignedAngle(d.rel_yaw);
+                document.getElementById("roll-val-top").innerText = formatSignedAngle(d.rel_roll);
+                document.getElementById("move-val-top").innerText = movementSummary(d.movement_intensity, glassesView);
 
                 document.getElementById("phase-val").innerText = glassesView ? compactPhaseLabel(session.phase_label) : (session.phase_label || "Focus");
                 document.getElementById("phase-pill").innerText = glassesView ? compactPhaseLabel(session.phase_label) : (session.phase_label || "Focus").toUpperCase();
@@ -1448,6 +1545,7 @@
                 setTone("mode-led", mainTone);
                 setTone("confidence-led", signalTone);
                 setTone("difficulty-led", diffTone);
+                setTone("sensor-led", rokidTone);
                 setTone("align-led", alignTone);
                 setTone("load-led", loadBandTone);
                 setTone("fatigue-led", fatigueRiskTone);

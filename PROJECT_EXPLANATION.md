@@ -301,12 +301,14 @@ The HUD shows:
 - task mode
 - confidence level
 - difficulty marker and review note
+- a lightweight Rokid sensor summary for `yaw / roll / movement`
 
 The redesigned layout is intended to fit the logic of smart glasses:
 
 - the center focuses on only the most important learning-state message
 - side rails reduce central visual clutter
 - confidence and task mode remain visible without blocking the main view
+- Rokid-style sensor context is surfaced in a compact top-strip pill instead of a central card
 - keyboard and clickable mode switching make demo interaction easier
 
 In `Glasses view`, the HUD further reduces occlusion by:
