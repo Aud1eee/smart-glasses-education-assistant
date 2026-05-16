@@ -446,7 +446,7 @@
                 <p>
                     This page lets you test the Rokid video-frame adapter directly. Upload a frame, point to a local
                     image path, or use the existing demo asset to see whether the system can derive a coarse
-                    head-pose proxy, a tracking confidence score, and a meaningful signal-check fallback.
+                    scene proxy, a confidence score, and a meaningful signal-check fallback.
                 </p>
             </div>
             <div class="hero-grid">
@@ -456,9 +456,9 @@
                     <p id="hero-runtime-note">The launcher should prefer a `cv2`-capable interpreter when this adapter is active.</p>
                 </div>
                 <div class="hero-card">
-                    <span>Tracking</span>
+                    <span>Scene state</span>
                     <strong id="hero-tracking">Warmup</strong>
-                    <p id="hero-tracking-note">The frame adapter should degrade into signal-check behavior when no stable face box is found.</p>
+                    <p id="hero-tracking-note">The frame adapter should degrade into signal-check behavior when the study scene is blurred, sparse, or unstable.</p>
                 </div>
                 <div class="hero-card">
                     <span>Current Hint</span>
@@ -519,8 +519,8 @@
                 <section class="panel section">
                     <h2>Adapter blueprint</h2>
                     <p class="lead">
-                        The frame adapter is intentionally conservative: it derives coarse head-pose proxies and tracking confidence,
-                        not precise gaze or eye-tracking signals.
+                        The frame adapter is intentionally conservative: it derives coarse scene proxies and confidence signals,
+                        not precise gaze, eye tracking, or guaranteed native IMU telemetry.
                     </p>
                     <div class="pill-row" id="blueprint-pills"></div>
                     <div class="json-box" id="blueprint-json">Loading adapter blueprint...</div>
@@ -531,7 +531,7 @@
                 <section class="panel section">
                     <h2>Live input snapshot</h2>
                     <p class="lead">
-                        This mirrors the current `/status` view after the latest simulator packet, Rokid head-pose packet, or frame-derived proxy packet.
+                        This mirrors the current `/status` view after the latest simulator packet, Rokid head-pose packet, or frame-derived scene packet.
                     </p>
                     <div class="metric-grid">
                         <div class="metric-card">
@@ -540,24 +540,24 @@
                             <p id="metric-source-note">Current packet origin.</p>
                         </div>
                         <div class="metric-card">
-                            <span>Tracking</span>
+                            <span>Scene state</span>
                             <strong id="metric-tracking">warmup</strong>
-                            <p id="metric-tracking-note">Current frame/head-pose tracking state.</p>
+                            <p id="metric-tracking-note">Current first-person scene lock state.</p>
                         </div>
                         <div class="metric-card">
-                            <span>Proxy pose</span>
+                            <span>Scene proxy</span>
                             <strong id="metric-pose">P +0 / Y +0 / R +0</strong>
-                            <p id="metric-pose-note">Current signed posture deltas used by the active model.</p>
+                            <p id="metric-pose-note">Current scene-derived proxies and structural drift.</p>
                         </div>
                         <div class="metric-card">
                             <span>Movement</span>
                             <strong id="metric-motion">0</strong>
-                            <p id="metric-motion-note">Current movement intensity used by the active model.</p>
+                            <p id="metric-motion-note">Current scene motion, switching, and drift activity.</p>
                         </div>
                         <div class="metric-card">
                             <span>Confidence</span>
                             <strong id="metric-confidence">warming_up</strong>
-                            <p id="metric-confidence-note">Model confidence after warmup and tracking uncertainty.</p>
+                            <p id="metric-confidence-note">Model confidence after scene quality and warmup uncertainty.</p>
                         </div>
                         <div class="metric-card">
                             <span>State hint</span>
@@ -575,7 +575,7 @@
                     </p>
                     <div class="pill-row">
                         <div class="pill pill-good"><span class="pill-dot"></span>Simulator and frame routes can coexist</div>
-                        <div class="pill pill-warn"><span class="pill-dot"></span>Missing face should bias toward signal-check</div>
+                        <div class="pill pill-warn"><span class="pill-dot"></span>Blurred or content-sparse scenes should bias toward signal-check</div>
                         <div class="pill pill-high"><span class="pill-dot"></span>Do not describe this path as precise eye tracking</div>
                         <div class="pill pill-signal"><span class="pill-dot"></span>Best for first-person video and single-frame probes</div>
                     </div>
@@ -681,17 +681,17 @@
                     `${input.pose_source || "unknown"} | ${input.frame_source || "unknown"} | ${input.device_profile || "unknown"}`;
                 document.getElementById("metric-tracking").innerText = input.tracking_state || "warmup";
                 document.getElementById("metric-tracking-note").innerText =
-                    `confidence ${input.tracking_confidence ?? "--"} | uncertainty ${input.tracking_uncertainty ?? "--"} | face ${String(input.face_present)}`;
+                    `confidence ${input.tracking_confidence ?? "--"} | uncertainty ${input.tracking_uncertainty ?? "--"} | content ${Math.round(Number(input.scene_content_score) || 0)}`;
                 document.getElementById("metric-pose").innerText =
                     `P ${formatSigned(data.signed_pitch_delta)} / Y ${formatSigned(data.signed_yaw_delta)} / R ${formatSigned(data.signed_roll_delta)}`;
                 document.getElementById("metric-pose-note").innerText =
-                    `combined drift ${Math.round(Number(data.combined_drift) || 0)} | orientation drift ${Math.round(Number(data.orientation_drift) || 0)}`;
+                    `content ${Math.round(Number(data.scene_content_score) || 0)} | text ${Math.round(Number(data.scene_text_score) || 0)} | stability ${Math.round(Number(data.scene_stability_score) || 0)}`;
                 document.getElementById("metric-motion").innerText = Math.round(Number(data.movement_intensity) || 0);
                 document.getElementById("metric-motion-note").innerText =
-                    `switching ${Math.round(Number(data.switching_index) || 0)} | drift trend ${Math.round(Number(data.drift_trend) || 0)}`;
+                    `scene switch ${Math.round(Number(data.scene_switch_rate) || 0)} | model switch ${Math.round(Number(data.switching_index) || 0)} | drift trend ${Math.round(Number(data.drift_trend) || 0)}`;
                 document.getElementById("metric-confidence").innerText = data.confidence_level || "warming_up";
                 document.getElementById("metric-confidence-note").innerText =
-                    `uncertainty ${Math.round(Number(data.uncertainty_score) || 0)} | source age ${data.last_posture_age_seconds ?? "--"}s`;
+                    `uncertainty ${Math.round(Number(data.uncertainty_score) || 0)} | blur ${Math.round(Number(data.blur_score) || 0)} | brightness ${Math.round(Number(data.brightness_score) || 0)}`;
                 document.getElementById("metric-hint").innerText = data.state_hint || "stable";
                 document.getElementById("metric-hint-note").innerText =
                     `alignment ${Math.round(Number(data.behavioral_alignment) || 0)} | load ${Math.round(Number(data.cognitive_load) || 0)} | fatigue ${Math.round(Number(data.fatigue_risk) || 0)}`;
@@ -701,7 +701,7 @@
                     `${input.pose_source || "unknown"} pose source | ${input.frame_source || "unknown"} frame source | motion ${input.motion_source || "unknown"}`;
                 document.getElementById("hero-tracking").innerText = input.tracking_state || "warmup";
                 document.getElementById("hero-tracking-note").innerText =
-                    `confidence ${input.tracking_confidence ?? "--"} | uncertainty ${input.tracking_uncertainty ?? "--"} | face ${String(input.face_present)}`;
+                    `confidence ${input.tracking_confidence ?? "--"} | uncertainty ${input.tracking_uncertainty ?? "--"} | content ${Math.round(Number(input.scene_content_score) || 0)} | stability ${Math.round(Number(input.scene_stability_score) || 0)}`;
                 document.getElementById("hero-hint").innerText = data.state_hint || "stable";
                 document.getElementById("hero-hint-note").innerText =
                     `${data.load_reason || "Stable learning state"} | ${data.session?.state_label || "Focus settling"}`;
@@ -720,6 +720,12 @@
                     signed_yaw_delta: data.signed_yaw_delta,
                     signed_roll_delta: data.signed_roll_delta,
                     movement_intensity: data.movement_intensity,
+                    scene_content_score: data.scene_content_score,
+                    scene_text_score: data.scene_text_score,
+                    scene_stability_score: data.scene_stability_score,
+                    scene_switch_rate: data.scene_switch_rate,
+                    blur_score: data.blur_score,
+                    brightness_score: data.brightness_score,
                     session: data.session,
                 });
             } catch (error) {

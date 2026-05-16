@@ -21,6 +21,12 @@ class RokidInputPacket:
     face_present: Optional[bool] = None
     frame_width: Optional[int] = None
     frame_height: Optional[int] = None
+    scene_content_score: Optional[float] = None
+    scene_text_score: Optional[float] = None
+    scene_stability_score: Optional[float] = None
+    scene_switch_rate: Optional[float] = None
+    blur_score: Optional[float] = None
+    brightness_score: Optional[float] = None
     device_profile: str = "rokid-imu-3dof"
     motion_source: str = "explicit"
     pose_source: str = "telemetry"
@@ -47,7 +53,7 @@ def build_simulator_packet(payload: dict[str, Any], default_task_mode: str = "re
         tracking_state="simulated",
         tracking_confidence=1.0,
         tracking_uncertainty=0.0,
-        face_present=True,
+        face_present=None,
         device_profile="simulator-rokid-proxy",
         motion_source=motion_source,
         pose_source="simulator",
@@ -96,7 +102,7 @@ def build_rokid_packet(payload: dict[str, Any], default_task_mode: str = "readin
         tracking_state=tracking_state,
         tracking_confidence=0.92 if tracking_state == "tracked" else 0.45,
         tracking_uncertainty=12.0 if tracking_state == "tracked" else 42.0,
-        face_present=True,
+        face_present=None,
         device_profile=str(_pick(payload, "device_profile", "device.model") or "rokid-imu-3dof"),
         motion_source=motion_source,
         pose_source="imu-packet",

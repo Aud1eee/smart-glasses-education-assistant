@@ -287,16 +287,19 @@ This keeps the active implementation aligned with realistic smart-glasses signal
 - optional `accel_magnitude / gyro_magnitude`
 - `task_mode` as app-side learning context
 
-When only frame or video input is available, the system now uses a **video-frame adapter** that derives coarse posture proxies from:
+When only frame or video input is available, the system now uses a **video-frame adapter** that derives coarse learning-state cues from first-person scene structure rather than from wearer-face detection.
 
-- face presence
-- face-box center offsets
-- frame-to-frame motion
-- scene change between frames
+The active scene logic now emphasizes:
 
-This path is intentionally conservative and should be described as a **frame-derived head-pose proxy**, not as precise eye tracking or native IMU telemetry.
+- frame-to-frame scene motion
+- content density and scene-text richness
+- blur and brightness quality
+- anchor stability across time
+- scene switching rate
 
-In the current Windows bundled runtime, this frame path still depends on native OpenCV availability. If OpenCV is not available in that runtime, the endpoint remains useful as an interface scaffold, but the actual face-driven proxy extraction will stay in a degraded `frame_unavailable` state until an OpenCV-capable runtime is used.
+This path should be described as a **scene-derived learning-state proxy**, not as precise eye tracking, native IMU telemetry, or direct face-based head-pose recovery.
+
+In the current Windows bundled runtime, this frame path still depends on native OpenCV availability. If OpenCV is not available in that runtime, the endpoint remains useful as an interface scaffold, but the actual scene-driven proxy extraction will stay in a degraded `frame_unavailable` state until an OpenCV-capable runtime is used.
 
 To support this path locally, `start_windows.ps1` now prefers a Python runtime that can successfully import `cv2`, which means the launcher will fall back to the project `.venv` when the bundled runtime does not provide native OpenCV support.
 

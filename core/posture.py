@@ -105,10 +105,27 @@ class PostureEngine:
         self.orientation_drift = 0.0
         self.movement_intensity = 0.0
         self.combined_drift = 0.0
+        self.scene_content_score = 0.0
+        self.scene_text_score = 0.0
+        self.scene_stability_score = 0.0
+        self.scene_switch_rate = 0.0
+        self.blur_score = 0.0
+        self.brightness_score = 0.0
+        self.scene_signal_active = False
 
-    def process(self, raw_pitch, raw_yaw=0.0, raw_roll=0.0, motion_intensity=None, external_uncertainty=0.0, now=None):
+    def process(
+        self,
+        raw_pitch,
+        raw_yaw=0.0,
+        raw_roll=0.0,
+        motion_intensity=None,
+        external_uncertainty=0.0,
+        scene_features=None,
+        now=None,
+    ):
         now = time.time() if now is None else now
         profile = self.TASK_PROFILES[self.task_mode]
+        scene = self._normalize_scene_features(scene_features)
 
         self.samples_since_reset += 1
         previous_vector = self.last_axis_vector
@@ -141,8 +158,18 @@ class PostureEngine:
         variance = float(np.var(self.history))
         self.orientation_drift = self._compute_orientation_drift(rel_pitch, rel_yaw, rel_roll, profile)
         self.movement_intensity = movement
+        self.scene_content_score = scene["scene_content_score"]
+        self.scene_text_score = scene["scene_text_score"]
+        self.scene_stability_score = scene["scene_stability_score"]
+        self.scene_switch_rate = scene["scene_switch_rate"]
+        self.blur_score = scene["blur_score"]
+        self.brightness_score = scene["brightness_score"]
+        self.scene_signal_active = any(value > 0 for value in scene.values())
 
         self.current_stability = self._compute_stability(variance, profile)
+        if self.scene_signal_active and self.scene_stability_score > 0:
+            blended = (self.current_stability * 0.72) + (self.scene_stability_score * 0.28)
+            self.current_stability = max(0, min(100, int(round(blended))))
         self.is_alert = self._update_alert_state(rel, profile["drift_hard"], now)
         self.drift_trend = self._compute_drift_trend(profile)
         self.switching_index = self._compute_switching_index(profile)
@@ -184,6 +211,12 @@ class PostureEngine:
             "drift_trend": self.drift_trend,
             "switching_index": self.switching_index,
             "state_hint": self.state_hint,
+            "scene_content_score": self.scene_content_score,
+            "scene_text_score": self.scene_text_score,
+            "scene_stability_score": self.scene_stability_score,
+            "scene_switch_rate": self.scene_switch_rate,
+            "blur_score": self.blur_score,
+            "brightness_score": self.brightness_score,
         }
 
     def calibrate(self):
@@ -229,6 +262,13 @@ class PostureEngine:
         self.orientation_drift = 0.0
         self.movement_intensity = 0.0
         self.combined_drift = 0.0
+        self.scene_content_score = 0.0
+        self.scene_text_score = 0.0
+        self.scene_stability_score = 0.0
+        self.scene_switch_rate = 0.0
+        self.blur_score = 0.0
+        self.brightness_score = 0.0
+        self.scene_signal_active = False
 
     def set_task_mode(self, task_mode, now=None):
         normalized = str(task_mode or "").strip().lower()
@@ -286,8 +326,38 @@ class PostureEngine:
         stability_penalty = (100 - self.current_stability) * 0.18
         switching_penalty = self.switching_index * 0.10
         trend_penalty = self.drift_trend * 0.08
+        scene_switch_penalty = self.scene_switch_rate * 0.09 if self.scene_signal_active else 0.0
+        content_penalty = (
+            max(0.0, self._content_expectation() - self.scene_content_score) * 0.16
+            if self.scene_signal_active
+            else 0.0
+        )
+        content_bonus = 0.0
+        if (
+            self.scene_signal_active
+            and self.scene_content_score >= self._content_expectation()
+            and self.scene_stability_score >= 42
+        ):
+            content_bonus = min(
+                11.0,
+                ((self.scene_content_score - self._content_expectation()) * 0.14)
+                + max(0.0, self.scene_stability_score - 42.0) * 0.06,
+            )
         alert_penalty = 12.0 if self.is_alert else 0.0
-        alignment = 100.0 - drift_penalty - motion_penalty - orientation_penalty - movement_penalty - stability_penalty - switching_penalty - trend_penalty - alert_penalty
+        alignment = (
+            100.0
+            - drift_penalty
+            - motion_penalty
+            - orientation_penalty
+            - movement_penalty
+            - stability_penalty
+            - switching_penalty
+            - scene_switch_penalty
+            - content_penalty
+            - trend_penalty
+            - alert_penalty
+            + content_bonus
+        )
         return round(max(0.0, min(100.0, alignment)), 1)
 
     def _classify_behavioral_level(self, rel, variance, profile):
@@ -416,7 +486,19 @@ class PostureEngine:
             volatility = min(22.0, ((variance - profile["variance_hard"]) / spread) * 22.0)
 
         external = min(42.0, max(0.0, float(external_uncertainty or 0.0)))
-        uncertainty = warmup + mode_transition + volatility + external
+        scene_visibility = 0.0
+        if self.scene_signal_active and self.blur_score > 0:
+            scene_visibility += max(0.0, 22.0 - self.blur_score) * 0.9
+        if self.scene_signal_active and self.brightness_score > 0:
+            if self.brightness_score < 14.0:
+                scene_visibility += (14.0 - self.brightness_score) * 0.85
+            elif self.brightness_score > 88.0:
+                scene_visibility += (self.brightness_score - 88.0) * 0.75
+        if self.scene_signal_active and self.scene_content_score > 0:
+            scene_visibility += max(0.0, self._content_expectation() - self.scene_content_score) * 0.5
+        if self.scene_signal_active and self.scene_stability_score > 0:
+            scene_visibility += max(0.0, 34.0 - self.scene_stability_score) * 0.35
+        uncertainty = warmup + mode_transition + volatility + external + scene_visibility
         return round(max(0.0, min(100.0, uncertainty)), 1)
 
     def _compute_cognitive_load(self, rel, variance, profile):
@@ -429,7 +511,33 @@ class PostureEngine:
         trend_cost = self.drift_trend * 0.14
         switching_cost = self.switching_index * 0.12
         fatigue_overlap = self.fatigue_risk * 0.1
-        cognitive_load = drift_cost + motion_cost + orientation_cost + movement_cost + stability_cost + alignment_cost + trend_cost + switching_cost + fatigue_overlap
+        scene_switch_cost = self.scene_switch_rate * 0.08 if self.scene_signal_active else 0.0
+        scene_sparse_cost = (
+            max(0.0, self._content_expectation() - self.scene_content_score) * 0.18
+            if self.scene_signal_active
+            else 0.0
+        )
+        scene_locked_discount = 0.0
+        if (
+            self.scene_signal_active
+            and self.scene_content_score >= self._content_expectation()
+            and self.scene_stability_score >= 42
+        ):
+            scene_locked_discount = min(10.0, ((self.scene_content_score - self._content_expectation()) * 0.12) + (self.scene_text_score * 0.04))
+        cognitive_load = (
+            drift_cost
+            + motion_cost
+            + orientation_cost
+            + movement_cost
+            + stability_cost
+            + alignment_cost
+            + trend_cost
+            + switching_cost
+            + scene_switch_cost
+            + scene_sparse_cost
+            + fatigue_overlap
+            - scene_locked_discount
+        )
         if self.is_alert:
             cognitive_load += 10.0
         if (
@@ -437,6 +545,7 @@ class PostureEngine:
             and self.fatigue_risk < 40
             and self.uncertainty_score < 45
             and self.switching_index < 38
+            and (not self.scene_signal_active or self.scene_content_score >= self._content_expectation())
             and 35 <= cognitive_load <= 72
         ):
             cognitive_load *= 0.9
@@ -458,6 +567,18 @@ class PostureEngine:
     def _classify_state_hint(self):
         if self.uncertainty_score >= 55:
             return "signal_check"
+        if (
+            self.scene_signal_active
+            and (
+                self.blur_score < 10
+                or (
+                    self.scene_content_score > 0
+                    and self.scene_content_score < 12
+                    and self.scene_stability_score < 26
+                )
+            )
+        ):
+            return "signal_check"
         if self.fatigue_risk >= 65:
             return "fatigue_risk"
         if (
@@ -465,6 +586,11 @@ class PostureEngine:
             or self.behavioral_level == "misaligned"
             or self.orientation_drift >= 72
             or (self.switching_index >= 48 and self.movement_intensity >= 28.0)
+            or (
+                self.scene_signal_active
+                and self.scene_switch_rate >= 52
+                and self.scene_content_score < max(18.0, self._content_expectation() - 8.0)
+            )
         ):
             return "off_task_risk"
         if (
@@ -473,12 +599,49 @@ class PostureEngine:
             and self.uncertainty_score < 45
             and self.switching_index < 38
             and self.drift_trend < 42
+            and (
+                not self.scene_signal_active
+                or (
+                    self.scene_content_score >= self._content_expectation()
+                    and self.scene_stability_score >= 38
+                )
+            )
             and 35 <= self.cognitive_load <= 72
         ):
             return "productive_struggle"
         if self.behavioral_level == "drifting" or self.cognitive_load >= 46:
             return "load_rising"
         return "stable"
+
+    def _normalize_scene_features(self, scene_features):
+        base = {
+            "scene_content_score": 0.0,
+            "scene_text_score": 0.0,
+            "scene_stability_score": 0.0,
+            "scene_switch_rate": 0.0,
+            "blur_score": 0.0,
+            "brightness_score": 0.0,
+        }
+        if not isinstance(scene_features, dict):
+            return base
+        normalized = {}
+        for key, default in base.items():
+            try:
+                normalized[key] = max(0.0, min(100.0, float(scene_features.get(key, default) or 0.0)))
+            except Exception:
+                normalized[key] = default
+        return normalized
+
+    def _content_expectation(self):
+        if self.task_mode == "reading":
+            return 44.0
+        if self.task_mode == "review":
+            return 40.0
+        if self.task_mode == "lecture":
+            return 28.0
+        if self.task_mode == "note-taking":
+            return 24.0
+        return 30.0
 
     def _classify_band(self, value, medium, high):
         if value >= high:

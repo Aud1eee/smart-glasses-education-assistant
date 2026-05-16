@@ -57,6 +57,12 @@ latest_input = {
     "tracking_confidence": None,
     "tracking_uncertainty": 0.0,
     "face_present": None,
+    "scene_content_score": 0.0,
+    "scene_text_score": 0.0,
+    "scene_stability_score": 0.0,
+    "scene_switch_rate": 0.0,
+    "blur_score": 0.0,
+    "brightness_score": 0.0,
     "motion_source": "default",
     "pose_source": "simulator",
     "frame_source": "simulator",
@@ -87,6 +93,12 @@ def _input_snapshot(packet=None):
             "tracking_confidence": None,
             "tracking_uncertainty": 0.0,
             "face_present": None,
+            "scene_content_score": 0.0,
+            "scene_text_score": 0.0,
+            "scene_stability_score": 0.0,
+            "scene_switch_rate": 0.0,
+            "blur_score": 0.0,
+            "brightness_score": 0.0,
             "motion_source": "default",
             "pose_source": "simulator",
             "frame_source": "simulator",
@@ -99,6 +111,12 @@ def _input_snapshot(packet=None):
         "tracking_confidence": packet.tracking_confidence,
         "tracking_uncertainty": packet.tracking_uncertainty,
         "face_present": packet.face_present,
+        "scene_content_score": packet.scene_content_score,
+        "scene_text_score": packet.scene_text_score,
+        "scene_stability_score": packet.scene_stability_score,
+        "scene_switch_rate": packet.scene_switch_rate,
+        "blur_score": packet.blur_score,
+        "brightness_score": packet.brightness_score,
         "motion_source": packet.motion_source,
         "pose_source": packet.pose_source,
         "frame_source": packet.frame_source,
@@ -179,9 +197,9 @@ def handle_rokid_frame():
     _ingest_packet(packet)
     message = "Frame packet ingested."
     if packet.frame_source == "opencv-unavailable":
-        message = "Frame adapter scaffold is active, but the current runtime does not provide OpenCV face detection support."
-    elif packet.tracking_state == "face_missing":
-        message = "Frame received, but no stable face box was detected; the session will bias toward signal-check behavior."
+        message = "Frame adapter scaffold is active, but the current runtime does not provide OpenCV scene-analysis support."
+    elif packet.tracking_state in {"content_sparse", "low_visibility", "blurred", "scene_unstable"}:
+        message = "Frame received, but the study scene was not stable enough; the session will bias toward signal-check behavior."
     elif packet.tracking_state == "frame_unavailable":
         message = "Frame input was not decoded successfully."
     return jsonify({
@@ -207,6 +225,14 @@ def _ingest_packet(packet):
         raw_roll=packet.roll or 0,
         motion_intensity=packet.motion_intensity,
         external_uncertainty=packet.tracking_uncertainty,
+        scene_features={
+            "scene_content_score": packet.scene_content_score,
+            "scene_text_score": packet.scene_text_score,
+            "scene_stability_score": packet.scene_stability_score,
+            "scene_switch_rate": packet.scene_switch_rate,
+            "blur_score": packet.blur_score,
+            "brightness_score": packet.brightness_score,
+        },
     )
     latest_session = focus_session.update(res)
     latest_difficulty = difficulty_marker.update(
@@ -306,6 +332,12 @@ def get_status():
         "fatigue_level": posture.fatigue_level,
         "uncertainty_score": posture.uncertainty_score,
         "confidence_level": posture.confidence_level,
+        "scene_content_score": posture.scene_content_score,
+        "scene_text_score": posture.scene_text_score,
+        "scene_stability_score": posture.scene_stability_score,
+        "scene_switch_rate": posture.scene_switch_rate,
+        "blur_score": posture.blur_score,
+        "brightness_score": posture.brightness_score,
         "session": latest_session,
         "input": latest_input,
         "difficulty": {
