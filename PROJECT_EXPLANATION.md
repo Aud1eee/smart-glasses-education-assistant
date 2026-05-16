@@ -278,6 +278,7 @@ The current input layer exposes two runtime paths:
 
 - `/api/v1/posture` for simulator-driven packets
 - `/api/v1/rokid/head-pose` for Rokid-style head pose and IMU packets
+- `/api/v1/rokid/frame` for first-person video frames or single-frame images
 
 This keeps the active implementation aligned with realistic smart-glasses signals:
 
@@ -285,6 +286,19 @@ This keeps the active implementation aligned with realistic smart-glasses signal
 - optional `motion_intensity`
 - optional `accel_magnitude / gyro_magnitude`
 - `task_mode` as app-side learning context
+
+When only frame or video input is available, the system now uses a **video-frame adapter** that derives coarse posture proxies from:
+
+- face presence
+- face-box center offsets
+- frame-to-frame motion
+- scene change between frames
+
+This path is intentionally conservative and should be described as a **frame-derived head-pose proxy**, not as precise eye tracking or native IMU telemetry.
+
+In the current Windows bundled runtime, this frame path still depends on native OpenCV availability. If OpenCV is not available in that runtime, the endpoint remains useful as an interface scaffold, but the actual face-driven proxy extraction will stay in a degraded `frame_unavailable` state until an OpenCV-capable runtime is used.
+
+To support this path locally, `start_windows.ps1` now prefers a Python runtime that can successfully import `cv2`, which means the launcher will fall back to the project `.venv` when the bundled runtime does not provide native OpenCV support.
 
 The current HUD has been redesigned to better match a **Rokid-style near-eye display** rather than a desktop dashboard.
 

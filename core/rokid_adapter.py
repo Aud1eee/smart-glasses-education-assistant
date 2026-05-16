@@ -16,8 +16,15 @@ class RokidInputPacket:
     accel_magnitude: Optional[float] = None
     gyro_magnitude: Optional[float] = None
     tracking_state: str = "tracked"
+    tracking_confidence: Optional[float] = None
+    tracking_uncertainty: float = 0.0
+    face_present: Optional[bool] = None
+    frame_width: Optional[int] = None
+    frame_height: Optional[int] = None
     device_profile: str = "rokid-imu-3dof"
     motion_source: str = "explicit"
+    pose_source: str = "telemetry"
+    frame_source: str = "telemetry"
 
 
 def build_simulator_packet(payload: dict[str, Any], default_task_mode: str = "reading") -> RokidInputPacket:
@@ -38,8 +45,13 @@ def build_simulator_packet(payload: dict[str, Any], default_task_mode: str = "re
         accel_magnitude=accel_mag,
         gyro_magnitude=gyro_mag,
         tracking_state="simulated",
+        tracking_confidence=1.0,
+        tracking_uncertainty=0.0,
+        face_present=True,
         device_profile="simulator-rokid-proxy",
         motion_source=motion_source,
+        pose_source="simulator",
+        frame_source="simulator",
     )
 
 
@@ -82,8 +94,13 @@ def build_rokid_packet(payload: dict[str, Any], default_task_mode: str = "readin
         accel_magnitude=accel_mag,
         gyro_magnitude=gyro_mag,
         tracking_state=tracking_state,
+        tracking_confidence=0.92 if tracking_state == "tracked" else 0.45,
+        tracking_uncertainty=12.0 if tracking_state == "tracked" else 42.0,
+        face_present=True,
         device_profile=str(_pick(payload, "device_profile", "device.model") or "rokid-imu-3dof"),
         motion_source=motion_source,
+        pose_source="imu-packet",
+        frame_source="telemetry",
     )
 
 
@@ -104,6 +121,7 @@ def build_rokid_adapter_blueprint():
         "adapter_name": "rokid-head-pose-adapter",
         "design_target": "Rokid-style 3DOF / 9-axis IMU learning-state input",
         "active_endpoint": "/api/v1/rokid/head-pose",
+        "video_frame_endpoint": "/api/v1/rokid/frame",
         "simulator_endpoint": "/api/v1/posture",
         "required_runtime_signals": ["pitch", "yaw", "roll"],
         "optional_runtime_signals": ["motion_intensity", "accel_magnitude", "gyro_magnitude", "timestamp_ms", "task_mode"],

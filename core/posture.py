@@ -106,7 +106,7 @@ class PostureEngine:
         self.movement_intensity = 0.0
         self.combined_drift = 0.0
 
-    def process(self, raw_pitch, raw_yaw=0.0, raw_roll=0.0, motion_intensity=None, now=None):
+    def process(self, raw_pitch, raw_yaw=0.0, raw_roll=0.0, motion_intensity=None, external_uncertainty=0.0, now=None):
         now = time.time() if now is None else now
         profile = self.TASK_PROFILES[self.task_mode]
 
@@ -150,7 +150,7 @@ class PostureEngine:
         self.behavioral_level = self._classify_behavioral_level(rel, variance, profile)
         self.fatigue_risk = self._compute_fatigue_risk(rel, variance, profile, now)
         self.fatigue_level = self._classify_band(self.fatigue_risk, medium=38, high=65)
-        self.uncertainty_score = self._compute_uncertainty(variance, profile, now)
+        self.uncertainty_score = self._compute_uncertainty(variance, profile, now, external_uncertainty=external_uncertainty)
         self.confidence_level = self._classify_confidence(self.uncertainty_score)
         self.cognitive_load = self._compute_cognitive_load(rel, variance, profile)
         self.state_hint = self._classify_state_hint()
@@ -400,7 +400,7 @@ class PostureEngine:
         index = (switch_ratio * 58.0) + (amplitude_ratio * 22.0) + (motion_ratio * 20.0)
         return round(max(0.0, min(100.0, index)), 1)
 
-    def _compute_uncertainty(self, variance, profile, now):
+    def _compute_uncertainty(self, variance, profile, now, external_uncertainty=0.0):
         warmup = max(0.0, (6 - min(self.samples_since_reset, 6)) / 6.0) * 42.0
         mode_transition = 0.0
         if self.mode_changed_at is not None:
@@ -415,7 +415,8 @@ class PostureEngine:
             spread = max(profile["variance_hard"] * 0.8, 0.1)
             volatility = min(22.0, ((variance - profile["variance_hard"]) / spread) * 22.0)
 
-        uncertainty = warmup + mode_transition + volatility
+        external = min(42.0, max(0.0, float(external_uncertainty or 0.0)))
+        uncertainty = warmup + mode_transition + volatility + external
         return round(max(0.0, min(100.0, uncertainty)), 1)
 
     def _compute_cognitive_load(self, rel, variance, profile):

@@ -101,8 +101,9 @@ def build_multimodal_blueprint():
         ],
         "device_readiness": {
             "simulator": "active",
-            "rokid_adapter": "planned",
-            "face_landmarker": "planned",
+            "rokid_adapter": "active",
+            "rokid_video_frame_adapter": "active",
+            "face_landmarker": "optional-future",
             "eye_features": "planned",
         },
         "rokid_constraints": [
@@ -112,7 +113,7 @@ def build_multimodal_blueprint():
         ],
         "recommended_rollout": [
             "phase-1: head pose and movement proxy with task-mode awareness",
-            "phase-2: Rokid adapter + scene/context hooks from app-side camera or UI events",
+            "phase-2: Rokid frame adapter + scene/context hooks from app-side camera or UI events",
             "phase-3: optional vision-assisted features only if device access is available and stable",
         ],
     }

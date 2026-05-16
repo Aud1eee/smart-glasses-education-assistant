@@ -16,6 +16,7 @@ from core.rokid_adapter import (
     build_rokid_packet,
     build_simulator_packet,
 )
+from core.rokid_frame_adapter import RokidFrameAdapter
 from core.vision import VisionEngine
 from utils.storage import DataLogger
 
@@ -29,6 +30,7 @@ EXPORT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "exports")
 logger = DataLogger()
 posture = PostureEngine()
 vision = VisionEngine()
+rokid_frame_adapter = RokidFrameAdapter()
 edu = EduEngine(logger.vocab_path)
 focus_session = FocusSessionEngine()
 difficulty_marker = DifficultyEventMarker()
@@ -52,7 +54,12 @@ latest_input = {
     "source": "simulator",
     "device_profile": "simulator-rokid-proxy",
     "tracking_state": "warmup",
+    "tracking_confidence": None,
+    "tracking_uncertainty": 0.0,
+    "face_present": None,
     "motion_source": "default",
+    "pose_source": "simulator",
+    "frame_source": "simulator",
     "timestamp_ms": None,
 }
 
@@ -77,14 +84,24 @@ def _input_snapshot(packet=None):
             "source": "simulator",
             "device_profile": "simulator-rokid-proxy",
             "tracking_state": "warmup",
+            "tracking_confidence": None,
+            "tracking_uncertainty": 0.0,
+            "face_present": None,
             "motion_source": "default",
+            "pose_source": "simulator",
+            "frame_source": "simulator",
             "timestamp_ms": None,
         }
     return {
         "source": packet.source,
         "device_profile": packet.device_profile,
         "tracking_state": packet.tracking_state,
+        "tracking_confidence": packet.tracking_confidence,
+        "tracking_uncertainty": packet.tracking_uncertainty,
+        "face_present": packet.face_present,
         "motion_source": packet.motion_source,
+        "pose_source": packet.pose_source,
+        "frame_source": packet.frame_source,
         "timestamp_ms": packet.timestamp_ms,
     }
 
@@ -138,6 +155,40 @@ def handle_rokid_head_pose():
     return jsonify({"status": "ok", "source": packet.source, "session_id": current_session_id})
 
 
+@app.route("/api/v1/rokid/frame", methods=["POST"])
+def handle_rokid_frame():
+    if request.files:
+        payload = request.form.to_dict()
+        image_bytes = request.files.get("frame").read() if request.files.get("frame") else None
+    else:
+        payload = request.json or {}
+        image_bytes = None
+
+    if not rokid_frame_adapter.has_frame_payload(payload, image_bytes=image_bytes):
+        return jsonify({
+            "status": "error",
+            "message": "Provide `frame` upload, `image_base64`, or `image_path` for the Rokid video-frame adapter.",
+        }), 400
+
+    packet = rokid_frame_adapter.build_packet(payload, image_bytes=image_bytes, default_task_mode=posture.task_mode)
+    _ingest_packet(packet)
+    message = "Frame packet ingested."
+    if packet.frame_source == "opencv-unavailable":
+        message = "Frame adapter scaffold is active, but the current runtime does not provide OpenCV face detection support."
+    elif packet.tracking_state == "face_missing":
+        message = "Frame received, but no stable face box was detected; the session will bias toward signal-check behavior."
+    elif packet.tracking_state == "frame_unavailable":
+        message = "Frame input was not decoded successfully."
+    return jsonify({
+        "status": "ok",
+        "source": packet.source,
+        "tracking_state": packet.tracking_state,
+        "tracking_confidence": packet.tracking_confidence,
+        "message": message,
+        "session_id": current_session_id,
+    })
+
+
 def _ingest_packet(packet):
     global pending_card, latest_session, latest_difficulty, latest_input, sample_counter, last_posture_at
     sample_counter += 1
@@ -150,6 +201,7 @@ def _ingest_packet(packet):
         raw_yaw=packet.yaw or 0,
         raw_roll=packet.roll or 0,
         motion_intensity=packet.motion_intensity,
+        external_uncertainty=packet.tracking_uncertainty,
     )
     latest_session = focus_session.update(res)
     latest_difficulty = difficulty_marker.update(
@@ -280,6 +332,11 @@ def multimodal_blueprint():
 @app.route("/api/rokid_adapter_blueprint")
 def rokid_adapter_blueprint():
     return jsonify(build_rokid_adapter_blueprint())
+
+
+@app.route("/api/rokid_frame_adapter_blueprint")
+def rokid_frame_adapter_blueprint():
+    return jsonify(rokid_frame_adapter.blueprint())
 
 
 @app.route("/calibrate")
