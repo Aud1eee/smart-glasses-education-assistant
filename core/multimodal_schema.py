@@ -44,7 +44,7 @@ def build_multimodal_blueprint():
 
     packet = MultimodalPacket()
     return {
-        "current_stage": "phase-1 posture proxy",
+        "current_stage": "phase-1 rokid posture proxy",
         "current_active_signals": [
             "pitch",
             "yaw",
@@ -62,30 +62,35 @@ def build_multimodal_blueprint():
                 "name": "behavioral_alignment",
                 "status": "active",
                 "current_signals": ["pitch", "yaw", "roll", "variance", "stability", "task_mode"],
-                "future_signals": ["gaze_target", "face_presence"],
+                "future_signals": ["scene_target_proxy", "capture_intent", "device_mode"],
             },
             {
                 "name": "cognitive_effort",
                 "status": "proxy-active",
                 "current_signals": ["drift", "variance", "alignment_cost", "switching_index", "drift_trend"],
-                "future_signals": ["pupil_feature", "blink_rate", "fixation_dwell", "reread_pattern"],
+                "future_signals": ["scene_change_rate", "revisit_pattern", "manual_checkpoint"],
             },
             {
                 "name": "fatigue_risk",
                 "status": "active",
                 "current_signals": ["passive_drift", "low_motion_window", "sustained_slump", "movement_intensity"],
-                "future_signals": ["eye_openness", "blink_duration_ms", "perclos"],
+                "future_signals": ["optional_eye_openness", "optional_blink_proxy", "session_break_context"],
             },
             {
                 "name": "confidence",
                 "status": "active",
                 "current_signals": ["warmup_window", "variance_spike", "mode_transition"],
-                "future_signals": ["face_confidence", "gaze_confidence", "tracking_quality"],
+                "future_signals": ["tracking_quality", "adapter_timestamp_skew", "imu_packet_health"],
             },
         ],
         "planned_modalities": {
             "imu": asdict(packet.imu),
-            "face": asdict(packet.face),
+            "vision_context": {
+                "scene_change_rate": None,
+                "capture_intent": False,
+                "device_mode": "reading",
+                "manual_checkpoint": False,
+            },
         },
         "future_states": [
             "Deep Focus",
@@ -100,9 +105,14 @@ def build_multimodal_blueprint():
             "face_landmarker": "planned",
             "eye_features": "planned",
         },
+        "rokid_constraints": [
+            "active logic assumes Rokid-realistic head pose and IMU signals first",
+            "precise gaze target, pupil dilation, and PERCLOS are not required in the current design",
+            "task mode and app-side context remain first-class inputs because device-side eye tracking may be unavailable",
+        ],
         "recommended_rollout": [
-            "phase-1: posture proxy with task-mode awareness",
-            "phase-2: face presence, gaze proxy, eye openness hooks",
-            "phase-3: pupil feature, blink and perclos-supported fusion",
+            "phase-1: head pose and movement proxy with task-mode awareness",
+            "phase-2: Rokid adapter + scene/context hooks from app-side camera or UI events",
+            "phase-3: optional vision-assisted features only if device access is available and stable",
         ],
     }

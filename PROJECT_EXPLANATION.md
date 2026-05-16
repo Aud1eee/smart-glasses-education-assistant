@@ -274,6 +274,18 @@ The Flask service and the HUD are connected through:
 - [app.py](</C:/Users/11721/Desktop/focus_project_windows/app.py:16>)
 - [web/index.html](</C:/Users/11721/Desktop/focus_project_windows/web/index.html:204>)
 
+The current input layer exposes two runtime paths:
+
+- `/api/v1/posture` for simulator-driven packets
+- `/api/v1/rokid/head-pose` for Rokid-style head pose and IMU packets
+
+This keeps the active implementation aligned with realistic smart-glasses signals:
+
+- `pitch / yaw / roll`
+- optional `motion_intensity`
+- optional `accel_magnitude / gyro_magnitude`
+- `task_mode` as app-side learning context
+
 The current HUD has been redesigned to better match a **Rokid-style near-eye display** rather than a desktop dashboard.
 
 The main visual principles are:

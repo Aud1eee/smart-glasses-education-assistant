@@ -443,6 +443,14 @@ New HUD interaction highlights:
 - compact glasses-specific state/guidance vocabulary in the live HUD
 - dot-based icon language for the live glasses HUD state summary
 - lightweight Rokid sensor summary pill in the top strip for `yaw / roll / movement` without adding central occlusion
+- a Rokid-aware input adapter layer now separates:
+  - `/api/v1/posture` for simulator-driven packets
+  - `/api/v1/rokid/head-pose` for Rokid-style head pose / IMU packets
+- the adapter keeps the active runtime constrained to Rokid-realistic signals:
+  - `pitch / yaw / roll`
+  - optional `motion_intensity`
+  - optional `accel_magnitude / gyro_magnitude`
+  - `task_mode`
 
 Verification:
 

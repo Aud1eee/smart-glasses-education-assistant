@@ -67,7 +67,7 @@ SCENARIO_RULES = {
 
 PIPELINE_RULES = [
     ("samples", "min", 300, "Demo run should contain enough samples for a meaningful timeline."),
-    ("avg_alignment", "between", (55, 75), "Average behavioral alignment should stay in a realistic mid-high range."),
+    ("avg_alignment", "between", (50, 75), "Average behavioral alignment should stay in a realistic mid-high range for the Rokid-aware head-pose proxy."),
     ("avg_load", "between", (30, 55), "Average load should show both stable and stressed segments."),
     ("avg_fatigue", "between", (20, 40), "Average fatigue should remain noticeable but not dominant across the full demo."),
     ("drift_ratio", "between", (40, 70), "Drift-risk ratio should reflect a mixed session rather than a perfectly stable trace."),

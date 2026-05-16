@@ -16,6 +16,7 @@ class DataLogger:
         "Orientation_Drift",
         "Movement_Intensity",
         "Task_Mode",
+        "Input_Source",
         "Stability",
         "Is_Alert",
         "Focus_Score",
@@ -103,6 +104,7 @@ class DataLogger:
                 "Orientation_Drift": row.get("Orientation_Drift", "") or "0",
                 "Movement_Intensity": row.get("Movement_Intensity", "") or "0",
                 "Task_Mode": row.get("Task_Mode", "") or "reading",
+                "Input_Source": row.get("Input_Source", "") or "simulator",
                 "Stability": row.get("Stability", ""),
                 "Is_Alert": row.get("Is_Alert", ""),
                 "Focus_Score": row.get("Focus_Score", ""),
@@ -178,6 +180,7 @@ class DataLogger:
         cognitive_load=0,
         load_level="low",
         task_mode="reading",
+        input_source="simulator",
         behavioral_alignment=100,
         behavioral_level="aligned",
         drift_trend=0,
@@ -206,6 +209,7 @@ class DataLogger:
                 round(orientation_drift, 1),
                 round(movement_intensity, 2),
                 task_mode,
+                input_source,
                 int(stability),
                 is_alert,
                 round(score, 1),
@@ -361,6 +365,7 @@ class DataLogger:
             "duration_seconds": 0,
             "duration_label": "00:00",
             "primary_task_mode": "unknown",
+            "primary_input_source": "unknown",
             "avg_alignment": 0.0,
             "avg_load": 0.0,
             "avg_fatigue": 0.0,
@@ -383,6 +388,7 @@ class DataLogger:
 
         duration_seconds = self._safe_int(session_report["Elapsed_Seconds"].max())
         primary_mode = self._mode_or_default(session_report.get("Task_Mode"), "reading")
+        primary_input_source = self._mode_or_default(session_report.get("Input_Source"), "simulator")
         high_load_ratio = self._ratio((session_report.get("Load_Level") == "high").sum(), len(session_report.index))
         low_confidence_ratio = self._ratio((session_report.get("Confidence_Level") == "low").sum(), len(session_report.index))
         state_hints = session_report.get("State_Hint", pd.Series(dtype=str)).fillna("").astype(str).str.lower()
@@ -397,6 +403,7 @@ class DataLogger:
             "duration_seconds": duration_seconds,
             "duration_label": self._format_mmss(duration_seconds),
             "primary_task_mode": primary_mode,
+            "primary_input_source": primary_input_source,
             "avg_alignment": round(self._safe_float(session_report["Behavioral_Alignment"].mean()), 1),
             "avg_load": round(self._safe_float(session_report["Cognitive_Load"].mean()), 1),
             "avg_fatigue": round(self._safe_float(session_report["Fatigue_Risk"].mean()), 1),

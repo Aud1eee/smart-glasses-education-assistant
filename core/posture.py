@@ -14,8 +14,8 @@ class PostureEngine:
             "roll_hard": 12.0,
             "variance_soft": 4.5,
             "variance_hard": 9.5,
-            "movement_soft": 3.5,
-            "movement_hard": 7.0,
+            "movement_soft": 16.0,
+            "movement_hard": 34.0,
             "fatigue_drift": 12.0,
             "fatigue_variance": 3.2,
             "axis_weights": (0.46, 0.34, 0.20),
@@ -29,8 +29,8 @@ class PostureEngine:
             "roll_hard": 14.0,
             "variance_soft": 6.5,
             "variance_hard": 12.5,
-            "movement_soft": 4.5,
-            "movement_hard": 8.5,
+            "movement_soft": 18.0,
+            "movement_hard": 38.0,
             "fatigue_drift": 14.0,
             "fatigue_variance": 4.0,
             "axis_weights": (0.56, 0.24, 0.20),
@@ -44,8 +44,8 @@ class PostureEngine:
             "roll_hard": 17.0,
             "variance_soft": 9.5,
             "variance_hard": 16.5,
-            "movement_soft": 6.5,
-            "movement_hard": 11.5,
+            "movement_soft": 24.0,
+            "movement_hard": 48.0,
             "fatigue_drift": 18.0,
             "fatigue_variance": 5.0,
             "axis_weights": (0.40, 0.36, 0.24),
@@ -59,8 +59,8 @@ class PostureEngine:
             "roll_hard": 15.0,
             "variance_soft": 8.0,
             "variance_hard": 14.0,
-            "movement_soft": 5.5,
-            "movement_hard": 10.0,
+            "movement_soft": 20.0,
+            "movement_hard": 42.0,
             "fatigue_drift": 16.0,
             "fatigue_variance": 4.4,
             "axis_weights": (0.50, 0.30, 0.20),
@@ -281,10 +281,10 @@ class PostureEngine:
     def _compute_behavioral_alignment(self, rel, variance, profile):
         drift_penalty = min(46.0, (rel / max(profile["drift_soft"], 1.0)) * 24.0)
         motion_penalty = min(34.0, (variance / max(profile["variance_soft"], 0.1)) * 18.0)
-        orientation_penalty = self.orientation_drift * 0.10
+        orientation_penalty = self.orientation_drift * 0.07
         movement_penalty = min(12.0, (self.movement_intensity / max(profile["movement_hard"], 0.1)) * 10.0)
         stability_penalty = (100 - self.current_stability) * 0.18
-        switching_penalty = self.switching_index * 0.12
+        switching_penalty = self.switching_index * 0.10
         trend_penalty = self.drift_trend * 0.08
         alert_penalty = 12.0 if self.is_alert else 0.0
         alignment = 100.0 - drift_penalty - motion_penalty - orientation_penalty - movement_penalty - stability_penalty - switching_penalty - trend_penalty - alert_penalty
@@ -354,7 +354,7 @@ class PostureEngine:
     def _resolve_movement_intensity(self, previous_vector, explicit_intensity):
         if explicit_intensity is not None:
             try:
-                return round(max(0.0, float(explicit_intensity)), 2)
+                return round(min(100.0, max(0.0, float(explicit_intensity))), 2)
             except Exception:
                 pass
 
@@ -463,7 +463,7 @@ class PostureEngine:
             self.is_alert
             or self.behavioral_level == "misaligned"
             or self.orientation_drift >= 72
-            or (self.switching_index >= 48 and self.movement_intensity >= 4.0)
+            or (self.switching_index >= 48 and self.movement_intensity >= 28.0)
         ):
             return "off_task_risk"
         if (

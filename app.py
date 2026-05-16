@@ -11,6 +11,11 @@ from core.edu import EduEngine
 from core.focus_session import FocusSessionEngine
 from core.multimodal_schema import build_multimodal_blueprint
 from core.posture import PostureEngine
+from core.rokid_adapter import (
+    build_rokid_adapter_blueprint,
+    build_rokid_packet,
+    build_simulator_packet,
+)
 from core.vision import VisionEngine
 from utils.storage import DataLogger
 
@@ -43,6 +48,13 @@ latest_difficulty = {
     "last_event": None,
     "event_count": 0,
 }
+latest_input = {
+    "source": "simulator",
+    "device_profile": "simulator-rokid-proxy",
+    "tracking_state": "warmup",
+    "motion_source": "default",
+    "timestamp_ms": None,
+}
 
 
 def _build_session_id(now=None):
@@ -59,8 +71,26 @@ def _new_difficulty_snapshot():
     }
 
 
+def _input_snapshot(packet=None):
+    if packet is None:
+        return {
+            "source": "simulator",
+            "device_profile": "simulator-rokid-proxy",
+            "tracking_state": "warmup",
+            "motion_source": "default",
+            "timestamp_ms": None,
+        }
+    return {
+        "source": packet.source,
+        "device_profile": packet.device_profile,
+        "tracking_state": packet.tracking_state,
+        "motion_source": packet.motion_source,
+        "timestamp_ms": packet.timestamp_ms,
+    }
+
+
 def _start_new_session(reset_posture=False):
-    global latest_session, latest_difficulty, sample_counter, last_posture_at, current_session_id
+    global latest_session, latest_difficulty, latest_input, sample_counter, last_posture_at, current_session_id
     if reset_posture:
         posture.calibrate()
     else:
@@ -70,6 +100,7 @@ def _start_new_session(reset_posture=False):
     current_session_id = _build_session_id()
     latest_session = focus_session.snapshot()
     latest_difficulty = _new_difficulty_snapshot()
+    latest_input = _input_snapshot()
     sample_counter = 0
     last_posture_at = None
     return current_session_id
@@ -95,16 +126,30 @@ def export_asset(filename):
 
 @app.route("/api/v1/posture", methods=["POST"])
 def handle_posture():
-    global pending_card, latest_session, latest_difficulty, sample_counter, last_posture_at
-    data = request.json or {}
+    packet = build_simulator_packet(request.json or {}, default_task_mode=posture.task_mode)
+    _ingest_packet(packet)
+    return jsonify({"status": "ok", "source": packet.source, "session_id": current_session_id})
+
+
+@app.route("/api/v1/rokid/head-pose", methods=["POST"])
+def handle_rokid_head_pose():
+    packet = build_rokid_packet(request.json or {}, default_task_mode=posture.task_mode)
+    _ingest_packet(packet)
+    return jsonify({"status": "ok", "source": packet.source, "session_id": current_session_id})
+
+
+def _ingest_packet(packet):
+    global pending_card, latest_session, latest_difficulty, latest_input, sample_counter, last_posture_at
     sample_counter += 1
     last_posture_at = datetime.now()
-    timestamp_text = datetime.now().strftime("%H:%M:%S")
+    timestamp_text = packet.timestamp_text or datetime.now().strftime("%H:%M:%S")
+    if packet.task_mode and packet.task_mode != posture.task_mode:
+        posture.set_task_mode(packet.task_mode)
     res = posture.process(
-        data.get("pitch", 0),
-        raw_yaw=data.get("yaw", 0),
-        raw_roll=data.get("roll", 0),
-        motion_intensity=data.get("motion_intensity"),
+        packet.pitch or 0,
+        raw_yaw=packet.yaw or 0,
+        raw_roll=packet.roll or 0,
+        motion_intensity=packet.motion_intensity,
     )
     latest_session = focus_session.update(res)
     latest_difficulty = difficulty_marker.update(
@@ -127,6 +172,7 @@ def handle_posture():
         cognitive_load=res["cognitive_load"],
         load_level=res["load_level"],
         task_mode=res["task_mode"],
+        input_source=packet.source,
         behavioral_alignment=res["behavioral_alignment"],
         behavioral_level=res["behavioral_level"],
         drift_trend=res.get("drift_trend", 0),
@@ -143,6 +189,7 @@ def handle_posture():
         timestamp_text=timestamp_text,
         session_id=current_session_id,
     )
+    latest_input = _input_snapshot(packet)
     if latest_difficulty["completed_event"]:
         logger.log_difficulty_event(latest_difficulty["completed_event"])
 
@@ -151,8 +198,6 @@ def handle_posture():
         if quiz:
             pending_card = quiz
             print(f"[EDU] Active recall triggered: {quiz['word']}")
-
-    return jsonify({"status": "ok"})
 
 
 @app.route("/capture")
@@ -176,12 +221,15 @@ def handle_collect():
 
 @app.route("/status")
 def get_status():
-    global pending_card, latest_session, latest_difficulty, last_posture_at
+    global pending_card, latest_session, latest_difficulty, latest_input, last_posture_at
     latest_session = focus_session.snapshot()
     data = {
         "rel_pitch": round(abs(posture.smooth_pitch - posture.base_pitch), 1),
+        "signed_pitch_delta": round(posture.smooth_pitch - posture.base_pitch, 1),
         "rel_yaw": round(abs(posture.smooth_yaw - posture.base_yaw), 1),
+        "signed_yaw_delta": round(posture.smooth_yaw - posture.base_yaw, 1),
         "rel_roll": round(abs(posture.smooth_roll - posture.base_roll), 1),
+        "signed_roll_delta": round(posture.smooth_roll - posture.base_roll, 1),
         "combined_drift": round(posture.combined_drift, 1),
         "orientation_drift": posture.orientation_drift,
         "movement_intensity": posture.movement_intensity,
@@ -202,6 +250,7 @@ def get_status():
         "uncertainty_score": posture.uncertainty_score,
         "confidence_level": posture.confidence_level,
         "session": latest_session,
+        "input": latest_input,
         "difficulty": {
             "active_event": latest_difficulty.get("active_event"),
             "last_event": latest_difficulty.get("last_event"),
@@ -226,6 +275,11 @@ def review_summary():
 @app.route("/api/multimodal_blueprint")
 def multimodal_blueprint():
     return jsonify(build_multimodal_blueprint())
+
+
+@app.route("/api/rokid_adapter_blueprint")
+def rokid_adapter_blueprint():
+    return jsonify(build_rokid_adapter_blueprint())
 
 
 @app.route("/calibrate")

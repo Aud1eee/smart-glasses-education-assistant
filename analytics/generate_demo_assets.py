@@ -12,7 +12,7 @@ from analytics.analyze_report import analyze
 from core.difficulty_marker import DifficultyEventMarker
 from core.focus_session import FocusSessionEngine
 from core.posture import PostureEngine
-from simulate_motion import PRESENTATION_SEQUENCE, SCENARIOS
+from simulate_motion import PRESENTATION_SEQUENCE, SCENARIOS, scenario_pose
 from utils.storage import DataLogger
 
 
@@ -53,7 +53,7 @@ def generate_demo_report(
         difficulty_writer.writerow(DataLogger.DIFFICULTY_FIELDS)
 
         for _ in range(20):
-            posture.process(8.0, now=now)
+            posture.process(8.0, raw_yaw=1.0, raw_roll=0.8, motion_intensity=10.0, now=now)
             now += 0.05
 
         posture.calibrate()
@@ -66,9 +66,15 @@ def generate_demo_report(
             samples = max(1, int(seconds / interval))
             for step in range(samples):
                 sample_index += 1
-                pitch = config["center"] + math.sin(step * config["speed"]) * config["swing"]
-                pitch += random.uniform(-config["noise"], config["noise"])
-                result = posture.process(pitch, now=now)
+                pose = scenario_pose(config, step)
+                pose["pitch"] += random.uniform(-config["noise"] * 0.2, config["noise"] * 0.2)
+                result = posture.process(
+                    pose["pitch"],
+                    raw_yaw=pose["yaw"],
+                    raw_roll=pose["roll"],
+                    motion_intensity=pose["motion_intensity"],
+                    now=now,
+                )
                 session_result = session.update(result, now=now)
                 timestamp_text = format_timestamp(now)
                 difficulty_result = difficulty_marker.update(
@@ -89,6 +95,7 @@ def generate_demo_report(
                     "Orientation_Drift": round(result.get("orientation_drift", 0), 1),
                     "Movement_Intensity": round(result.get("movement_intensity", 0), 2),
                     "Task_Mode": result["task_mode"],
+                    "Input_Source": "simulator",
                     "Stability": int(result["stability"]),
                     "Is_Alert": result["is_alert"],
                     "Focus_Score": round(result["focus_score"], 1),

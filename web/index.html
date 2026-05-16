@@ -1513,8 +1513,8 @@
                 document.getElementById("confidence-val-top").innerText = glassesView ? compactConfidenceLabel(confidenceRaw) : confidence;
                 document.getElementById("confidence-val").innerText = glassesView ? compactConfidenceLabel(confidenceRaw) : confidence;
                 document.getElementById("reason-val").innerText = glassesView ? compactReasonText(reasonText, stateHint) : `${stateHint.replaceAll("_", " ")} | ${reasonText}`;
-                document.getElementById("yaw-val-top").innerText = formatSignedAngle(d.rel_yaw);
-                document.getElementById("roll-val-top").innerText = formatSignedAngle(d.rel_roll);
+                document.getElementById("yaw-val-top").innerText = formatSignedAngle(d.signed_yaw_delta);
+                document.getElementById("roll-val-top").innerText = formatSignedAngle(d.signed_roll_delta);
                 document.getElementById("move-val-top").innerText = movementSummary(d.movement_intensity, glassesView);
 
                 document.getElementById("phase-val").innerText = glassesView ? compactPhaseLabel(session.phase_label) : (session.phase_label || "Focus");
