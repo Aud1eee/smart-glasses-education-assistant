@@ -307,6 +307,15 @@ To make this path easier to inspect during development, the system now includes 
 - live cards for `tracking_state`, `tracking_confidence`, pose proxy, movement, and `state_hint`
 - quick navigation from the HUD (`K`) and from the review page (`Rokid Debug`)
 
+For continuous local validation, the project now also includes a **frame-stream test chain**:
+
+- `stream_rokid_frames.py`
+- `start_rokid_frame_stream.ps1`
+
+This chain reads from an image loop, a video file, or a camera source, then continuously posts frames into `/api/v1/rokid/frame`. It is meant to answer the practical question:
+
+> If Rokid only gives us first-person frames or a video stream, can the learning-state pipeline continue running over time rather than only on single-frame probes?
+
 The current HUD has been redesigned to better match a **Rokid-style near-eye display** rather than a desktop dashboard.
 
 The main visual principles are:

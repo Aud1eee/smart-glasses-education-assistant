@@ -457,6 +457,11 @@ New HUD interaction highlights:
   - it accepts upload, local-path, and demo-image probes for `/api/v1/rokid/frame`
   - it shows live `tracking_state / tracking_confidence / pose proxy / movement / state_hint`
   - HUD now links to it with `K`, and the review page also exposes a `Rokid Debug` entry
+- a continuous Rokid frame-stream test chain is now available:
+  - `stream_rokid_frames.py` continuously posts JPEG frames into `/api/v1/rokid/frame`
+  - `start_rokid_frame_stream.ps1` is the Windows launcher for `image / video / camera` sources
+  - it can optionally reset, warm up, calibrate, and restart a session before the measured run
+  - terminal output now shows `tracking_state / tracking_confidence / state_hint / alignment / load / fatigue` per frame
 - the adapter keeps the active runtime constrained to Rokid-realistic signals:
   - `pitch / yaw / roll`
   - optional `motion_intensity`

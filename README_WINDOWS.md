@@ -27,6 +27,28 @@ Outputs:
 - `exports\validation_summary.md`
 - `exports\validation_summary.json`
 
+## Rokid frame stream test
+
+When you want to simulate a Rokid-like continuous frame input path instead of the posture-only simulator:
+
+```powershell
+.\start_rokid_frame_stream.ps1 -Source image -ImagePath .\images\demo.jpg -MaxFrames 12
+```
+
+Useful variants:
+
+```powershell
+.\start_rokid_frame_stream.ps1 -Source camera -TaskMode reading
+.\start_rokid_frame_stream.ps1 -Source video -VideoPath C:\path\to\clip.mp4 -LoopVideo
+```
+
+This route posts frames to `/api/v1/rokid/frame`, then prints:
+
+- `tracking_state`
+- `tracking_confidence`
+- `state_hint`
+- `behavioral_alignment / cognitive_load / fatigue_risk`
+
 ## Runtime note
 
 The old Windows `.venv` currently points to a broken local Python 3.14 installation path.

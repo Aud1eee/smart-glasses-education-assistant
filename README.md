@@ -68,6 +68,19 @@ PowerShell commands also work:
 .\start_simulator.ps1
 ```
 
+For the Rokid-like video-frame path, you can now also run:
+
+```powershell
+.\start_rokid_frame_stream.ps1 -Source image -ImagePath .\images\demo.jpg -MaxFrames 12
+```
+
+or switch to a camera / video source:
+
+```powershell
+.\start_rokid_frame_stream.ps1 -Source camera -TaskMode reading
+.\start_rokid_frame_stream.ps1 -Source video -VideoPath C:\path\to\clip.mp4 -LoopVideo
+```
+
 Current Windows note:
 
 - the legacy `.venv` still stores project packages, but its original Python 3.14 interpreter path is broken on this machine
