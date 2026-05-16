@@ -139,6 +139,59 @@ Based on these features, the algorithm now exposes a `state_hint` layer that hel
 - `fatigue_risk`
 - `signal_check`
 
+## 2.4 Rokid first-person scene adapter
+
+The project no longer assumes that Rokid can directly provide stable raw head-pose or self-face signals to the application layer.
+
+Instead, the current Rokid path is designed around a more realistic assumption:
+
+- the glasses can provide first-person images or video frames
+- the backend derives scene-level learning proxies from those frames
+
+The current frame-driven scene adapter focuses on:
+
+- `scene_content_score`
+- `scene_text_score`
+- `scene_stability_score`
+- `scene_switch_rate`
+- `study_surface_score`
+- `scene_lock_score`
+
+These metrics are then folded into the main learning-state logic to influence:
+
+- `behavioral_alignment`
+- `cognitive_load`
+- `uncertainty_score`
+- `state_hint`
+
+This means the Rokid branch is currently best described as:
+
+> a first-person scene-driven learning-state proxy, rather than a direct physiological attention detector.
+
+## 2.5 Rokid scene tuning page
+
+To make the first-person logic adjustable without changing source code, the project now includes a runtime tuning surface:
+
+- [rokid_debug.html](</C:/Users/11721/Desktop/focus_project_windows/web/rokid_debug.html>)
+
+The tuning page can:
+
+- inspect the current posture-side scene thresholds
+- inspect the current frame-adapter thresholds
+- apply new threshold values at runtime
+- reset all tuning values back to defaults
+
+The related APIs are:
+
+- `/api/rokid_scene_tuning`
+- `/api/rokid_scene_tuning/reset`
+
+This is useful for:
+
+- local parameter calibration
+- future Rokid device-side debugging
+- thesis and presentation explanation of how scene thresholds are controlled
+
 This upgrade is important because the system no longer treats every medium/high load state as a negative event.
 
 In particular:

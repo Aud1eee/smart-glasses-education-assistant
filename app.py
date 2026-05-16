@@ -387,6 +387,33 @@ def rokid_frame_adapter_blueprint():
     return jsonify(rokid_frame_adapter.blueprint())
 
 
+@app.route("/api/rokid_scene_tuning", methods=["GET", "POST"])
+def rokid_scene_tuning():
+    if request.method == "GET":
+        return jsonify({
+            "posture": posture.get_scene_tuning(),
+            "frame_adapter": rokid_frame_adapter.get_scene_tuning(),
+        })
+
+    payload = request.json or {}
+    posture_config = posture.update_scene_tuning(payload.get("posture", {}))
+    frame_config = rokid_frame_adapter.update_scene_tuning(payload.get("frame_adapter", {}))
+    return jsonify({
+        "status": "ok",
+        "posture": posture_config,
+        "frame_adapter": frame_config,
+    })
+
+
+@app.route("/api/rokid_scene_tuning/reset", methods=["POST"])
+def rokid_scene_tuning_reset():
+    return jsonify({
+        "status": "ok",
+        "posture": posture.reset_scene_tuning(),
+        "frame_adapter": rokid_frame_adapter.reset_scene_tuning(),
+    })
+
+
 @app.route("/calibrate")
 def calibrate():
     session_id = _start_new_session(reset_posture=True)

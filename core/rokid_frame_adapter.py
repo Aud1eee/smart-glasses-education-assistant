@@ -28,8 +28,59 @@ class RokidFrameAdapter:
     instead of assuming face-based head-pose recovery.
     """
 
+    DEFAULT_SCENE_TUNING = {
+        "blurred_floor": 10.0,
+        "low_visibility_floor": 10.0,
+        "low_visibility_ceiling": 92.0,
+        "content_sparse_floor": 18.0,
+        "scene_unstable_stability_floor": 28.0,
+        "scene_unstable_switch_floor": 48.0,
+        "scene_locked_surface_floor": 54.0,
+        "scene_locked_lock_floor": 58.0,
+        "lock_surface_floor": 42.0,
+        "lock_stability_floor": 38.0,
+        "lock_switch_ceiling": 36.0,
+    }
+
     def __init__(self):
+        self.scene_tuning = dict(self.DEFAULT_SCENE_TUNING)
         self.reset_scene_memory()
+
+    def get_scene_tuning(self):
+        return dict(self.scene_tuning)
+
+    def reset_scene_tuning(self):
+        self.scene_tuning = dict(self.DEFAULT_SCENE_TUNING)
+        return self.get_scene_tuning()
+
+    def update_scene_tuning(self, updates):
+        if not isinstance(updates, dict):
+            return self.get_scene_tuning()
+        limits = {
+            "blurred_floor": (0.0, 40.0),
+            "low_visibility_floor": (0.0, 40.0),
+            "low_visibility_ceiling": (60.0, 100.0),
+            "content_sparse_floor": (0.0, 50.0),
+            "scene_unstable_stability_floor": (0.0, 60.0),
+            "scene_unstable_switch_floor": (10.0, 90.0),
+            "scene_locked_surface_floor": (20.0, 90.0),
+            "scene_locked_lock_floor": (20.0, 90.0),
+            "lock_surface_floor": (10.0, 80.0),
+            "lock_stability_floor": (10.0, 80.0),
+            "lock_switch_ceiling": (10.0, 80.0),
+        }
+        for key, bounds in limits.items():
+            if key not in updates:
+                continue
+            try:
+                raw_value = float(updates.get(key))
+            except Exception:
+                continue
+            low, high = bounds
+            self.scene_tuning[key] = max(low, min(high, raw_value))
+        if self.scene_tuning["low_visibility_ceiling"] < self.scene_tuning["low_visibility_floor"] + 10.0:
+            self.scene_tuning["low_visibility_ceiling"] = self.scene_tuning["low_visibility_floor"] + 10.0
+        return self.get_scene_tuning()
 
     def reset_scene_memory(self):
         self.previous_preview = None
@@ -489,15 +540,24 @@ class RokidFrameAdapter:
         study_surface_score,
         scene_lock_score,
     ):
-        if blur_score < 10.0:
+        if blur_score < self.scene_tuning["blurred_floor"]:
             return "blurred"
-        if brightness_score < 10.0 or brightness_score > 92.0:
+        if (
+            brightness_score < self.scene_tuning["low_visibility_floor"]
+            or brightness_score > self.scene_tuning["low_visibility_ceiling"]
+        ):
             return "low_visibility"
-        if content_score < 18.0:
+        if content_score < self.scene_tuning["content_sparse_floor"]:
             return "content_sparse"
-        if scene_stability < 28.0 and scene_switch_rate >= 48.0:
+        if (
+            scene_stability < self.scene_tuning["scene_unstable_stability_floor"]
+            and scene_switch_rate >= self.scene_tuning["scene_unstable_switch_floor"]
+        ):
             return "scene_unstable"
-        if study_surface_score >= 54.0 and scene_lock_score >= 58.0:
+        if (
+            study_surface_score >= self.scene_tuning["scene_locked_surface_floor"]
+            and scene_lock_score >= self.scene_tuning["scene_locked_lock_floor"]
+        ):
             return "scene_locked"
         return "scene_tracking"
 
@@ -554,10 +614,13 @@ class RokidFrameAdapter:
         histogram_delta,
         anchor_shift,
     ):
+        surface_floor = self.scene_tuning["lock_surface_floor"]
+        stability_floor = self.scene_tuning["lock_stability_floor"]
+        switch_ceiling = self.scene_tuning["lock_switch_ceiling"]
         stable_frame = (
-            study_surface_score >= 42.0
-            and scene_stability >= 38.0
-            and scene_switch_rate <= 36.0
+            study_surface_score >= surface_floor
+            and scene_stability >= stability_floor
+            and scene_switch_rate <= switch_ceiling
             and anchor_shift <= 0.18
             and histogram_delta <= 0.24
         )

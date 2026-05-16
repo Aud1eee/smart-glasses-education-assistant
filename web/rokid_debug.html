@@ -251,9 +251,17 @@
         }
 
         .field input[type="text"],
+        .field input[type="number"],
         .field select {
             width: 100%;
             padding: 12px 14px;
+        }
+
+        .tuning-grid {
+            margin-top: 16px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
         }
 
         .field input[type="file"] {
@@ -415,7 +423,8 @@
             }
 
             .metric-grid,
-            .hero-grid {
+            .hero-grid,
+            .tuning-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -525,6 +534,62 @@
                     <div class="pill-row" id="blueprint-pills"></div>
                     <div class="json-box" id="blueprint-json">Loading adapter blueprint...</div>
                 </section>
+
+                <section class="panel section">
+                    <h2>Scene tuning</h2>
+                    <p class="lead">
+                        Adjust the active runtime thresholds for first-person study scenes. These controls update the current
+                        Flask session immediately and are meant for local calibration, not permanent training.
+                    </p>
+                    <div class="tuning-grid">
+                        <div class="field">
+                            <label for="tune-content-bias">Content Expectation Bias</label>
+                            <input id="tune-content-bias" type="number" step="0.5">
+                        </div>
+                        <div class="field">
+                            <label for="tune-surface-bias">Surface Expectation Bias</label>
+                            <input id="tune-surface-bias" type="number" step="0.5">
+                        </div>
+                        <div class="field">
+                            <label for="tune-signal-uncertainty">Signal Uncertainty Floor</label>
+                            <input id="tune-signal-uncertainty" type="number" step="0.5">
+                        </div>
+                        <div class="field">
+                            <label for="tune-offtask-switch">Off-task Switch Floor</label>
+                            <input id="tune-offtask-switch" type="number" step="0.5">
+                        </div>
+                        <div class="field">
+                            <label for="tune-productive-align">Productive Alignment Floor</label>
+                            <input id="tune-productive-align" type="number" step="0.5">
+                        </div>
+                        <div class="field">
+                            <label for="tune-productive-lock">Productive Scene Lock Floor</label>
+                            <input id="tune-productive-lock" type="number" step="0.5">
+                        </div>
+                        <div class="field">
+                            <label for="tune-frame-sparse">Frame Content Sparse Floor</label>
+                            <input id="tune-frame-sparse" type="number" step="0.5">
+                        </div>
+                        <div class="field">
+                            <label for="tune-frame-locked-surface">Frame Locked Surface Floor</label>
+                            <input id="tune-frame-locked-surface" type="number" step="0.5">
+                        </div>
+                        <div class="field">
+                            <label for="tune-frame-locked-lock">Frame Locked Lock Floor</label>
+                            <input id="tune-frame-locked-lock" type="number" step="0.5">
+                        </div>
+                        <div class="field">
+                            <label for="tune-frame-lock-switch">Frame Lock Switch Ceiling</label>
+                            <input id="tune-frame-lock-switch" type="number" step="0.5">
+                        </div>
+                    </div>
+                    <div class="button-row" style="margin-top:16px;">
+                        <button class="primary" onclick="applySceneTuning()">Apply tuning</button>
+                        <button onclick="resetSceneTuning()">Reset defaults</button>
+                        <button onclick="loadSceneTuning()">Reload values</button>
+                    </div>
+                    <div class="json-box" id="tuning-response">Loading live scene tuning...</div>
+                </section>
             </div>
 
             <div class="stack">
@@ -587,9 +652,47 @@
     <script>
         const APP_BASE_URL = window.location.protocol === "file:" ? "http://127.0.0.1:5000" : "";
         const DEFAULT_DEMO_IMAGE = "C:/Users/11721/Desktop/focus_project_windows/images/demo.jpg";
+        const POSTURE_TUNING_FIELDS = {
+            content_expectation_bias: "tune-content-bias",
+            surface_expectation_bias: "tune-surface-bias",
+            signal_uncertainty_floor: "tune-signal-uncertainty",
+            off_task_switch_floor: "tune-offtask-switch",
+            productive_alignment_floor: "tune-productive-align",
+            productive_lock_floor: "tune-productive-lock",
+        };
+        const FRAME_TUNING_FIELDS = {
+            content_sparse_floor: "tune-frame-sparse",
+            scene_locked_surface_floor: "tune-frame-locked-surface",
+            scene_locked_lock_floor: "tune-frame-locked-lock",
+            lock_switch_ceiling: "tune-frame-lock-switch",
+        };
 
         function prettyJson(value) {
             return JSON.stringify(value, null, 2);
+        }
+
+        function assignTuningFields(values, fieldMap) {
+            for (const [key, elementId] of Object.entries(fieldMap)) {
+                const element = document.getElementById(elementId);
+                if (!element) continue;
+                const raw = values && Object.prototype.hasOwnProperty.call(values, key) ? values[key] : "";
+                element.value = raw === null || raw === undefined ? "" : raw;
+            }
+        }
+
+        function collectTuningFields(fieldMap) {
+            const payload = {};
+            for (const [key, elementId] of Object.entries(fieldMap)) {
+                const element = document.getElementById(elementId);
+                if (!element) continue;
+                const raw = element.value;
+                if (raw === "") continue;
+                const parsed = Number(raw);
+                if (!Number.isNaN(parsed)) {
+                    payload[key] = parsed;
+                }
+            }
+            return payload;
         }
 
         function setPreviewFromUrl(url) {
@@ -754,8 +857,59 @@
             }
         }
 
+        async function loadSceneTuning() {
+            try {
+                const response = await fetch(`${APP_BASE_URL}/api/rokid_scene_tuning`);
+                const data = await response.json();
+                assignTuningFields(data.posture || {}, POSTURE_TUNING_FIELDS);
+                assignTuningFields(data.frame_adapter || {}, FRAME_TUNING_FIELDS);
+                document.getElementById("tuning-response").innerText = prettyJson(data);
+            } catch (error) {
+                document.getElementById("tuning-response").innerText =
+                    `Scene tuning request failed.\n\n${String(error)}\n\nStart the local Flask backend at http://127.0.0.1:5000 and refresh this page.`;
+            }
+        }
+
+        async function applySceneTuning() {
+            const payload = {
+                posture: collectTuningFields(POSTURE_TUNING_FIELDS),
+                frame_adapter: collectTuningFields(FRAME_TUNING_FIELDS),
+            };
+            try {
+                const response = await fetch(`${APP_BASE_URL}/api/rokid_scene_tuning`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                });
+                const data = await response.json();
+                document.getElementById("tuning-response").innerText = prettyJson(data);
+                assignTuningFields(data.posture || {}, POSTURE_TUNING_FIELDS);
+                assignTuningFields(data.frame_adapter || {}, FRAME_TUNING_FIELDS);
+                await refreshStatus();
+            } catch (error) {
+                document.getElementById("tuning-response").innerText =
+                    `Apply tuning failed.\n\n${String(error)}\n\nStart the local Flask backend at http://127.0.0.1:5000 and try again.`;
+            }
+        }
+
+        async function resetSceneTuning() {
+            try {
+                const response = await fetch(`${APP_BASE_URL}/api/rokid_scene_tuning/reset`, {
+                    method: "POST",
+                });
+                const data = await response.json();
+                document.getElementById("tuning-response").innerText = prettyJson(data);
+                assignTuningFields(data.posture || {}, POSTURE_TUNING_FIELDS);
+                assignTuningFields(data.frame_adapter || {}, FRAME_TUNING_FIELDS);
+                await refreshStatus();
+            } catch (error) {
+                document.getElementById("tuning-response").innerText =
+                    `Reset tuning failed.\n\n${String(error)}\n\nStart the local Flask backend at http://127.0.0.1:5000 and try again.`;
+            }
+        }
+
         async function refreshAll() {
-            await Promise.all([refreshStatus(), loadBlueprint()]);
+            await Promise.all([refreshStatus(), loadBlueprint(), loadSceneTuning()]);
         }
 
         refreshAll();

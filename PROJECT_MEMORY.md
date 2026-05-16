@@ -118,6 +118,27 @@ Recommended structure:
     - `signal_check`
 - `productive_struggle` is important for explanation:
   - it means the learner is still behaviorally aligned, but effort is clearly elevated
+
+### Latest Rokid scene-logic upgrade
+
+- the Rokid input path now assumes a **first-person frame stream**, not a self-face camera
+- the current Rokid judgment path is scene-driven rather than face-driven
+- the frame adapter now extracts first-person scene proxies such as:
+  - `scene_content_score`
+  - `scene_text_score`
+  - `scene_stability_score`
+  - `scene_switch_rate`
+  - `study_surface_score`
+  - `scene_lock_score`
+- the runtime now includes a **Rokid scene tuning page** in:
+  - [rokid_debug.html](</C:/Users/11721/Desktop/focus_project_windows/web/rokid_debug.html>)
+- the tuning page can:
+  - read current posture and frame-adapter thresholds
+  - apply threshold overrides without editing code
+  - reset tuning values back to defaults
+- the main tuning APIs are:
+  - `/api/rokid_scene_tuning`
+  - `/api/rokid_scene_tuning/reset`
   - it should not be described as simple distraction
 - this upgrade stays inside realistic Rokid-side constraints:
   - posture / head pose

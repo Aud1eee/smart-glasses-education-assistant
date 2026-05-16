@@ -4,6 +4,19 @@ import numpy as np
 
 
 class PostureEngine:
+    DEFAULT_SCENE_TUNING = {
+        "content_expectation_bias": 0.0,
+        "surface_expectation_bias": 0.0,
+        "signal_uncertainty_floor": 55.0,
+        "signal_content_floor": 12.0,
+        "signal_stability_floor": 26.0,
+        "off_task_switch_floor": 52.0,
+        "off_task_content_margin": 8.0,
+        "off_task_surface_margin": 6.0,
+        "productive_alignment_floor": 76.0,
+        "productive_lock_floor": 36.0,
+        "productive_stability_floor": 38.0,
+    }
     TASK_PROFILES = {
         "lecture": {
             "drift_soft": 10.0,
@@ -70,6 +83,7 @@ class PostureEngine:
     def __init__(self, alpha=0.3, history_size=15):
         self.alpha = alpha
         self.history_size = history_size
+        self.scene_tuning = dict(self.DEFAULT_SCENE_TUNING)
         self.base_pitch = 0.0
         self.base_yaw = 0.0
         self.base_roll = 0.0
@@ -313,6 +327,40 @@ class PostureEngine:
         self.samples_since_reset = 0
         self.mode_changed_at = now
         return self.task_mode
+
+    def get_scene_tuning(self):
+        return dict(self.scene_tuning)
+
+    def reset_scene_tuning(self):
+        self.scene_tuning = dict(self.DEFAULT_SCENE_TUNING)
+        return self.get_scene_tuning()
+
+    def update_scene_tuning(self, updates):
+        if not isinstance(updates, dict):
+            return self.get_scene_tuning()
+        limits = {
+            "content_expectation_bias": (-20.0, 20.0),
+            "surface_expectation_bias": (-20.0, 20.0),
+            "signal_uncertainty_floor": (20.0, 80.0),
+            "signal_content_floor": (0.0, 40.0),
+            "signal_stability_floor": (0.0, 50.0),
+            "off_task_switch_floor": (20.0, 90.0),
+            "off_task_content_margin": (0.0, 24.0),
+            "off_task_surface_margin": (0.0, 24.0),
+            "productive_alignment_floor": (40.0, 95.0),
+            "productive_lock_floor": (0.0, 70.0),
+            "productive_stability_floor": (0.0, 70.0),
+        }
+        for key, bounds in limits.items():
+            if key not in updates:
+                continue
+            try:
+                raw_value = float(updates.get(key))
+            except Exception:
+                continue
+            low, high = bounds
+            self.scene_tuning[key] = max(low, min(high, raw_value))
+        return self.get_scene_tuning()
 
     def _compute_stability(self, variance, profile):
         ratio = min(2.0, variance / max(profile["variance_hard"], 0.1))
@@ -600,7 +648,17 @@ class PostureEngine:
         return "low", "Stable learning state"
 
     def _classify_state_hint(self):
-        if self.uncertainty_score >= 55:
+        signal_uncertainty_floor = self.scene_tuning["signal_uncertainty_floor"]
+        signal_content_floor = self.scene_tuning["signal_content_floor"]
+        signal_stability_floor = self.scene_tuning["signal_stability_floor"]
+        off_task_switch_floor = self.scene_tuning["off_task_switch_floor"]
+        off_task_content_floor = max(18.0, self._content_expectation() - self.scene_tuning["off_task_content_margin"])
+        off_task_surface_floor = max(20.0, self._surface_expectation() - self.scene_tuning["off_task_surface_margin"])
+        productive_alignment_floor = self.scene_tuning["productive_alignment_floor"]
+        productive_lock_floor = self.scene_tuning["productive_lock_floor"]
+        productive_stability_floor = self.scene_tuning["productive_stability_floor"]
+
+        if self.uncertainty_score >= signal_uncertainty_floor:
             return "signal_check"
         if (
             self.scene_signal_active
@@ -608,8 +666,8 @@ class PostureEngine:
                 self.blur_score < 10
                 or (
                     self.scene_content_score > 0
-                    and self.scene_content_score < 12
-                    and self.scene_stability_score < 26
+                    and self.scene_content_score < signal_content_floor
+                    and self.scene_stability_score < signal_stability_floor
                 )
             )
         ):
@@ -623,14 +681,14 @@ class PostureEngine:
             or (self.switching_index >= 48 and self.movement_intensity >= 28.0)
             or (
                 self.scene_signal_active
-                and self.scene_switch_rate >= 52
-                and self.scene_content_score < max(18.0, self._content_expectation() - 8.0)
-                and self.study_surface_score < max(20.0, self._surface_expectation() - 6.0)
+                and self.scene_switch_rate >= off_task_switch_floor
+                and self.scene_content_score < off_task_content_floor
+                and self.study_surface_score < off_task_surface_floor
             )
         ):
             return "off_task_risk"
         if (
-            self.behavioral_alignment >= 76
+            self.behavioral_alignment >= productive_alignment_floor
             and self.fatigue_risk < 40
             and self.uncertainty_score < 45
             and self.switching_index < 38
@@ -639,9 +697,9 @@ class PostureEngine:
                 not self.scene_signal_active
                 or (
                     self.scene_content_score >= self._content_expectation()
-                    and self.scene_stability_score >= 38
+                    and self.scene_stability_score >= productive_stability_floor
                     and self.study_surface_score >= self._surface_expectation()
-                    and self.scene_lock_score >= 36
+                    and self.scene_lock_score >= productive_lock_floor
                 )
             )
             and 35 <= self.cognitive_load <= 72
@@ -673,26 +731,28 @@ class PostureEngine:
         return normalized
 
     def _content_expectation(self):
+        bias = self.scene_tuning.get("content_expectation_bias", 0.0)
         if self.task_mode == "reading":
-            return 44.0
+            return 44.0 + bias
         if self.task_mode == "review":
-            return 40.0
+            return 40.0 + bias
         if self.task_mode == "lecture":
-            return 28.0
+            return 28.0 + bias
         if self.task_mode == "note-taking":
-            return 24.0
-        return 30.0
+            return 24.0 + bias
+        return 30.0 + bias
 
     def _surface_expectation(self):
+        bias = self.scene_tuning.get("surface_expectation_bias", 0.0)
         if self.task_mode == "reading":
-            return 48.0
+            return 48.0 + bias
         if self.task_mode == "review":
-            return 42.0
+            return 42.0 + bias
         if self.task_mode == "lecture":
-            return 26.0
+            return 26.0 + bias
         if self.task_mode == "note-taking":
-            return 28.0
-        return 32.0
+            return 28.0 + bias
+        return 32.0 + bias
 
     def _classify_band(self, value, medium, high):
         if value >= high:
