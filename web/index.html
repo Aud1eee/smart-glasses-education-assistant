@@ -1184,6 +1184,7 @@
                 <div class="hint"><b>1-4</b><span>Switch task mode</span></div>
                 <div class="hint"><b>V</b><span>Toggle HUD view</span></div>
                 <div class="hint"><b>G</b><span>Open review page</span></div>
+                <div class="hint"><b>K</b><span>Open Rokid frame debug</span></div>
                 <div class="hint"><b>C</b><span>Calibrate baseline</span></div>
                 <div class="hint"><b>R</b><span>Reset session</span></div>
                 <div class="hint"><b>Space</b><span>OCR capture</span></div>
@@ -1609,6 +1610,7 @@
             if (e.code === "Digit4") switchMode("review");
             if (e.code === "KeyV") switchViewMode(document.body.classList.contains("view-demo") ? "glasses" : "demo");
             if (e.code === "KeyG") window.location.href = "/review";
+            if (e.code === "KeyK") window.location.href = "/rokid_debug";
         };
 
         restoreViewMode();

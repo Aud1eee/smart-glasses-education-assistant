@@ -136,6 +136,11 @@ def review_page():
     return render_template("review.html")
 
 
+@app.route("/rokid_debug")
+def rokid_debug_page():
+    return render_template("rokid_debug.html")
+
+
 @app.route("/exports/<path:filename>")
 def export_asset(filename):
     return send_from_directory(EXPORT_DIR, filename)

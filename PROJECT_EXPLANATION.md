@@ -300,6 +300,13 @@ In the current Windows bundled runtime, this frame path still depends on native 
 
 To support this path locally, `start_windows.ps1` now prefers a Python runtime that can successfully import `cv2`, which means the launcher will fall back to the project `.venv` when the bundled runtime does not provide native OpenCV support.
 
+To make this path easier to inspect during development, the system now includes a dedicated **Rokid frame debug page**:
+
+- `/rokid_debug`
+- upload, local path, and demo-image probes for `/api/v1/rokid/frame`
+- live cards for `tracking_state`, `tracking_confidence`, pose proxy, movement, and `state_hint`
+- quick navigation from the HUD (`K`) and from the review page (`Rokid Debug`)
+
 The current HUD has been redesigned to better match a **Rokid-style near-eye display** rather than a desktop dashboard.
 
 The main visual principles are:

@@ -144,6 +144,13 @@
             color: var(--ink);
         }
 
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
         .session-select {
             min-width: 260px;
             max-width: 360px;
@@ -839,7 +846,10 @@
                 <select id="session-select" class="session-select" onchange="loadReview()"></select>
             </div>
 
-            <a class="nav-link" id="back-link" href="/">Back to HUD</a>
+            <div class="nav-links">
+                <a class="nav-link" id="debug-link" href="/rokid_debug">Rokid Debug</a>
+                <a class="nav-link" id="back-link" href="/">Back to HUD</a>
+            </div>
         </section>
 
         <section class="panel hero">

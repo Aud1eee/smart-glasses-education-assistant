@@ -452,6 +452,11 @@ New HUD interaction highlights:
   - face tracking confidence is folded into the active uncertainty path, so missing faces degrade into `Signal check` instead of fake stability
   - in the current Windows bundled runtime, this path still depends on native OpenCV availability; if OpenCV is missing, the adapter stays in scaffold mode and reports `frame_unavailable` / `opencv-unavailable`
   - `start_windows.ps1` now prefers a Python runtime that can actually import `cv2`, so local app startup will choose the OpenCV-capable `.venv` when needed
+- a dedicated Rokid frame debug surface is now part of the local workflow:
+  - `/rokid_debug` renders `web/rokid_debug.html`
+  - it accepts upload, local-path, and demo-image probes for `/api/v1/rokid/frame`
+  - it shows live `tracking_state / tracking_confidence / pose proxy / movement / state_hint`
+  - HUD now links to it with `K`, and the review page also exposes a `Rokid Debug` entry
 - the adapter keeps the active runtime constrained to Rokid-realistic signals:
   - `pitch / yaw / roll`
   - optional `motion_intensity`

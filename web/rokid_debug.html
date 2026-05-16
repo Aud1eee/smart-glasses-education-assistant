@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rokid Frame Debug</title>
+    <style>
+        :root {
+            --bg: #040404;
+            --ink: #fff2da;
+            --muted: rgba(255, 242, 218, 0.64);
+            --glass: rgba(16, 12, 8, 0.78);
+            --glass-soft: rgba(255, 255, 255, 0.035);
+            --line: rgba(255, 189, 92, 0.18);
+            --accent: #ffbd5c;
+            --good: #8ff0c8;
+            --warn: #ffd36c;
+            --high: #ff7b5c;
+            --signal: #cdb8ff;
+            --cool: #9fd7ff;
+            --shadow: 0 22px 60px rgba(0, 0, 0, 0.24);
+            --round: 24px;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            min-height: 100%;
+            background:
+                radial-gradient(circle at 18% 18%, rgba(255, 189, 92, 0.12), transparent 28%),
+                radial-gradient(circle at 84% 14%, rgba(159, 215, 255, 0.10), transparent 24%),
+                linear-gradient(135deg, #030303 0%, #0b0906 62%, #040404 100%);
+            color: var(--ink);
+            font-family: "Aptos", "Bahnschrift", "Segoe UI", "PingFang SC", sans-serif;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(rgba(255, 255, 255, 0.014) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.014) 1px, transparent 1px);
+            background-size: 64px 64px;
+            opacity: 0.28;
+        }
+
+        main {
+            position: relative;
+            z-index: 1;
+            width: min(1220px, calc(100vw - 40px));
+            margin: 0 auto;
+            padding: 18px 0 28px;
+        }
+
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: var(--round);
+            background: var(--glass);
+            backdrop-filter: blur(18px);
+            box-shadow: var(--shadow);
+        }
+
+        .topbar {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 18px;
+            align-items: center;
+            padding: 16px 18px;
+        }
+
+        .brand {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .brand-mark {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(255, 189, 92, 0.30);
+            color: var(--accent);
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            background: linear-gradient(145deg, rgba(255, 189, 92, 0.16), rgba(255, 189, 92, 0.04));
+        }
+
+        .brand-copy strong {
+            display: block;
+            font-size: 17px;
+            letter-spacing: 0.05em;
+        }
+
+        .brand-copy span {
+            display: block;
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            justify-content: end;
+            flex-wrap: wrap;
+        }
+
+        .nav-link,
+        button,
+        select,
+        input[type="text"] {
+            border-radius: 999px;
+            border: 1px solid rgba(255, 189, 92, 0.16);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--ink);
+            font: inherit;
+        }
+
+        .nav-link,
+        button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 14px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .nav-link.active,
+        button.primary {
+            background: rgba(255, 189, 92, 0.18);
+        }
+
+        .hero {
+            margin-top: 16px;
+            padding: 24px;
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+            gap: 22px;
+        }
+
+        .hero-copy span {
+            color: rgba(255, 189, 92, 0.86);
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+
+        .hero-copy h1 {
+            margin: 10px 0 0;
+            font-size: clamp(30px, 3.4vw, 44px);
+            letter-spacing: -0.05em;
+            line-height: 0.98;
+            max-width: 12ch;
+        }
+
+        .hero-copy p {
+            margin: 14px 0 0;
+            color: rgba(255, 242, 218, 0.76);
+            line-height: 1.6;
+            max-width: 62ch;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .hero-card {
+            padding: 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 189, 92, 0.10);
+            background: var(--glass-soft);
+        }
+
+        .hero-card span {
+            display: block;
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .hero-card strong {
+            display: block;
+            margin-top: 10px;
+            font-size: 24px;
+            letter-spacing: -0.04em;
+        }
+
+        .hero-card p {
+            margin: 8px 0 0;
+            color: rgba(255, 242, 218, 0.70);
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        .grid {
+            margin-top: 18px;
+            display: grid;
+            grid-template-columns: minmax(0, 1.02fr) minmax(340px, 0.98fr);
+            gap: 18px;
+        }
+
+        .stack {
+            display: grid;
+            gap: 18px;
+        }
+
+        .section {
+            padding: 20px;
+        }
+
+        .section h2 {
+            margin: 0;
+            font-size: 22px;
+            letter-spacing: -0.03em;
+        }
+
+        .section p.lead {
+            margin: 10px 0 0;
+            color: rgba(255, 242, 218, 0.72);
+            line-height: 1.55;
+        }
+
+        .form-grid {
+            margin-top: 18px;
+            display: grid;
+            gap: 14px;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+
+        .field input[type="text"],
+        .field select {
+            width: 100%;
+            padding: 12px 14px;
+        }
+
+        .field input[type="file"] {
+            display: block;
+            width: 100%;
+            color: var(--muted);
+        }
+
+        .button-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .preview-shell {
+            margin-top: 16px;
+            border-radius: 18px;
+            border: 1px dashed rgba(255, 189, 92, 0.18);
+            background: rgba(255, 255, 255, 0.02);
+            min-height: 220px;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+        }
+
+        .preview-shell img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .preview-empty {
+            padding: 24px;
+            text-align: center;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        .metric-grid {
+            margin-top: 18px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .metric-card {
+            padding: 16px;
+            border-radius: 18px;
+            background: var(--glass-soft);
+            border: 1px solid rgba(255, 189, 92, 0.10);
+        }
+
+        .metric-card span {
+            display: block;
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .metric-card strong {
+            display: block;
+            margin-top: 10px;
+            font-size: 22px;
+            letter-spacing: -0.04em;
+        }
+
+        .metric-card p {
+            margin: 8px 0 0;
+            color: rgba(255, 242, 218, 0.68);
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        .json-box {
+            margin-top: 16px;
+            padding: 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 189, 92, 0.10);
+            background: rgba(5, 4, 3, 0.68);
+            color: #f8edd8;
+            font-family: "Cascadia Code", "Consolas", monospace;
+            font-size: 12px;
+            line-height: 1.55;
+            white-space: pre-wrap;
+            word-break: break-word;
+            min-height: 140px;
+        }
+
+        .pill-row {
+            margin-top: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 189, 92, 0.12);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .pill-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.18);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+            flex: 0 0 auto;
+        }
+
+        .pill-good .pill-dot {
+            background: var(--good);
+            box-shadow: 0 0 0 1px rgba(143, 240, 200, 0.22), 0 0 14px rgba(143, 240, 200, 0.18);
+        }
+
+        .pill-warn .pill-dot {
+            background: var(--warn);
+            box-shadow: 0 0 0 1px rgba(255, 211, 108, 0.22), 0 0 14px rgba(255, 211, 108, 0.18);
+        }
+
+        .pill-high .pill-dot {
+            background: var(--high);
+            box-shadow: 0 0 0 1px rgba(255, 123, 92, 0.22), 0 0 14px rgba(255, 123, 92, 0.18);
+        }
+
+        .pill-signal .pill-dot {
+            background: var(--signal);
+            box-shadow: 0 0 0 1px rgba(205, 184, 255, 0.22), 0 0 14px rgba(205, 184, 255, 0.18);
+        }
+
+        @media (max-width: 980px) {
+            .hero,
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 760px) {
+            main {
+                width: min(100vw - 24px, 100%);
+            }
+
+            .topbar {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-links {
+                justify-content: start;
+            }
+
+            .metric-grid,
+            .hero-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <section class="panel topbar">
+            <div class="brand">
+                <div class="brand-mark">RK</div>
+                <div class="brand-copy">
+                    <strong>Rokid Frame Debug</strong>
+                    <span>Video-frame adapter diagnostics</span>
+                </div>
+            </div>
+            <div></div>
+            <div class="nav-links">
+                <a class="nav-link" href="/">HUD</a>
+                <a class="nav-link" href="/review">Review</a>
+                <a class="nav-link active" href="/rokid_debug">Frame Debug</a>
+            </div>
+        </section>
+
+        <section class="panel hero">
+            <div class="hero-copy">
+                <span>Rokid-first frame path</span>
+                <h1>Turn one frame into a usable learning-state proxy.</h1>
+                <p>
+                    This page lets you test the Rokid video-frame adapter directly. Upload a frame, point to a local
+                    image path, or use the existing demo asset to see whether the system can derive a coarse
+                    head-pose proxy, a tracking confidence score, and a meaningful signal-check fallback.
+                </p>
+            </div>
+            <div class="hero-grid">
+                <div class="hero-card">
+                    <span>Runtime Path</span>
+                    <strong id="hero-runtime">Awaiting status</strong>
+                    <p id="hero-runtime-note">The launcher should prefer a `cv2`-capable interpreter when this adapter is active.</p>
+                </div>
+                <div class="hero-card">
+                    <span>Tracking</span>
+                    <strong id="hero-tracking">Warmup</strong>
+                    <p id="hero-tracking-note">The frame adapter should degrade into signal-check behavior when no stable face box is found.</p>
+                </div>
+                <div class="hero-card">
+                    <span>Current Hint</span>
+                    <strong id="hero-hint">Stable</strong>
+                    <p id="hero-hint-note">After each frame upload, the live `/status` output below will reflect the current state hint.</p>
+                </div>
+                <div class="hero-card">
+                    <span>Latest Input</span>
+                    <strong id="hero-source">Simulator</strong>
+                    <p id="hero-source-note">You can verify whether the current session is still driven by the simulator or by the new frame path.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid">
+            <div class="stack">
+                <section class="panel section">
+                    <h2>Send a frame</h2>
+                    <p class="lead">
+                        Use a local image file, paste a local image path, or press the demo button to test the adapter with the existing project asset.
+                    </p>
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="task-mode">Task mode</label>
+                            <select id="task-mode">
+                                <option value="reading" selected>Reading</option>
+                                <option value="lecture">Lecture</option>
+                                <option value="note-taking">Note-taking</option>
+                                <option value="review">Review</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="frame-upload">Frame upload</label>
+                            <input id="frame-upload" type="file" accept="image/*">
+                        </div>
+                        <div class="field">
+                            <label for="image-path">Local image path</label>
+                            <input id="image-path" type="text" value="C:/Users/11721/Desktop/focus_project_windows/images/demo.jpg">
+                        </div>
+                        <div class="button-row">
+                            <button class="primary" onclick="sendUploadedFrame()">Send uploaded frame</button>
+                            <button onclick="sendPathFrame()">Send image path</button>
+                            <button onclick="sendDemoFrame()">Use demo image</button>
+                            <button onclick="refreshAll()">Refresh live status</button>
+                        </div>
+                    </div>
+
+                    <div class="preview-shell" id="preview-shell">
+                        <div class="preview-empty" id="preview-empty">
+                            No preview yet. Upload a frame or use the demo image to inspect the Rokid frame adapter output.
+                        </div>
+                        <img id="preview-image" alt="Frame preview" style="display:none;">
+                    </div>
+
+                    <div class="json-box" id="adapter-response">Waiting for adapter response...</div>
+                </section>
+
+                <section class="panel section">
+                    <h2>Adapter blueprint</h2>
+                    <p class="lead">
+                        The frame adapter is intentionally conservative: it derives coarse head-pose proxies and tracking confidence,
+                        not precise gaze or eye-tracking signals.
+                    </p>
+                    <div class="pill-row" id="blueprint-pills"></div>
+                    <div class="json-box" id="blueprint-json">Loading adapter blueprint...</div>
+                </section>
+            </div>
+
+            <div class="stack">
+                <section class="panel section">
+                    <h2>Live input snapshot</h2>
+                    <p class="lead">
+                        This mirrors the current `/status` view after the latest simulator packet, Rokid head-pose packet, or frame-derived proxy packet.
+                    </p>
+                    <div class="metric-grid">
+                        <div class="metric-card">
+                            <span>Input source</span>
+                            <strong id="metric-source">simulator</strong>
+                            <p id="metric-source-note">Current packet origin.</p>
+                        </div>
+                        <div class="metric-card">
+                            <span>Tracking</span>
+                            <strong id="metric-tracking">warmup</strong>
+                            <p id="metric-tracking-note">Current frame/head-pose tracking state.</p>
+                        </div>
+                        <div class="metric-card">
+                            <span>Proxy pose</span>
+                            <strong id="metric-pose">P +0 / Y +0 / R +0</strong>
+                            <p id="metric-pose-note">Current signed posture deltas used by the active model.</p>
+                        </div>
+                        <div class="metric-card">
+                            <span>Movement</span>
+                            <strong id="metric-motion">0</strong>
+                            <p id="metric-motion-note">Current movement intensity used by the active model.</p>
+                        </div>
+                        <div class="metric-card">
+                            <span>Confidence</span>
+                            <strong id="metric-confidence">warming_up</strong>
+                            <p id="metric-confidence-note">Model confidence after warmup and tracking uncertainty.</p>
+                        </div>
+                        <div class="metric-card">
+                            <span>State hint</span>
+                            <strong id="metric-hint">stable</strong>
+                            <p id="metric-hint-note">Current coarse interpretation produced by the learning-state model.</p>
+                        </div>
+                    </div>
+                    <div class="json-box" id="status-json">Waiting for live status...</div>
+                </section>
+
+                <section class="panel section">
+                    <h2>Why this page matters</h2>
+                    <p class="lead">
+                        This is the fastest way to verify whether a Rokid-side frame path is actually usable before we spend time on a heavier real-device client.
+                    </p>
+                    <div class="pill-row">
+                        <div class="pill pill-good"><span class="pill-dot"></span>Simulator and frame routes can coexist</div>
+                        <div class="pill pill-warn"><span class="pill-dot"></span>Missing face should bias toward signal-check</div>
+                        <div class="pill pill-high"><span class="pill-dot"></span>Do not describe this path as precise eye tracking</div>
+                        <div class="pill pill-signal"><span class="pill-dot"></span>Best for first-person video and single-frame probes</div>
+                    </div>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const APP_BASE_URL = window.location.protocol === "file:" ? "http://127.0.0.1:5000" : "";
+        const DEFAULT_DEMO_IMAGE = "C:/Users/11721/Desktop/focus_project_windows/images/demo.jpg";
+
+        function prettyJson(value) {
+            return JSON.stringify(value, null, 2);
+        }
+
+        function setPreviewFromUrl(url) {
+            const img = document.getElementById("preview-image");
+            const empty = document.getElementById("preview-empty");
+            img.src = url;
+            img.style.display = "block";
+            empty.style.display = "none";
+        }
+
+        function setPreviewFromPath(path) {
+            if (!path) return;
+            if (/^https?:\/\//i.test(path) || /^file:\/\//i.test(path)) {
+                setPreviewFromUrl(path);
+                return;
+            }
+            setPreviewFromUrl(`file:///${path.replace(/\\/g, "/")}`);
+        }
+
+        async function sendUploadedFrame() {
+            const fileInput = document.getElementById("frame-upload");
+            const file = fileInput.files && fileInput.files[0];
+            if (!file) {
+                document.getElementById("adapter-response").innerText = "Pick an image file first.";
+                return;
+            }
+
+            const form = new FormData();
+            form.append("frame", file);
+            form.append("task_mode", document.getElementById("task-mode").value);
+            setPreviewFromUrl(URL.createObjectURL(file));
+            await sendFrameRequest({
+                body: form,
+                headers: {},
+            });
+        }
+
+        async function sendPathFrame() {
+            const imagePath = document.getElementById("image-path").value.trim();
+            if (!imagePath) {
+                document.getElementById("adapter-response").innerText = "Provide a local image path first.";
+                return;
+            }
+            setPreviewFromPath(imagePath);
+            await sendFrameRequest({
+                body: JSON.stringify({
+                    image_path: imagePath,
+                    task_mode: document.getElementById("task-mode").value,
+                }),
+                headers: { "Content-Type": "application/json" },
+            });
+        }
+
+        async function sendDemoFrame() {
+            document.getElementById("image-path").value = DEFAULT_DEMO_IMAGE;
+            await sendPathFrame();
+        }
+
+        async function sendFrameRequest({ body, headers }) {
+            try {
+                const response = await fetch(`${APP_BASE_URL}/api/v1/rokid/frame`, {
+                    method: "POST",
+                    body,
+                    headers,
+                });
+                const data = await response.json();
+                document.getElementById("adapter-response").innerText = prettyJson(data);
+                await refreshStatus();
+            } catch (error) {
+                document.getElementById("adapter-response").innerText =
+                    `Frame request failed.\n\n${String(error)}\n\nStart the local Flask backend at http://127.0.0.1:5000 and try again.`;
+            }
+        }
+
+        function formatSigned(value) {
+            const num = Math.round(Number(value) || 0);
+            const sign = num > 0 ? "+" : num < 0 ? "-" : "";
+            return `${sign}${Math.abs(num)}`;
+        }
+
+        async function refreshStatus() {
+            try {
+                const response = await fetch(`${APP_BASE_URL}/status`);
+                const data = await response.json();
+                const input = data.input || {};
+
+                document.getElementById("metric-source").innerText = input.source || "simulator";
+                document.getElementById("metric-source-note").innerText =
+                    `${input.pose_source || "unknown"} | ${input.frame_source || "unknown"} | ${input.device_profile || "unknown"}`;
+                document.getElementById("metric-tracking").innerText = input.tracking_state || "warmup";
+                document.getElementById("metric-tracking-note").innerText =
+                    `confidence ${input.tracking_confidence ?? "--"} | uncertainty ${input.tracking_uncertainty ?? "--"} | face ${String(input.face_present)}`;
+                document.getElementById("metric-pose").innerText =
+                    `P ${formatSigned(data.signed_pitch_delta)} / Y ${formatSigned(data.signed_yaw_delta)} / R ${formatSigned(data.signed_roll_delta)}`;
+                document.getElementById("metric-pose-note").innerText =
+                    `combined drift ${Math.round(Number(data.combined_drift) || 0)} | orientation drift ${Math.round(Number(data.orientation_drift) || 0)}`;
+                document.getElementById("metric-motion").innerText = Math.round(Number(data.movement_intensity) || 0);
+                document.getElementById("metric-motion-note").innerText =
+                    `switching ${Math.round(Number(data.switching_index) || 0)} | drift trend ${Math.round(Number(data.drift_trend) || 0)}`;
+                document.getElementById("metric-confidence").innerText = data.confidence_level || "warming_up";
+                document.getElementById("metric-confidence-note").innerText =
+                    `uncertainty ${Math.round(Number(data.uncertainty_score) || 0)} | source age ${data.last_posture_age_seconds ?? "--"}s`;
+                document.getElementById("metric-hint").innerText = data.state_hint || "stable";
+                document.getElementById("metric-hint-note").innerText =
+                    `alignment ${Math.round(Number(data.behavioral_alignment) || 0)} | load ${Math.round(Number(data.cognitive_load) || 0)} | fatigue ${Math.round(Number(data.fatigue_risk) || 0)}`;
+
+                document.getElementById("hero-runtime").innerText = `${input.source || "simulator"} / ${input.device_profile || "unknown"}`;
+                document.getElementById("hero-runtime-note").innerText =
+                    `${input.pose_source || "unknown"} pose source | ${input.frame_source || "unknown"} frame source | motion ${input.motion_source || "unknown"}`;
+                document.getElementById("hero-tracking").innerText = input.tracking_state || "warmup";
+                document.getElementById("hero-tracking-note").innerText =
+                    `confidence ${input.tracking_confidence ?? "--"} | uncertainty ${input.tracking_uncertainty ?? "--"} | face ${String(input.face_present)}`;
+                document.getElementById("hero-hint").innerText = data.state_hint || "stable";
+                document.getElementById("hero-hint-note").innerText =
+                    `${data.load_reason || "Stable learning state"} | ${data.session?.state_label || "Focus settling"}`;
+                document.getElementById("hero-source").innerText = input.source || "simulator";
+                document.getElementById("hero-source-note").innerText =
+                    `task mode ${data.task_mode || "reading"} | session ${data.session_id || "unknown"}`;
+
+                document.getElementById("status-json").innerText = prettyJson({
+                    input,
+                    state_hint: data.state_hint,
+                    behavioral_alignment: data.behavioral_alignment,
+                    cognitive_load: data.cognitive_load,
+                    fatigue_risk: data.fatigue_risk,
+                    confidence_level: data.confidence_level,
+                    signed_pitch_delta: data.signed_pitch_delta,
+                    signed_yaw_delta: data.signed_yaw_delta,
+                    signed_roll_delta: data.signed_roll_delta,
+                    movement_intensity: data.movement_intensity,
+                    session: data.session,
+                });
+            } catch (error) {
+                document.getElementById("status-json").innerText =
+                    `Status request failed.\n\n${String(error)}\n\nStart the local Flask backend at http://127.0.0.1:5000 and refresh this page.`;
+            }
+        }
+
+        async function loadBlueprint() {
+            try {
+                const response = await fetch(`${APP_BASE_URL}/api/rokid_frame_adapter_blueprint`);
+                const data = await response.json();
+                document.getElementById("blueprint-json").innerText = prettyJson(data);
+
+                const pills = [];
+                pills.push(`<div class="pill pill-good"><span class="pill-dot"></span>${data.active_endpoint}</div>`);
+                for (const signal of (data.derived_signals || [])) {
+                    pills.push(`<div class="pill pill-warn"><span class="pill-dot"></span>${signal}</div>`);
+                }
+                document.getElementById("blueprint-pills").innerHTML = pills.join("");
+            } catch (error) {
+                document.getElementById("blueprint-json").innerText =
+                    `Blueprint request failed.\n\n${String(error)}\n\nStart the local Flask backend at http://127.0.0.1:5000 and refresh this page.`;
+            }
+        }
+
+        async function refreshAll() {
+            await Promise.all([refreshStatus(), loadBlueprint()]);
+        }
+
+        refreshAll();
+        setInterval(refreshStatus, 1200);
+    </script>
+</body>
+</html>
