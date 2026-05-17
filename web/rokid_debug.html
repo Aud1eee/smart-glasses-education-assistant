@@ -264,6 +264,71 @@
             gap: 12px;
         }
 
+        .calibration-grid {
+            margin-top: 16px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .preset-summary {
+            min-height: 100%;
+            padding: 14px 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 189, 92, 0.10);
+            background: rgba(255, 255, 255, 0.03);
+            color: rgba(255, 242, 218, 0.76);
+            line-height: 1.55;
+        }
+
+        .preset-summary strong {
+            display: block;
+            color: var(--ink);
+            font-size: 14px;
+            letter-spacing: 0.02em;
+        }
+
+        .diagnosis-list {
+            margin-top: 16px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .diagnosis-card {
+            padding: 15px 16px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.035);
+            border: 1px solid rgba(255, 189, 92, 0.08);
+        }
+
+        .diagnosis-card strong {
+            display: block;
+            font-size: 15px;
+            letter-spacing: -0.02em;
+        }
+
+        .diagnosis-card p {
+            margin: 8px 0 0;
+            color: rgba(255, 242, 218, 0.72);
+            line-height: 1.55;
+        }
+
+        .diagnosis-card ul {
+            margin: 10px 0 0 18px;
+            padding: 0;
+            color: rgba(255, 242, 218, 0.78);
+            line-height: 1.55;
+        }
+
+        .diagnosis-card li + li {
+            margin-top: 6px;
+        }
+
+        .diagnosis-good { border-color: rgba(143, 240, 200, 0.18); }
+        .diagnosis-medium { border-color: rgba(255, 211, 108, 0.18); }
+        .diagnosis-high { border-color: rgba(255, 123, 92, 0.18); }
+        .diagnosis-signal { border-color: rgba(205, 184, 255, 0.18); }
+
         .field input[type="file"] {
             display: block;
             width: 100%;
@@ -541,6 +606,24 @@
                         Adjust the active runtime thresholds for first-person study scenes. These controls update the current
                         Flask session immediately and are meant for local calibration, not permanent training.
                     </p>
+                    <div class="calibration-grid">
+                        <div class="field">
+                            <label for="preset-select">Calibration profile</label>
+                            <select id="preset-select"></select>
+                        </div>
+                        <div class="field">
+                            <label>Preset summary</label>
+                            <div class="preset-summary" id="preset-summary">
+                                Loading first-person scene calibration profiles...
+                            </div>
+                        </div>
+                    </div>
+                    <div class="button-row" style="margin-top:16px;">
+                        <button class="primary" onclick="applyScenePreset()">Apply preset</button>
+                        <button onclick="loadCalibrationGuide()">Reload diagnosis</button>
+                    </div>
+                    <div class="json-box" id="preset-response">Loading scene calibration guidance...</div>
+                    <div class="diagnosis-list" id="diagnosis-list"></div>
                     <div class="tuning-grid">
                         <div class="field">
                             <label for="tune-content-bias">Content Expectation Bias</label>
@@ -652,6 +735,7 @@
     <script>
         const APP_BASE_URL = window.location.protocol === "file:" ? "http://127.0.0.1:5000" : "";
         const DEFAULT_DEMO_IMAGE = "C:/Users/11721/Desktop/focus_project_windows/images/demo.jpg";
+        let scenePresets = [];
         const POSTURE_TUNING_FIELDS = {
             content_expectation_bias: "tune-content-bias",
             surface_expectation_bias: "tune-surface-bias",
@@ -669,6 +753,13 @@
 
         function prettyJson(value) {
             return JSON.stringify(value, null, 2);
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;");
         }
 
         function assignTuningFields(values, fieldMap) {
@@ -693,6 +784,46 @@
                 }
             }
             return payload;
+        }
+
+        function renderPresetSummary() {
+            const select = document.getElementById("preset-select");
+            const selected = scenePresets.find((item) => item.preset_id === select.value);
+            const summary = document.getElementById("preset-summary");
+            if (!selected) {
+                summary.innerHTML = "Pick a first-person scene profile to see its intended use.";
+                return;
+            }
+            summary.innerHTML = `<strong>${escapeHtml(selected.label)}</strong>${escapeHtml(selected.summary)}`;
+        }
+
+        function renderCalibrationDiagnosis(diagnosis) {
+            const container = document.getElementById("diagnosis-list");
+            const items = diagnosis?.items || [];
+            if (!items.length) {
+                container.innerHTML = `<div class="diagnosis-card diagnosis-signal"><strong>No active diagnosis yet</strong><p>Send a few steady first-person frames, then reload calibration guidance.</p></div>`;
+                return;
+            }
+            container.innerHTML = items.map((item) => {
+                const severity = item.severity || "signal";
+                const className = severity === "good"
+                    ? "diagnosis-good"
+                    : severity === "high"
+                        ? "diagnosis-high"
+                        : severity === "medium"
+                            ? "diagnosis-medium"
+                            : "diagnosis-signal";
+                const actions = (item.recommended_actions || [])
+                    .map((action) => `<li>${escapeHtml(action)}</li>`)
+                    .join("");
+                return `
+                    <div class="diagnosis-card ${className}">
+                        <strong>${escapeHtml(item.title)}</strong>
+                        <p>${escapeHtml(item.reason)}</p>
+                        ${actions ? `<ul>${actions}</ul>` : ""}
+                    </div>
+                `;
+            }).join("");
         }
 
         function setPreviewFromUrl(url) {
@@ -870,6 +1001,37 @@
             }
         }
 
+        async function loadCalibrationGuide() {
+            try {
+                const response = await fetch(`${APP_BASE_URL}/api/rokid_scene_calibration`);
+                const data = await response.json();
+                scenePresets = data.presets || [];
+                const select = document.getElementById("preset-select");
+                const current = select.value;
+                select.innerHTML = scenePresets
+                    .map((preset) => `<option value="${escapeHtml(preset.preset_id)}">${escapeHtml(preset.label)}</option>`)
+                    .join("");
+                const suggested = data.diagnosis?.suggested_preset || "";
+                if (scenePresets.some((preset) => preset.preset_id === current)) {
+                    select.value = current;
+                } else if (scenePresets.some((preset) => preset.preset_id === suggested)) {
+                    select.value = suggested;
+                } else if (scenePresets.length) {
+                    select.value = scenePresets[0].preset_id;
+                }
+                renderPresetSummary();
+                renderCalibrationDiagnosis(data.diagnosis || {});
+                document.getElementById("preset-response").innerText = prettyJson({
+                    suggested_preset: data.diagnosis?.suggested_preset,
+                    headline: data.diagnosis?.headline,
+                    metrics: data.diagnosis?.metrics,
+                });
+            } catch (error) {
+                document.getElementById("preset-response").innerText =
+                    `Calibration guidance request failed.\n\n${String(error)}\n\nStart the local Flask backend at http://127.0.0.1:5000 and refresh this page.`;
+            }
+        }
+
         async function applySceneTuning() {
             const payload = {
                 posture: collectTuningFields(POSTURE_TUNING_FIELDS),
@@ -885,10 +1047,34 @@
                 document.getElementById("tuning-response").innerText = prettyJson(data);
                 assignTuningFields(data.posture || {}, POSTURE_TUNING_FIELDS);
                 assignTuningFields(data.frame_adapter || {}, FRAME_TUNING_FIELDS);
-                await refreshStatus();
+                await Promise.all([refreshStatus(), loadCalibrationGuide()]);
             } catch (error) {
                 document.getElementById("tuning-response").innerText =
                     `Apply tuning failed.\n\n${String(error)}\n\nStart the local Flask backend at http://127.0.0.1:5000 and try again.`;
+            }
+        }
+
+        async function applyScenePreset() {
+            const presetId = document.getElementById("preset-select").value;
+            if (!presetId) {
+                document.getElementById("preset-response").innerText = "Pick a calibration profile first.";
+                return;
+            }
+            try {
+                const response = await fetch(`${APP_BASE_URL}/api/rokid_scene_tuning/preset`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ preset_id: presetId }),
+                });
+                const data = await response.json();
+                document.getElementById("preset-response").innerText = prettyJson(data);
+                assignTuningFields(data.posture || {}, POSTURE_TUNING_FIELDS);
+                assignTuningFields(data.frame_adapter || {}, FRAME_TUNING_FIELDS);
+                renderPresetSummary();
+                await Promise.all([refreshStatus(), loadCalibrationGuide()]);
+            } catch (error) {
+                document.getElementById("preset-response").innerText =
+                    `Apply preset failed.\n\n${String(error)}\n\nStart the local Flask backend at http://127.0.0.1:5000 and try again.`;
             }
         }
 
@@ -901,7 +1087,7 @@
                 document.getElementById("tuning-response").innerText = prettyJson(data);
                 assignTuningFields(data.posture || {}, POSTURE_TUNING_FIELDS);
                 assignTuningFields(data.frame_adapter || {}, FRAME_TUNING_FIELDS);
-                await refreshStatus();
+                await Promise.all([refreshStatus(), loadCalibrationGuide()]);
             } catch (error) {
                 document.getElementById("tuning-response").innerText =
                     `Reset tuning failed.\n\n${String(error)}\n\nStart the local Flask backend at http://127.0.0.1:5000 and try again.`;
@@ -909,9 +1095,10 @@
         }
 
         async function refreshAll() {
-            await Promise.all([refreshStatus(), loadBlueprint(), loadSceneTuning()]);
+            await Promise.all([refreshStatus(), loadBlueprint(), loadSceneTuning(), loadCalibrationGuide()]);
         }
 
+        document.getElementById("preset-select").addEventListener("change", renderPresetSummary);
         refreshAll();
         setInterval(refreshStatus, 1200);
     </script>

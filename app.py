@@ -71,10 +71,214 @@ latest_input = {
     "timestamp_ms": None,
 }
 
+ROKID_SCENE_PRESETS = {
+    "balanced-reading": {
+        "label": "Balanced Reading",
+        "summary": "General first-person reading baseline for books, slides, and mixed text surfaces.",
+        "posture": {
+            "content_expectation_bias": 0.0,
+            "surface_expectation_bias": 2.0,
+            "signal_uncertainty_floor": 54.0,
+            "off_task_switch_floor": 52.0,
+            "productive_alignment_floor": 76.0,
+            "productive_lock_floor": 34.0,
+        },
+        "frame_adapter": {
+            "content_sparse_floor": 18.0,
+            "scene_locked_surface_floor": 54.0,
+            "scene_locked_lock_floor": 58.0,
+            "lock_switch_ceiling": 36.0,
+        },
+    },
+    "screen-lecture": {
+        "label": "Screen Lecture",
+        "summary": "For PPT or teacher-screen viewing where content is stable but less text-dense than books.",
+        "posture": {
+            "content_expectation_bias": -4.0,
+            "surface_expectation_bias": 0.0,
+            "signal_uncertainty_floor": 58.0,
+            "off_task_switch_floor": 48.0,
+            "productive_alignment_floor": 72.0,
+            "productive_lock_floor": 28.0,
+        },
+        "frame_adapter": {
+            "content_sparse_floor": 14.0,
+            "scene_locked_surface_floor": 48.0,
+            "scene_locked_lock_floor": 52.0,
+            "lock_switch_ceiling": 40.0,
+        },
+    },
+    "notes-switching": {
+        "label": "Notes Switching",
+        "summary": "For note-taking with frequent book-screen or page-note switching; reduces false off-task triggers.",
+        "posture": {
+            "content_expectation_bias": -2.0,
+            "surface_expectation_bias": -2.0,
+            "signal_uncertainty_floor": 60.0,
+            "off_task_switch_floor": 62.0,
+            "productive_alignment_floor": 70.0,
+            "productive_lock_floor": 24.0,
+        },
+        "frame_adapter": {
+            "content_sparse_floor": 12.0,
+            "scene_locked_surface_floor": 44.0,
+            "scene_locked_lock_floor": 46.0,
+            "lock_switch_ceiling": 48.0,
+        },
+    },
+    "strict-review": {
+        "label": "Strict Review",
+        "summary": "For focused revision demos where scene lock is expected and drift should surface quickly.",
+        "posture": {
+            "content_expectation_bias": 4.0,
+            "surface_expectation_bias": 6.0,
+            "signal_uncertainty_floor": 50.0,
+            "off_task_switch_floor": 46.0,
+            "productive_alignment_floor": 80.0,
+            "productive_lock_floor": 40.0,
+        },
+        "frame_adapter": {
+            "content_sparse_floor": 22.0,
+            "scene_locked_surface_floor": 60.0,
+            "scene_locked_lock_floor": 64.0,
+            "lock_switch_ceiling": 30.0,
+        },
+    },
+}
+
 
 def _build_session_id(now=None):
     now = now or datetime.now()
     return now.strftime("session-%Y%m%d-%H%M%S-%f")
+
+
+def _active_scene_metrics():
+    return {
+        "tracking_state": latest_input.get("tracking_state", "warmup"),
+        "tracking_confidence": latest_input.get("tracking_confidence"),
+        "tracking_uncertainty": latest_input.get("tracking_uncertainty", 0.0),
+        "scene_content_score": posture.scene_content_score,
+        "scene_text_score": posture.scene_text_score,
+        "scene_stability_score": posture.scene_stability_score,
+        "scene_switch_rate": posture.scene_switch_rate,
+        "study_surface_score": posture.study_surface_score,
+        "scene_lock_score": posture.scene_lock_score,
+        "blur_score": posture.blur_score,
+        "brightness_score": posture.brightness_score,
+        "behavioral_alignment": posture.behavioral_alignment,
+        "cognitive_load": posture.cognitive_load,
+        "fatigue_risk": posture.fatigue_risk,
+        "uncertainty_score": posture.uncertainty_score,
+        "state_hint": posture.state_hint,
+        "task_mode": posture.task_mode,
+    }
+
+
+def _build_scene_calibration_diagnosis():
+    metrics = _active_scene_metrics()
+    posture_tuning = posture.get_scene_tuning()
+    frame_tuning = rokid_frame_adapter.get_scene_tuning()
+    diagnosis = []
+    suggested_preset = "balanced-reading"
+
+    if metrics["tracking_state"] in {"frame_unavailable", "low_visibility", "blurred"}:
+        diagnosis.append({
+            "severity": "high",
+            "title": "Scene signal is not stable enough yet",
+            "reason": "The first-person frame currently looks too dim, too blurred, or unavailable for scene-based learning inference.",
+            "recommended_actions": [
+                "Improve lighting or hold the glasses more steadily for a few seconds.",
+                f"If this scene is usually usable, try lowering `blurred_floor` below {frame_tuning['blurred_floor']:.1f}.",
+                f"If dark textbook scenes are common, lower `low_visibility_floor` or raise `low_visibility_ceiling` from {frame_tuning['low_visibility_ceiling']:.1f}.",
+            ],
+            "target_fields": ["blurred_floor", "low_visibility_floor", "low_visibility_ceiling"],
+        })
+
+    if metrics["scene_content_score"] < frame_tuning["content_sparse_floor"] and metrics["study_surface_score"] < frame_tuning["scene_locked_surface_floor"]:
+        diagnosis.append({
+            "severity": "medium",
+            "title": "Study surface looks too sparse for the current thresholds",
+            "reason": "The scene appears weakly text-anchored or lacks a strong reading surface under the active rules.",
+            "recommended_actions": [
+                "If this is a screen or low-text slide, try the `Screen Lecture` preset.",
+                f"Otherwise reduce `content_sparse_floor` below {frame_tuning['content_sparse_floor']:.1f}.",
+                f"You can also lower `surface_expectation_bias` from {posture_tuning['surface_expectation_bias']:.1f} for mixed-content scenes.",
+            ],
+            "target_fields": ["content_sparse_floor", "surface_expectation_bias"],
+        })
+        suggested_preset = "screen-lecture"
+
+    if metrics["scene_content_score"] >= 45 and metrics["study_surface_score"] >= 45 and metrics["scene_lock_score"] < frame_tuning["scene_locked_lock_floor"]:
+        diagnosis.append({
+            "severity": "medium",
+            "title": "The scene has content, but the lock requirement may be too strict",
+            "reason": "Book or screen content is visible, yet the adapter still struggles to call the view scene-locked.",
+            "recommended_actions": [
+                f"Lower `scene_locked_lock_floor` from {frame_tuning['scene_locked_lock_floor']:.1f}.",
+                f"Lower `scene_locked_surface_floor` from {frame_tuning['scene_locked_surface_floor']:.1f} if the material is visually lighter.",
+                "Use the `Balanced Reading` preset as a safer baseline before fine-grained tuning.",
+            ],
+            "target_fields": ["scene_locked_lock_floor", "scene_locked_surface_floor"],
+        })
+
+    if metrics["scene_switch_rate"] >= posture_tuning["off_task_switch_floor"] and metrics["task_mode"] in {"reading", "note-taking"}:
+        diagnosis.append({
+            "severity": "medium",
+            "title": "Switching sensitivity is high for the current study rhythm",
+            "reason": "The model sees frequent target switching, which may be valid note-taking rather than true off-task drift.",
+            "recommended_actions": [
+                "If you are intentionally moving between notes and screen, try the `Notes Switching` preset.",
+                f"Raise `off_task_switch_floor` above {posture_tuning['off_task_switch_floor']:.1f} to tolerate valid switching.",
+                f"Raise `lock_switch_ceiling` above {frame_tuning['lock_switch_ceiling']:.1f} if scene lock drops too easily during note-taking.",
+            ],
+            "target_fields": ["off_task_switch_floor", "lock_switch_ceiling"],
+        })
+        suggested_preset = "notes-switching"
+
+    if metrics["behavioral_alignment"] >= posture_tuning["productive_alignment_floor"] and metrics["scene_lock_score"] >= posture_tuning["productive_lock_floor"] and metrics["state_hint"] in {"stable", "productive_struggle"}:
+        diagnosis.append({
+            "severity": "good",
+            "title": "Current thresholds are aligned with a focused first-person study scene",
+            "reason": "The scene is sufficiently content-rich and locked for the model to distinguish stable study from productive struggle.",
+            "recommended_actions": [
+                "Keep this threshold set as a local baseline snapshot.",
+                "Only tighten it if off-task drift is being missed during demos.",
+            ],
+            "target_fields": [],
+        })
+
+    if not diagnosis:
+        diagnosis.append({
+            "severity": "signal",
+            "title": "Warm up with a stable textbook or screen frame",
+            "reason": "The system needs a few consistent first-person frames before the scene thresholds become informative.",
+            "recommended_actions": [
+                "Send a short burst of similar frames from a book, note page, or screen.",
+                "Then compare `scene_content`, `study_surface`, and `scene_lock` before changing thresholds.",
+            ],
+            "target_fields": [],
+        })
+
+    headline = diagnosis[0]["title"]
+    return {
+        "headline": headline,
+        "suggested_preset": suggested_preset,
+        "items": diagnosis,
+        "metrics": metrics,
+    }
+
+
+def _scene_preset_payload(preset_id):
+    preset = ROKID_SCENE_PRESETS.get(preset_id)
+    if not preset:
+        return None
+    return {
+        "preset_id": preset_id,
+        "label": preset["label"],
+        "summary": preset["summary"],
+        "posture": dict(preset["posture"]),
+        "frame_adapter": dict(preset["frame_adapter"]),
+    }
 
 
 def _new_difficulty_snapshot():
@@ -405,12 +609,51 @@ def rokid_scene_tuning():
     })
 
 
+@app.route("/api/rokid_scene_tuning/preset", methods=["POST"])
+def rokid_scene_tuning_preset():
+    payload = request.json or {}
+    preset_id = str(payload.get("preset_id", "")).strip().lower()
+    preset = _scene_preset_payload(preset_id)
+    if not preset:
+        return jsonify({
+            "status": "error",
+            "message": f"Unknown preset: {preset_id or 'missing'}",
+        }), 400
+
+    posture.reset_scene_tuning()
+    rokid_frame_adapter.reset_scene_tuning()
+    posture_config = posture.update_scene_tuning(preset["posture"])
+    frame_config = rokid_frame_adapter.update_scene_tuning(preset["frame_adapter"])
+    return jsonify({
+        "status": "ok",
+        "preset": {
+            "preset_id": preset["preset_id"],
+            "label": preset["label"],
+            "summary": preset["summary"],
+        },
+        "posture": posture_config,
+        "frame_adapter": frame_config,
+    })
+
+
 @app.route("/api/rokid_scene_tuning/reset", methods=["POST"])
 def rokid_scene_tuning_reset():
     return jsonify({
         "status": "ok",
         "posture": posture.reset_scene_tuning(),
         "frame_adapter": rokid_frame_adapter.reset_scene_tuning(),
+    })
+
+
+@app.route("/api/rokid_scene_calibration")
+def rokid_scene_calibration():
+    return jsonify({
+        "presets": [_scene_preset_payload(preset_id) for preset_id in ROKID_SCENE_PRESETS.keys()],
+        "active_tuning": {
+            "posture": posture.get_scene_tuning(),
+            "frame_adapter": rokid_frame_adapter.get_scene_tuning(),
+        },
+        "diagnosis": _build_scene_calibration_diagnosis(),
     })
 
 

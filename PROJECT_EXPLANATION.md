@@ -192,6 +192,24 @@ This is useful for:
 - future Rokid device-side debugging
 - thesis and presentation explanation of how scene thresholds are controlled
 
+The tuning page now also includes a **scene calibration workflow**:
+
+- preset-based starting points for:
+  - `Balanced Reading`
+  - `Screen Lecture`
+  - `Notes Switching`
+  - `Strict Review`
+- diagnosis cards that explain whether the current first-person scene is:
+  - too sparse
+  - too dim or blurred
+  - too strict to lock
+  - too switch-sensitive for note-taking
+
+The related calibration APIs are:
+
+- `/api/rokid_scene_calibration`
+- `/api/rokid_scene_tuning/preset`
+
 This upgrade is important because the system no longer treats every medium/high load state as a negative event.
 
 In particular:

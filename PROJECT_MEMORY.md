@@ -139,6 +139,19 @@ Recommended structure:
 - the main tuning APIs are:
   - `/api/rokid_scene_tuning`
   - `/api/rokid_scene_tuning/reset`
+- the Rokid debug page now also supports a **calibration workflow**, not only raw threshold editing
+- calibration features now include:
+  - built-in first-person presets:
+    - `Balanced Reading`
+    - `Screen Lecture`
+    - `Notes Switching`
+    - `Strict Review`
+  - a diagnosis panel that explains:
+    - why the current scene is weak / sparse / too strict / too switch-heavy
+    - which threshold group should be relaxed or tightened first
+- the calibration APIs now also include:
+  - `/api/rokid_scene_calibration`
+  - `/api/rokid_scene_tuning/preset`
   - it should not be described as simple distraction
 - this upgrade stays inside realistic Rokid-side constraints:
   - posture / head pose
