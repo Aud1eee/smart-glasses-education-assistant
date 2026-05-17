@@ -152,6 +152,14 @@ Recommended structure:
 - the calibration APIs now also include:
   - `/api/rokid_scene_calibration`
   - `/api/rokid_scene_tuning/preset`
+- calibration is now persistent across restarts through:
+  - `/api/rokid_scene_profiles`
+  - `/api/rokid_scene_profiles/save`
+  - `/api/rokid_scene_profiles/load`
+  - `/api/rokid_scene_profiles/export`
+- saved calibration profiles are kept in:
+  - `data/rokid_scene_profiles.json`
+- that JSON store should stay local and should not be committed as team source code
   - it should not be described as simple distraction
 - this upgrade stays inside realistic Rokid-side constraints:
   - posture / head pose

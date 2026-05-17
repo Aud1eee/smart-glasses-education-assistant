@@ -1,9 +1,11 @@
+import json
 import os
+import re
 from datetime import datetime
 
 import bootstrap_windows_runtime  # noqa: F401
 from dotenv import load_dotenv
-from flask import Flask, jsonify, render_template, request, send_from_directory
+from flask import Flask, jsonify, render_template, request, send_from_directory, Response
 from flask_cors import CORS
 
 from core.difficulty_marker import DifficultyEventMarker
@@ -26,6 +28,8 @@ load_dotenv()
 app = Flask(__name__, template_folder="web", static_folder="web")
 CORS(app)
 EXPORT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "exports")
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+ROKID_PROFILE_STORE_PATH = os.path.join(PROJECT_ROOT, "data", "rokid_scene_profiles.json")
 
 logger = DataLogger()
 posture = PostureEngine()
@@ -279,6 +283,68 @@ def _scene_preset_payload(preset_id):
         "posture": dict(preset["posture"]),
         "frame_adapter": dict(preset["frame_adapter"]),
     }
+
+
+def _default_scene_profile_store():
+    return {
+        "version": 1,
+        "profiles": [],
+    }
+
+
+def _load_scene_profile_store():
+    if not os.path.exists(ROKID_PROFILE_STORE_PATH):
+        return _default_scene_profile_store()
+    try:
+        with open(ROKID_PROFILE_STORE_PATH, "r", encoding="utf-8") as handle:
+            data = json.load(handle)
+    except Exception:
+        return _default_scene_profile_store()
+    if not isinstance(data, dict):
+        return _default_scene_profile_store()
+    data.setdefault("version", 1)
+    profiles = data.get("profiles")
+    if not isinstance(profiles, list):
+        data["profiles"] = []
+    return data
+
+
+def _save_scene_profile_store(store):
+    os.makedirs(os.path.dirname(ROKID_PROFILE_STORE_PATH), exist_ok=True)
+    with open(ROKID_PROFILE_STORE_PATH, "w", encoding="utf-8") as handle:
+        json.dump(store, handle, indent=2, ensure_ascii=False)
+
+
+def _slugify_profile_name(name):
+    normalized = re.sub(r"[^a-zA-Z0-9]+", "-", str(name or "").strip().lower())
+    normalized = normalized.strip("-")
+    return normalized or "scene-profile"
+
+
+def _build_scene_profile_payload(profile_name, task_mode=None, notes="", source_preset=""):
+    timestamp = datetime.now()
+    slug = _slugify_profile_name(profile_name)
+    profile_id = f"{slug}-{timestamp.strftime('%Y%m%d-%H%M%S')}"
+    task_mode = str(task_mode or posture.task_mode or "reading").strip().lower()
+    return {
+        "profile_id": profile_id,
+        "profile_name": str(profile_name or "").strip() or "Scene calibration",
+        "task_mode": task_mode,
+        "notes": str(notes or "").strip(),
+        "source_preset": str(source_preset or "").strip(),
+        "saved_at": timestamp.isoformat(timespec="seconds"),
+        "posture": posture.get_scene_tuning(),
+        "frame_adapter": rokid_frame_adapter.get_scene_tuning(),
+        "snapshot": _active_scene_metrics(),
+    }
+
+
+def _find_scene_profile(profile_id):
+    store = _load_scene_profile_store()
+    for profile in store.get("profiles", []):
+        if profile.get("profile_id") == profile_id:
+            return store, profile
+    return store, None
 
 
 def _new_difficulty_snapshot():
@@ -655,6 +721,100 @@ def rokid_scene_calibration():
         },
         "diagnosis": _build_scene_calibration_diagnosis(),
     })
+
+
+@app.route("/api/rokid_scene_profiles")
+def rokid_scene_profiles():
+    store = _load_scene_profile_store()
+    profiles = list(store.get("profiles", []))
+    profiles.sort(key=lambda item: item.get("saved_at", ""), reverse=True)
+    return jsonify({
+        "status": "ok",
+        "store_path": ROKID_PROFILE_STORE_PATH,
+        "profiles": profiles,
+    })
+
+
+@app.route("/api/rokid_scene_profiles/save", methods=["POST"])
+def save_rokid_scene_profile():
+    payload = request.json or {}
+    profile_name = str(payload.get("profile_name", "")).strip()
+    if not profile_name:
+        return jsonify({
+            "status": "error",
+            "message": "Provide `profile_name` before saving a Rokid scene calibration profile.",
+        }), 400
+
+    store = _load_scene_profile_store()
+    profile = _build_scene_profile_payload(
+        profile_name=profile_name,
+        task_mode=payload.get("task_mode") or posture.task_mode,
+        notes=payload.get("notes", ""),
+        source_preset=payload.get("source_preset", ""),
+    )
+    store["profiles"] = [item for item in store.get("profiles", []) if item.get("profile_id") != profile["profile_id"]]
+    store["profiles"].append(profile)
+    _save_scene_profile_store(store)
+    return jsonify({
+        "status": "ok",
+        "saved_profile": profile,
+        "profile_count": len(store["profiles"]),
+    })
+
+
+@app.route("/api/rokid_scene_profiles/load", methods=["POST"])
+def load_rokid_scene_profile():
+    payload = request.json or {}
+    profile_id = str(payload.get("profile_id", "")).strip()
+    if not profile_id:
+        return jsonify({
+            "status": "error",
+            "message": "Provide `profile_id` before loading a Rokid scene calibration profile.",
+        }), 400
+
+    store, profile = _find_scene_profile(profile_id)
+    if not profile:
+        return jsonify({
+            "status": "error",
+            "message": f"Profile not found: {profile_id}",
+        }), 404
+
+    posture.reset_scene_tuning()
+    rokid_frame_adapter.reset_scene_tuning()
+    posture_config = posture.update_scene_tuning(profile.get("posture", {}))
+    frame_config = rokid_frame_adapter.update_scene_tuning(profile.get("frame_adapter", {}))
+    if profile.get("task_mode"):
+        posture.set_task_mode(profile.get("task_mode"))
+    return jsonify({
+        "status": "ok",
+        "loaded_profile": profile,
+        "posture": posture_config,
+        "frame_adapter": frame_config,
+    })
+
+
+@app.route("/api/rokid_scene_profiles/export")
+def export_rokid_scene_profile():
+    profile_id = str(request.args.get("profile_id", "")).strip()
+    store = _load_scene_profile_store()
+    payload = store
+    filename = "rokid_scene_profiles.json"
+    if profile_id:
+        _, profile = _find_scene_profile(profile_id)
+        if not profile:
+            return jsonify({
+                "status": "error",
+                "message": f"Profile not found: {profile_id}",
+            }), 404
+        payload = profile
+        filename = f"{profile_id}.json"
+
+    response = Response(
+        json.dumps(payload, indent=2, ensure_ascii=False),
+        mimetype="application/json",
+    )
+    response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
 
 
 @app.route("/calibrate")

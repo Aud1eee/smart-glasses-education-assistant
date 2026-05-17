@@ -210,6 +210,23 @@ The related calibration APIs are:
 - `/api/rokid_scene_calibration`
 - `/api/rokid_scene_tuning/preset`
 
+The calibration layer is now also **persistent**. A tuned first-person threshold set can be:
+
+- saved as a named local profile
+- reloaded in later sessions
+- exported as JSON for reporting or device-side replay
+
+The related profile APIs are:
+
+- `/api/rokid_scene_profiles`
+- `/api/rokid_scene_profiles/save`
+- `/api/rokid_scene_profiles/load`
+- `/api/rokid_scene_profiles/export`
+
+The local profile store is:
+
+- `data/rokid_scene_profiles.json`
+
 This upgrade is important because the system no longer treats every medium/high load state as a negative event.
 
 In particular:

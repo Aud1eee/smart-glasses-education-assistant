@@ -329,6 +329,32 @@
         .diagnosis-high { border-color: rgba(255, 123, 92, 0.18); }
         .diagnosis-signal { border-color: rgba(205, 184, 255, 0.18); }
 
+        .history-list {
+            margin-top: 14px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .history-card {
+            padding: 14px 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 189, 92, 0.08);
+            background: rgba(255, 255, 255, 0.028);
+        }
+
+        .history-card strong {
+            display: block;
+            font-size: 14px;
+            letter-spacing: -0.02em;
+        }
+
+        .history-card p {
+            margin: 7px 0 0;
+            color: rgba(255, 242, 218, 0.72);
+            line-height: 1.5;
+            font-size: 13px;
+        }
+
         .field input[type="file"] {
             display: block;
             width: 100%;
@@ -624,6 +650,33 @@
                     </div>
                     <div class="json-box" id="preset-response">Loading scene calibration guidance...</div>
                     <div class="diagnosis-list" id="diagnosis-list"></div>
+                    <div class="calibration-grid" style="margin-top:18px;">
+                        <div class="field">
+                            <label for="save-profile-name">Save current tuning as</label>
+                            <input id="save-profile-name" type="text" placeholder="e.g. Reading desk lamp">
+                        </div>
+                        <div class="field">
+                            <label for="save-profile-notes">Short note</label>
+                            <input id="save-profile-notes" type="text" placeholder="e.g. Warm desk light, narrow textbook crop">
+                        </div>
+                    </div>
+                    <div class="calibration-grid">
+                        <div class="field">
+                            <label for="saved-profile-select">Saved profile history</label>
+                            <select id="saved-profile-select"></select>
+                        </div>
+                        <div class="field">
+                            <label>Profile actions</label>
+                            <div class="button-row">
+                                <button class="primary" onclick="saveCurrentSceneProfile()">Save current profile</button>
+                                <button onclick="loadSavedSceneProfile()">Load selected profile</button>
+                                <button onclick="exportSavedSceneProfile()">Export selected JSON</button>
+                                <button onclick="loadSavedProfiles()">Refresh history</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="json-box" id="history-response">Loading saved calibration profiles...</div>
+                    <div class="history-list" id="history-list"></div>
                     <div class="tuning-grid">
                         <div class="field">
                             <label for="tune-content-bias">Content Expectation Bias</label>
@@ -736,6 +789,7 @@
         const APP_BASE_URL = window.location.protocol === "file:" ? "http://127.0.0.1:5000" : "";
         const DEFAULT_DEMO_IMAGE = "C:/Users/11721/Desktop/focus_project_windows/images/demo.jpg";
         let scenePresets = [];
+        let savedSceneProfiles = [];
         const POSTURE_TUNING_FIELDS = {
             content_expectation_bias: "tune-content-bias",
             surface_expectation_bias: "tune-surface-bias",
@@ -821,6 +875,29 @@
                         <strong>${escapeHtml(item.title)}</strong>
                         <p>${escapeHtml(item.reason)}</p>
                         ${actions ? `<ul>${actions}</ul>` : ""}
+                    </div>
+                `;
+            }).join("");
+        }
+
+        function renderSavedProfiles() {
+            const select = document.getElementById("saved-profile-select");
+            const history = document.getElementById("history-list");
+            if (!savedSceneProfiles.length) {
+                select.innerHTML = "";
+                history.innerHTML = `<div class="history-card"><strong>No saved scene profiles yet</strong><p>Save a tuned threshold set after you stabilize a useful first-person reading or screen scene.</p></div>`;
+                return;
+            }
+            select.innerHTML = savedSceneProfiles
+                .map((profile) => `<option value="${escapeHtml(profile.profile_id)}">${escapeHtml(profile.profile_name)}</option>`)
+                .join("");
+            history.innerHTML = savedSceneProfiles.map((profile) => {
+                const note = profile.notes ? `<p>${escapeHtml(profile.notes)}</p>` : "";
+                return `
+                    <div class="history-card">
+                        <strong>${escapeHtml(profile.profile_name)}</strong>
+                        <p>${escapeHtml(profile.saved_at || "Unknown time")} | mode ${escapeHtml(profile.task_mode || "reading")} | preset ${escapeHtml(profile.source_preset || "custom")}</p>
+                        ${note}
                     </div>
                 `;
             }).join("");
@@ -1032,6 +1109,22 @@
             }
         }
 
+        async function loadSavedProfiles() {
+            try {
+                const response = await fetch(`${APP_BASE_URL}/api/rokid_scene_profiles`);
+                const data = await response.json();
+                savedSceneProfiles = data.profiles || [];
+                renderSavedProfiles();
+                document.getElementById("history-response").innerText = prettyJson({
+                    profile_count: savedSceneProfiles.length,
+                    store_path: data.store_path,
+                });
+            } catch (error) {
+                document.getElementById("history-response").innerText =
+                    `Saved profile request failed.\n\n${String(error)}\n\nStart the local Flask backend at http://127.0.0.1:5000 and refresh this page.`;
+            }
+        }
+
         async function applySceneTuning() {
             const payload = {
                 posture: collectTuningFields(POSTURE_TUNING_FIELDS),
@@ -1078,6 +1171,69 @@
             }
         }
 
+        async function saveCurrentSceneProfile() {
+            const profileName = document.getElementById("save-profile-name").value.trim();
+            if (!profileName) {
+                document.getElementById("history-response").innerText = "Enter a profile name before saving the current calibration.";
+                return;
+            }
+            const selectedPreset = document.getElementById("preset-select").value || "";
+            const notes = document.getElementById("save-profile-notes").value.trim();
+            try {
+                const response = await fetch(`${APP_BASE_URL}/api/rokid_scene_profiles/save`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        profile_name: profileName,
+                        notes,
+                        source_preset: selectedPreset,
+                        task_mode: document.getElementById("task-mode").value,
+                    }),
+                });
+                const data = await response.json();
+                document.getElementById("history-response").innerText = prettyJson(data);
+                await loadSavedProfiles();
+            } catch (error) {
+                document.getElementById("history-response").innerText =
+                    `Save profile failed.\n\n${String(error)}\n\nStart the local Flask backend at http://127.0.0.1:5000 and try again.`;
+            }
+        }
+
+        async function loadSavedSceneProfile() {
+            const profileId = document.getElementById("saved-profile-select").value;
+            if (!profileId) {
+                document.getElementById("history-response").innerText = "Pick a saved profile first.";
+                return;
+            }
+            try {
+                const response = await fetch(`${APP_BASE_URL}/api/rokid_scene_profiles/load`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ profile_id: profileId }),
+                });
+                const data = await response.json();
+                document.getElementById("history-response").innerText = prettyJson(data);
+                assignTuningFields(data.posture || {}, POSTURE_TUNING_FIELDS);
+                assignTuningFields(data.frame_adapter || {}, FRAME_TUNING_FIELDS);
+                const loaded = data.loaded_profile || {};
+                document.getElementById("task-mode").value = loaded.task_mode || document.getElementById("task-mode").value;
+                await Promise.all([refreshStatus(), loadCalibrationGuide(), loadSavedProfiles()]);
+            } catch (error) {
+                document.getElementById("history-response").innerText =
+                    `Load profile failed.\n\n${String(error)}\n\nStart the local Flask backend at http://127.0.0.1:5000 and try again.`;
+            }
+        }
+
+        async function exportSavedSceneProfile() {
+            const profileId = document.getElementById("saved-profile-select").value;
+            if (!profileId) {
+                document.getElementById("history-response").innerText = "Pick a saved profile first.";
+                return;
+            }
+            const url = `${APP_BASE_URL}/api/rokid_scene_profiles/export?profile_id=${encodeURIComponent(profileId)}`;
+            window.open(url, "_blank");
+        }
+
         async function resetSceneTuning() {
             try {
                 const response = await fetch(`${APP_BASE_URL}/api/rokid_scene_tuning/reset`, {
@@ -1095,7 +1251,7 @@
         }
 
         async function refreshAll() {
-            await Promise.all([refreshStatus(), loadBlueprint(), loadSceneTuning(), loadCalibrationGuide()]);
+            await Promise.all([refreshStatus(), loadBlueprint(), loadSceneTuning(), loadCalibrationGuide(), loadSavedProfiles()]);
         }
 
         document.getElementById("preset-select").addEventListener("change", renderPresetSummary);
