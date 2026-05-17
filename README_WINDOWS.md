@@ -49,6 +49,28 @@ This route posts frames to `/api/v1/rokid/frame`, then prints:
 - `state_hint`
 - `behavioral_alignment / cognitive_load / fatigue_risk`
 
+## Rokid scene calibration workflow
+
+To generate the standard first-person calibration worksheet:
+
+```powershell
+.\generate_scene_calibration_sheet.ps1
+```
+
+This writes:
+
+- `exports\rokid_scene_calibration_sheet.md`
+
+The recommended protocol is documented in:
+
+- `ROKID_SCENE_CALIBRATION_PROTOCOL.md`
+
+Use the worksheet together with:
+
+- `http://127.0.0.1:5000/rokid_debug`
+- the built-in presets
+- saved local scene profiles
+
 ## Runtime note
 
 The old Windows `.venv` currently points to a broken local Python 3.14 installation path.

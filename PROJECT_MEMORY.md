@@ -160,6 +160,12 @@ Recommended structure:
 - saved calibration profiles are kept in:
   - `data/rokid_scene_profiles.json`
 - that JSON store should stay local and should not be committed as team source code
+- a standard Rokid calibration method is now documented in:
+  - [ROKID_SCENE_CALIBRATION_PROTOCOL.md](</C:/Users/11721/Desktop/focus_project_windows/ROKID_SCENE_CALIBRATION_PROTOCOL.md>)
+- a fillable worksheet can now be generated with:
+  - `generate_scene_calibration_sheet.ps1`
+- that generator writes:
+  - `exports/rokid_scene_calibration_sheet.md`
   - it should not be described as simple distraction
 - this upgrade stays inside realistic Rokid-side constraints:
   - posture / head pose

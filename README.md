@@ -81,6 +81,20 @@ or switch to a camera / video source:
 .\start_rokid_frame_stream.ps1 -Source video -VideoPath C:\path\to\clip.mp4 -LoopVideo
 ```
 
+For standardized Rokid scene calibration, you can now run:
+
+```powershell
+.\generate_scene_calibration_sheet.ps1
+```
+
+This writes:
+
+- `exports\rokid_scene_calibration_sheet.md`
+
+The recommended method is documented in:
+
+- `ROKID_SCENE_CALIBRATION_PROTOCOL.md`
+
 Current Windows note:
 
 - the legacy `.venv` still stores project packages, but its original Python 3.14 interpreter path is broken on this machine
@@ -121,6 +135,7 @@ Demo-friendly default:
 - `README_WINDOWS.md`: short Windows-specific run note
 - `PROJECT_MEMORY.md`: project decisions, current scope, and next-step context
 - `PROJECT_EXPLANATION.md`: long-form explanation draft for defense and reporting
+- `ROKID_SCENE_CALIBRATION_PROTOCOL.md`: standard first-person scene calibration method
 
 ## Current scope
 

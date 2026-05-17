@@ -227,6 +227,20 @@ The local profile store is:
 
 - `data/rokid_scene_profiles.json`
 
+The project now also includes a **standardized Rokid calibration method**:
+
+- [ROKID_SCENE_CALIBRATION_PROTOCOL.md](</C:/Users/11721/Desktop/focus_project_windows/ROKID_SCENE_CALIBRATION_PROTOCOL.md>)
+- [generate_scene_calibration_sheet.ps1](</C:/Users/11721/Desktop/focus_project_windows/generate_scene_calibration_sheet.ps1>)
+
+The protocol defines four standard first-person scenarios:
+
+- stable book reading
+- stable screen or PPT viewing
+- book/screen or note-switching
+- clearly leaving the study area
+
+This matters because it turns scene tuning from ad hoc threshold editing into a repeatable experiment workflow.
+
 This upgrade is important because the system no longer treats every medium/high load state as a negative event.
 
 In particular:
