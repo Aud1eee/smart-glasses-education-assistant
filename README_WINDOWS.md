@@ -28,6 +28,27 @@ Outputs:
 - `exports\validation_summary.md`
 - `exports\validation_summary.json`
 
+## Reflection smoke checks
+
+Run this to validate the reflection-coach flow end to end:
+
+```powershell
+.\generate_reflection_smoke_report.ps1
+```
+
+Outputs:
+
+- `exports\reflection_smoke_summary.md`
+- `exports\reflection_smoke_summary.json`
+
+This smoke validator boots a temporary backend through the same import-based launcher family used by `.\start_windows.ps1`, then checks:
+
+- `/review -> /reflection` event linking
+- `/api/reflection_coach`
+- `/api/reflection_compare`
+- `/api/reflection_snapshot`
+- evidence-anchor export behavior
+
 ## Rokid frame stream test
 
 When you want to simulate a Rokid-like continuous frame input path instead of the posture-only simulator:

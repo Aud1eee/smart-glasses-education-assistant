@@ -63,6 +63,10 @@ Validation:
   - `exports/validation_summary.md`
   - `exports/validation_summary.json`
 - this checks four deterministic scenarios (`stable`, `rising`, `overload`, `recovery`) and the end-to-end demo pipeline against the current learning-state model.
+- run `generate_reflection_smoke_report.ps1` on Windows to produce:
+  - `exports/reflection_smoke_summary.md`
+  - `exports/reflection_smoke_summary.json`
+- this boots a temporary reflection backend through the import-based Windows launcher and smoke-tests `/review`, `/reflection`, `/api/reflection_coach`, `/api/reflection_compare`, and `/api/reflection_snapshot`.
 
 PowerShell commands also work:
 
