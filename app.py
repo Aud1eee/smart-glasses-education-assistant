@@ -2,6 +2,7 @@ import json
 import os
 import re
 from datetime import datetime
+import time
 
 import bootstrap_windows_runtime  # noqa: F401
 from dotenv import load_dotenv
@@ -13,6 +14,7 @@ from core.edu import EduEngine
 from core.focus_session import FocusSessionEngine
 from core.multimodal_schema import build_multimodal_blueprint
 from core.posture import PostureEngine
+from core.reflection_coach import ReflectionCoach
 from core.rokid_adapter import (
     build_rokid_adapter_blueprint,
     build_rokid_packet,
@@ -28,6 +30,7 @@ load_dotenv()
 app = Flask(__name__, template_folder="web", static_folder="web")
 CORS(app)
 EXPORT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "exports")
+REFLECTION_SNAPSHOT_DIR = os.path.join(EXPORT_DIR, "reflection_snapshots")
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 ROKID_PROFILE_STORE_PATH = os.path.join(PROJECT_ROOT, "data", "rokid_scene_profiles.json")
 
@@ -37,6 +40,7 @@ vision = VisionEngine()
 rokid_frame_adapter = RokidFrameAdapter()
 edu = EduEngine(logger.vocab_path)
 focus_session = FocusSessionEngine()
+reflection_coach = ReflectionCoach(logger)
 difficulty_marker = DifficultyEventMarker()
 auto_recall_enabled = os.getenv("ENABLE_AUTO_RECALL", "0").lower() in {"1", "true", "yes", "on"}
 sample_counter = 0
@@ -321,6 +325,314 @@ def _slugify_profile_name(name):
     return normalized or "scene-profile"
 
 
+def _slugify_reflection_name(name, fallback="reflection"):
+    normalized = re.sub(r"[^a-zA-Z0-9]+", "-", str(name or "").strip().lower())
+    normalized = normalized.strip("-")
+    return normalized or fallback
+
+
+def _clean_model_override_name(value):
+    return " ".join(str(value or "").strip().split())[:160].strip()
+
+
+def _clean_compare_models(raw_models):
+    if not isinstance(raw_models, list):
+        return []
+    models = []
+    seen = set()
+    for item in raw_models:
+        model_name = _clean_model_override_name(item)
+        if not model_name or model_name in seen:
+            continue
+        models.append(model_name)
+        seen.add(model_name)
+    return models
+
+
+def _reflection_markdown_lines(items, prefix):
+    lines = []
+    for index, item in enumerate(items or [], start=1):
+        if isinstance(item, dict):
+            text = item.get("question") or item.get("title") or ""
+        else:
+            text = str(item or "")
+        text = str(text).strip()
+        if text:
+            lines.append(f"{prefix}{index}. {text}")
+    return lines or [f"{prefix}None"]
+
+
+def _reflection_experiment_lines(items):
+    lines = []
+    for index, item in enumerate(items or [], start=1):
+        if not isinstance(item, dict):
+            continue
+        title = str(item.get("title", "")).strip() or f"Experiment {index}"
+        detail = str(item.get("detail", "")).strip()
+        success_marker = str(item.get("success_marker", "")).strip()
+        combined = title
+        if detail:
+            combined += f": {detail}"
+        if success_marker:
+            combined += f" Success marker: {success_marker}"
+        lines.append(f"- {combined}")
+    return lines or ["- None"]
+
+
+def _snapshot_display_label(value, fallback="--"):
+    text = str(value or "").strip()
+    if not text:
+        return fallback
+    normalized = re.sub(r"[_-]+", " ", text)
+    normalized = " ".join(normalized.split())
+    return normalized.title() if normalized else fallback
+
+
+def _snapshot_metric(value, suffix=""):
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return f"--{suffix}"
+    return f"{int(round(numeric))}{suffix}"
+
+
+def _reflection_anchor_reason(payload, event):
+    event = event or {}
+    requested_event_id = str(payload.get("requested_event_id", "") or "").strip()
+    selected_event_id = str(payload.get("selected_event_id", "") or event.get("event_id", "") or "").strip()
+    if not event:
+        return "No specific difficulty event was available, so the coach read the overall session rhythm."
+    if requested_event_id and requested_event_id == selected_event_id:
+        return f"This reflection inherited D{selected_event_id} from the review selection."
+    if requested_event_id and requested_event_id != selected_event_id:
+        return (
+            f"Requested D{requested_event_id} was unavailable in this session, "
+            f"so the coach fell back to D{selected_event_id}, the strongest recorded difficulty segment."
+        )
+    return f"No explicit event was passed in, so the coach anchored itself to D{selected_event_id}, the strongest difficulty segment in this session."
+
+
+def _reflection_anchor_markdown_lines(payload, heading="## Evidence Anchor"):
+    payload = payload if isinstance(payload, dict) else {}
+    event = payload.get("highlight_event") or {}
+    if not event:
+        return [
+            heading,
+            "",
+            "- Anchor reason: No event-specific replay anchor was available for this session.",
+        ]
+
+    severity_label = str(event.get("severity_label", "")).strip() or _snapshot_display_label(event.get("severity"), "Clear")
+    state_label = str(event.get("state_hint_label", "")).strip() or _snapshot_display_label(event.get("state_hint"), "Stable")
+    lines = [
+        heading,
+        "",
+        f"- Anchor reason: {_reflection_anchor_reason(payload, event)}",
+        f"- Event: D{event.get('event_id')}",
+        f"- Window: {event.get('time_window', '--')}",
+        f"- Severity: {severity_label}",
+        f"- State hint: {state_label}",
+        f"- Task mode: {_snapshot_display_label(event.get('task_mode'), '--')}",
+        f"- Load / Fatigue / Switching: {_snapshot_metric(event.get('avg_load'))} / {_snapshot_metric(event.get('avg_fatigue'))} / {_snapshot_metric(event.get('avg_switching'))}",
+        f"- Trigger: {event.get('trigger_label') or '--'}",
+        f"- Trigger reason: {event.get('trigger_reason') or '--'}",
+        f"- Review note: {event.get('review_note') or '--'}",
+        f"- Catch-up action: {event.get('catch_up_action') or '--'}",
+    ]
+    return lines
+
+
+def _build_single_reflection_snapshot_markdown(bundle):
+    payload = bundle.get("payload", {}) or {}
+    summary = payload.get("summary", {}) or {}
+    generation = payload.get("generation", {}) or {}
+    coach_summary = payload.get("coach_summary", {}) or {}
+    signature = payload.get("signature", {}) or {}
+    lines = [
+        "# Reflection Snapshot",
+        "",
+        f"- Saved at: {bundle.get('saved_at', '')}",
+        f"- Session ID: {bundle.get('session_id', '') or '--'}",
+        f"- Dataset: {bundle.get('dataset', '') or '--'}",
+        f"- Provider: {generation.get('provider_label', 'Heuristic')}",
+        f"- Model: {generation.get('model', '') or '--'}",
+        f"- Primary task mode: {summary.get('primary_task_mode', '--')}",
+        "",
+        "## Signature",
+        "",
+        f"**{signature.get('label', '--')}**",
+        "",
+        signature.get("detail", "No signature detail."),
+        "",
+        "## Summary",
+        "",
+        f"- Headline: {coach_summary.get('headline', '--')}",
+        f"- Overview: {coach_summary.get('overview', '--')}",
+        f"- Why it matters: {coach_summary.get('why_it_matters', '--')}",
+        f"- Next boundary: {coach_summary.get('next_boundary', '--')}",
+        "",
+    ]
+    lines.extend(_reflection_anchor_markdown_lines(payload))
+    lines.extend([
+        "",
+        "## Coach Memo",
+        "",
+        payload.get("coach_memo", "No coach memo."),
+        "",
+        "## Reflection Questions",
+        "",
+    ])
+    lines.extend(_reflection_markdown_lines(payload.get("reflection_questions", []), ""))
+    lines.extend([
+        "",
+        "## Next-session Experiments",
+        "",
+    ])
+    lines.extend(_reflection_experiment_lines(payload.get("next_session_experiments", [])))
+    return "\n".join(lines).strip() + "\n"
+
+
+def _build_compare_reflection_snapshot_markdown(bundle):
+    payload = bundle.get("payload", {}) or {}
+    variants = payload.get("variants", []) or []
+    anchor_payload = {}
+    for variant in variants:
+        candidate = variant.get("payload")
+        if isinstance(candidate, dict) and candidate:
+            anchor_payload = candidate
+            break
+    lines = [
+        "# Reflection Compare Snapshot",
+        "",
+        f"- Saved at: {bundle.get('saved_at', '')}",
+        f"- Session ID: {bundle.get('session_id', '') or '--'}",
+        f"- Dataset: {bundle.get('dataset', '') or '--'}",
+        f"- Compared at: {payload.get('compared_at', '') or '--'}",
+        f"- Provider: {payload.get('request', {}).get('provider', 'ollama')}",
+        "",
+    ]
+    lines.extend(_reflection_anchor_markdown_lines(anchor_payload, heading="## Shared Evidence Anchor"))
+    lines.append("")
+    for variant in variants:
+        generation = variant.get("generation", {}) or {}
+        coach_summary = variant.get("coach_summary", {}) or {}
+        lines.extend([
+            f"## {variant.get('model', '--')}",
+            "",
+            f"- Duration: {variant.get('duration_ms', 0)} ms",
+            f"- Active mode: {generation.get('mode', 'heuristic')}",
+            f"- Provider note: {generation.get('note', '--')}",
+            "",
+            f"Headline: {coach_summary.get('headline', '--')}",
+            "",
+            f"Overview: {coach_summary.get('overview', '--')}",
+            "",
+            "Coach memo:",
+            "",
+            variant.get("coach_memo", "No coach memo."),
+            "",
+            "Reflection questions:",
+            "",
+        ])
+        lines.extend(_reflection_markdown_lines(variant.get("reflection_questions", []), ""))
+        lines.extend([
+            "",
+            "Experiments:",
+            "",
+        ])
+        lines.extend(_reflection_experiment_lines(variant.get("next_session_experiments", [])))
+        lines.append("")
+    return "\n".join(lines).strip() + "\n"
+
+
+def _build_reflection_snapshot_markdown(bundle):
+    if bundle.get("kind") == "compare":
+        return _build_compare_reflection_snapshot_markdown(bundle)
+    return _build_single_reflection_snapshot_markdown(bundle)
+
+
+def _build_reflection_snapshot_bundle(kind, payload):
+    saved_at = datetime.now().isoformat(timespec="seconds")
+    payload = payload if isinstance(payload, dict) else {}
+    session_id = str(payload.get("session_id", "")).strip()
+    dataset = str(payload.get("dataset", "")).strip().lower() or "live"
+    anchor_payload = payload
+
+    if kind == "compare":
+        variants = payload.get("variants", []) or []
+        if not session_id and variants:
+            session_id = str((variants[0].get("payload", {}) or {}).get("session_id", "")).strip()
+        if not payload.get("dataset") and variants:
+            dataset = str((variants[0].get("payload", {}) or {}).get("dataset", dataset)).strip().lower() or dataset
+        for variant in variants:
+            candidate = variant.get("payload")
+            if isinstance(candidate, dict) and candidate:
+                anchor_payload = candidate
+                break
+
+    return {
+        "kind": kind,
+        "saved_at": saved_at,
+        "session_id": session_id,
+        "dataset": dataset,
+        "requested_event_id": (anchor_payload or {}).get("requested_event_id"),
+        "selected_event_id": (anchor_payload or {}).get("selected_event_id"),
+        "payload": payload,
+    }
+
+
+def _save_reflection_snapshot(kind, payload):
+    bundle = _build_reflection_snapshot_bundle(kind, payload)
+    os.makedirs(REFLECTION_SNAPSHOT_DIR, exist_ok=True)
+    session_slug = _slugify_reflection_name(bundle.get("session_id") or f"{bundle.get('dataset', 'live')}-session", fallback="session")
+    basename = f"{session_slug}-reflection-{kind}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    json_path = os.path.join(REFLECTION_SNAPSHOT_DIR, f"{basename}.json")
+    md_path = os.path.join(REFLECTION_SNAPSHOT_DIR, f"{basename}.md")
+
+    with open(json_path, "w", encoding="utf-8") as handle:
+        json.dump(bundle, handle, indent=2, ensure_ascii=False)
+    with open(md_path, "w", encoding="utf-8") as handle:
+        handle.write(_build_reflection_snapshot_markdown(bundle))
+
+    return {
+        "status": "ok",
+        "kind": kind,
+        "snapshot_id": basename,
+        "saved_at": bundle["saved_at"],
+        "json_url": f"/exports/reflection_snapshots/{basename}.json",
+        "md_url": f"/exports/reflection_snapshots/{basename}.md",
+        "json_path": json_path,
+        "md_path": md_path,
+    }
+
+
+def _build_reflection_compare_variant(dataset, session_id, event_id, learner_note, next_goal, model_name):
+    started_at = time.perf_counter()
+    payload = reflection_coach.build_payload(
+        session_id=session_id,
+        dataset=dataset,
+        event_id=event_id,
+        learner_note=learner_note,
+        next_goal=next_goal,
+        use_llm=True,
+        provider_override="ollama",
+        model_override=model_name,
+    )
+    duration_ms = int(round((time.perf_counter() - started_at) * 1000))
+    generation = payload.get("generation", {}) or {}
+    return {
+        "model": generation.get("model") or model_name,
+        "duration_ms": duration_ms,
+        "generation": generation,
+        "signature": payload.get("signature", {}),
+        "coach_summary": payload.get("coach_summary", {}),
+        "coach_memo": payload.get("coach_memo", ""),
+        "reflection_questions": payload.get("reflection_questions", []),
+        "next_session_experiments": payload.get("next_session_experiments", []),
+        "payload": payload,
+    }
+
+
 def _build_scene_profile_payload(profile_name, task_mode=None, notes="", source_preset=""):
     timestamp = datetime.now()
     slug = _slugify_profile_name(profile_name)
@@ -429,6 +741,11 @@ def index():
 @app.route("/review")
 def review_page():
     return render_template("review.html")
+
+
+@app.route("/reflection")
+def reflection_page():
+    return render_template("reflection.html")
 
 
 @app.route("/rokid_debug")
@@ -640,6 +957,100 @@ def review_summary():
     session_id = request.args.get("session_id") or None
     payload = logger.build_review_payload(session_id=session_id, dataset=dataset)
     return jsonify(payload)
+
+
+@app.route("/api/reflection_coach", methods=["GET", "POST"])
+def reflection_coach_summary():
+    payload = (request.get_json(silent=True) or {}) if request.method == "POST" else request.args.to_dict()
+    dataset = str(payload.get("dataset", "live")).strip().lower() or "live"
+    session_id = str(payload.get("session_id", "")).strip() or None
+    event_id = str(payload.get("event_id", "")).strip() or None
+    learner_note = payload.get("learner_note", "")
+    next_goal = payload.get("next_goal", "")
+    use_llm = str(payload.get("use_llm", payload.get("use_model", "0"))).strip().lower() in {"1", "true", "yes", "on"}
+    provider_override = str(payload.get("provider_override", "auto")).strip() or "auto"
+    model_override = str(payload.get("model_override", "")).strip()
+    return jsonify(
+        reflection_coach.build_payload(
+            session_id=session_id,
+            dataset=dataset,
+            event_id=event_id,
+            learner_note=learner_note,
+            next_goal=next_goal,
+            use_llm=use_llm,
+            provider_override=provider_override,
+            model_override=model_override,
+        )
+    )
+
+
+@app.route("/api/reflection_provider_status")
+def reflection_provider_status():
+    provider_override = str(request.args.get("provider_override", "auto")).strip() or "auto"
+    model_override = str(request.args.get("model_override", "")).strip()
+    return jsonify(reflection_coach.provider_status(provider_override=provider_override, model_override=model_override))
+
+
+@app.route("/api/reflection_compare", methods=["POST"])
+def reflection_compare():
+    payload = request.get_json(silent=True) or {}
+    dataset = str(payload.get("dataset", "live")).strip().lower() or "live"
+    session_id = str(payload.get("session_id", "")).strip() or None
+    event_id = str(payload.get("event_id", "")).strip() or None
+    learner_note = payload.get("learner_note", "")
+    next_goal = payload.get("next_goal", "")
+    requested_models = _clean_compare_models(payload.get("models", []))
+
+    if len(requested_models) < 2:
+        status = reflection_coach.provider_status(provider_override="ollama")
+        fallback_models = [
+            str(item.get("name", "")).strip()
+            for item in (status.get("ollama", {}) or {}).get("available_models", [])
+            if str(item.get("name", "")).strip()
+        ]
+        requested_models = _clean_compare_models(fallback_models[:2])
+
+    if len(requested_models) < 2:
+        return jsonify({
+            "status": "error",
+            "message": "At least two local Ollama models are required for comparison.",
+        }), 400
+
+    variants = [
+        _build_reflection_compare_variant(dataset, session_id, event_id, learner_note, next_goal, model_name)
+        for model_name in requested_models[:2]
+    ]
+    resolved_session_id = str((variants[0].get("payload", {}) or {}).get("session_id", session_id or "")).strip()
+    resolved_dataset = str((variants[0].get("payload", {}) or {}).get("dataset", dataset)).strip().lower() or dataset
+    return jsonify({
+        "status": "ok",
+        "dataset": resolved_dataset,
+        "session_id": resolved_session_id,
+        "compared_at": datetime.now().isoformat(timespec="seconds"),
+        "request": {
+            "provider": "ollama",
+            "models": [variant.get("model", "") for variant in variants],
+        },
+        "variants": variants,
+    })
+
+
+@app.route("/api/reflection_snapshot", methods=["POST"])
+def reflection_snapshot():
+    payload = request.get_json(silent=True) or {}
+    kind = str(payload.get("kind", "single")).strip().lower()
+    snapshot_payload = payload.get("payload", {})
+    if kind not in {"single", "compare"}:
+        return jsonify({
+            "status": "error",
+            "message": f"Unsupported snapshot kind: {kind}",
+        }), 400
+    if not isinstance(snapshot_payload, dict) or not snapshot_payload:
+        return jsonify({
+            "status": "error",
+            "message": "Snapshot payload is required.",
+        }), 400
+    return jsonify(_save_reflection_snapshot(kind, snapshot_payload))
 
 
 @app.route("/api/multimodal_blueprint")

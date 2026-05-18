@@ -68,6 +68,66 @@ The current review page is now designed as a **presentation-ready after-class fo
   - detailed event list
   - supporting report assets
 
+## 2.0 Independent follow-up module: Learning Reflection Coach
+
+The project now also includes an independent module called:
+
+**Learning Reflection Coach**
+
+This module does not replace the main `Learning State Guardian` pipeline. Instead, it sits after the session and asks a different question:
+
+> Given the learning-state evidence, how should the learner reflect on what happened and what should change in the next attempt?
+
+Its input is:
+
+- the structured study-session log
+- the difficulty-event log
+- the session summary already produced by the review layer
+- an optional learner self-note or next-session goal
+
+Its output is:
+
+- a session signature such as productive challenge, switching drift, fatigue drag, signal check, or steady control
+- a short coach memo
+- reflection questions
+- next-session experiments
+
+This matters because it keeps the module differentiated from teammates' directions. It does not do:
+
+- knowledge explanation
+- AI tutor conversation
+- writing guidance
+- language tutoring
+- AI note taking
+- gesture input
+
+Instead, it focuses on:
+
+- metacognitive reflection
+- self-regulation
+- replay strategy
+- study-process experimentation
+
+The current runtime entry points are:
+
+- `/reflection`
+- `/api/reflection_coach`
+
+The current implementation now uses a **switchable provider architecture**:
+
+- `heuristic`
+- `ollama`
+- `remote`
+- `openai`
+
+This matters for future deployment. The reflection logic does not need to be rewritten when moving toward Rokid-side integration:
+
+- for local free demos, it can use a local Ollama model
+- for later deployment, it can switch to a remote API provider
+- if no model is available, it still falls back to the heuristic coach
+
+The evidence base still comes from the local learning-state logs. Model providers only refine the reflection wording and experiment framing.
+
 ## 2.1 Validation and experiment layer
 
 The project now includes a **repeatable validation module** for the current learning-state algorithm.

@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Learning Reflection Coach</title>
+    <style>
+        :root {
+            --bg: #110d08;
+            --panel: rgba(33, 24, 16, 0.9);
+            --panel-soft: rgba(43, 31, 21, 0.72);
+            --line: rgba(244, 184, 96, 0.18);
+            --line-strong: rgba(244, 184, 96, 0.32);
+            --text: #f7f1e7;
+            --muted: rgba(247, 241, 231, 0.64);
+            --gold: #f2b86a;
+            --amber: #d99234;
+            --sand: #f5d8ad;
+            --good: #8fd8a4;
+            --warn: #f0c66a;
+            --high: #ff8e63;
+            --signal: #8ac6d8;
+            --cool: #b2c6ff;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--text);
+            font-family: "Segoe UI", sans-serif;
+            background:
+                radial-gradient(circle at 12% 16%, rgba(242, 184, 106, 0.16), transparent 28%),
+                radial-gradient(circle at 88% 18%, rgba(138, 198, 216, 0.12), transparent 26%),
+                linear-gradient(135deg, #090603 0%, #171009 48%, #090603 100%);
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.014) 1px, transparent 1px);
+            background-size: 42px 42px;
+            opacity: 0.55;
+        }
+
+        main {
+            position: relative;
+            z-index: 1;
+            width: min(1240px, calc(100vw - 32px));
+            margin: 0 auto;
+            padding: 22px 0 34px;
+        }
+
+        .panel {
+            border: 1px solid var(--line);
+            background: var(--panel);
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.24);
+            backdrop-filter: blur(10px);
+        }
+
+        .topbar,
+        .hero,
+        .input-panel,
+        .content-grid,
+        .memo-grid {
+            border-radius: 24px;
+        }
+
+        .topbar {
+            display: grid;
+            grid-template-columns: 1.2fr auto auto;
+            gap: 18px;
+            align-items: center;
+            padding: 18px 22px;
+            margin-bottom: 18px;
+        }
+
+        .brand,
+        .brand-copy,
+        .nav-links,
+        .control-row,
+        .hero-summary,
+        .summary-grid,
+        .coach-strip,
+        .list-stack,
+        .evidence-grid,
+        .memo-stack {
+            display: flex;
+        }
+
+        .brand { align-items: center; gap: 14px; }
+
+        .brand-mark {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, rgba(242, 184, 106, 0.2), rgba(138, 198, 216, 0.18));
+            color: var(--sand);
+            font-weight: 800;
+            letter-spacing: 0.08em;
+        }
+
+        .brand-copy { flex-direction: column; gap: 4px; }
+        .brand-copy strong { font-size: 18px; }
+        .brand-copy span { color: var(--muted); font-size: 13px; }
+
+        .controls {
+            display: grid;
+            grid-template-columns: auto minmax(240px, 320px);
+            gap: 12px;
+            align-items: center;
+        }
+
+        .chip-switch {
+            display: inline-flex;
+            padding: 4px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--line);
+        }
+
+        .chip-switch button,
+        .action-btn,
+        .nav-link {
+            border: 0;
+            cursor: pointer;
+            transition: 180ms ease;
+        }
+
+        .chip-switch button {
+            padding: 10px 16px;
+            border-radius: 999px;
+            background: transparent;
+            color: var(--muted);
+            font-weight: 700;
+        }
+
+        .chip-switch button.active {
+            background: linear-gradient(135deg, rgba(242, 184, 106, 0.22), rgba(138, 198, 216, 0.18));
+            color: var(--text);
+        }
+
+        .session-select,
+        .goal-input,
+        .note-input {
+            width: 100%;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text);
+            font: inherit;
+        }
+
+        .session-select,
+        .goal-input {
+            min-height: 46px;
+            padding: 10px 14px;
+        }
+
+        .note-input {
+            min-height: 112px;
+            resize: vertical;
+            padding: 14px 16px;
+            line-height: 1.55;
+        }
+
+        .nav-links {
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            padding: 11px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--line);
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .nav-link:hover,
+        .action-btn:hover,
+        .chip-switch button:hover {
+            transform: translateY(-1px);
+            border-color: var(--line-strong);
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1.2fr 0.9fr;
+            gap: 20px;
+            padding: 28px;
+            margin-bottom: 18px;
+            background:
+                linear-gradient(135deg, rgba(242, 184, 106, 0.08), transparent 38%),
+                linear-gradient(160deg, rgba(138, 198, 216, 0.08), transparent 44%),
+                var(--panel);
+        }
+
+        .hero-eyebrow,
+        .panel-eyebrow,
+        .card-eyebrow {
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        h1, h2, h3, p { margin: 0; }
+
+        .hero-copy h1 {
+            margin-top: 12px;
+            font-size: clamp(30px, 3.4vw, 46px);
+            line-height: 1.04;
+            max-width: 12ch;
+        }
+
+        .hero-copy p {
+            margin-top: 14px;
+            color: var(--muted);
+            line-height: 1.68;
+            max-width: 62ch;
+        }
+
+        .boundary-note {
+            margin-top: 18px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(138, 198, 216, 0.22);
+            background: rgba(138, 198, 216, 0.08);
+            color: rgba(247, 241, 231, 0.84);
+            line-height: 1.6;
+        }
+
+        .hero-summary {
+            flex-direction: column;
+            gap: 14px;
+            padding: 20px;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--line);
+        }
+
+        .provider-status {
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            gap: 18px;
+            align-items: center;
+            padding: 18px 22px;
+            margin-bottom: 18px;
+            border-radius: 22px;
+            background:
+                linear-gradient(135deg, rgba(242, 184, 106, 0.08), transparent 30%),
+                linear-gradient(160deg, rgba(138, 198, 216, 0.08), transparent 48%),
+                var(--panel);
+        }
+
+        .provider-copy p {
+            margin-top: 10px;
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        .provider-copy h2 {
+            margin-top: 10px;
+            font-size: 24px;
+            line-height: 1.15;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .status-pill {
+            padding: 14px 16px;
+            border-radius: 18px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .status-pill span {
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .status-pill strong {
+            display: block;
+            margin-top: 8px;
+            font-size: 18px;
+            line-height: 1.25;
+        }
+
+        .status-pill p {
+            margin-top: 8px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .hero-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .tone-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .tone-good { color: var(--good); border-color: rgba(143, 216, 164, 0.24); }
+        .tone-warn { color: var(--warn); border-color: rgba(240, 198, 106, 0.26); }
+        .tone-high { color: var(--high); border-color: rgba(255, 142, 99, 0.28); }
+        .tone-signal { color: var(--signal); border-color: rgba(138, 198, 216, 0.26); }
+        .tone-cool { color: var(--cool); border-color: rgba(178, 198, 255, 0.24); }
+
+        .summary-grid {
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .summary-item,
+        .coach-card,
+        .list-panel,
+        .memo-panel,
+        .evidence-card {
+            border-radius: 20px;
+            border: 1px solid var(--line);
+            background: var(--panel-soft);
+        }
+
+        .summary-item {
+            width: calc(50% - 6px);
+            min-width: 180px;
+            padding: 16px;
+        }
+
+        .summary-item span {
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .summary-item strong {
+            display: block;
+            margin-top: 8px;
+            font-size: 28px;
+        }
+
+        .summary-item p {
+            margin-top: 8px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .anchor-panel,
+        .input-panel {
+            padding: 22px;
+            margin-bottom: 18px;
+        }
+
+        .anchor-header,
+        .input-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: flex-start;
+            margin-bottom: 18px;
+        }
+
+        .anchor-header p,
+        .input-header p,
+        .list-panel p,
+        .memo-panel p {
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        .anchor-shell {
+            display: grid;
+            grid-template-columns: 1.18fr 0.82fr;
+            gap: 16px;
+        }
+
+        .anchor-main,
+        .anchor-side-card,
+        .anchor-empty {
+            border-radius: 20px;
+            border: 1px solid var(--line);
+            background: var(--panel-soft);
+        }
+
+        .anchor-main,
+        .anchor-side-card {
+            padding: 20px;
+        }
+
+        .anchor-main h3,
+        .anchor-side-card h3 {
+            margin-top: 10px;
+            font-size: 24px;
+            line-height: 1.2;
+        }
+
+        .anchor-main p,
+        .anchor-side-card p,
+        .anchor-empty p {
+            margin-top: 12px;
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        .anchor-meta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(242, 184, 106, 0.18);
+            background: rgba(242, 184, 106, 0.08);
+            color: var(--sand);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .anchor-metrics,
+        .anchor-links,
+        .anchor-side {
+            display: flex;
+        }
+
+        .anchor-metrics,
+        .anchor-links {
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+
+        .anchor-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.035);
+            color: rgba(247, 241, 231, 0.88);
+            font-size: 13px;
+        }
+
+        .anchor-chip strong {
+            color: var(--sand);
+            font-size: 12px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .anchor-side {
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .anchor-empty {
+            padding: 22px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 16px;
+        }
+
+        .control-row {
+            gap: 12px;
+            align-items: center;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-row {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .action-btn {
+            padding: 12px 18px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(242, 184, 106, 0.22), rgba(138, 198, 216, 0.16));
+            color: var(--text);
+            font-weight: 800;
+        }
+
+        .action-btn:disabled,
+        .checkbox-row input:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .meta-line {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .compare-panel {
+            padding: 22px;
+            margin-bottom: 18px;
+        }
+
+        .compare-toolbar,
+        .compare-links,
+        .compare-card-head,
+        .compare-card-list {
+            display: flex;
+        }
+
+        .compare-toolbar,
+        .compare-links {
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .compare-status {
+            display: grid;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 18px;
+        }
+
+        .compare-card {
+            padding: 18px;
+            border-radius: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .compare-card-head {
+            justify-content: space-between;
+            gap: 14px;
+            align-items: flex-start;
+        }
+
+        .compare-card-head h3 {
+            margin-top: 10px;
+            font-size: 24px;
+            line-height: 1.2;
+        }
+
+        .compare-card-note,
+        .compare-block p {
+            margin-top: 10px;
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        .compare-card-list {
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .compare-card-list div {
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.025);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            line-height: 1.5;
+        }
+
+        .compare-block {
+            margin-top: 16px;
+        }
+
+        .compare-block span {
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .coach-strip {
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .coach-card {
+            flex: 1;
+            min-width: 0;
+            padding: 18px;
+        }
+
+        .coach-card h3 {
+            margin-top: 10px;
+            font-size: 22px;
+            line-height: 1.2;
+        }
+
+        .coach-card p {
+            margin-top: 12px;
+            color: rgba(247, 241, 231, 0.82);
+            line-height: 1.66;
+        }
+
+        .content-grid,
+        .memo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .content-grid { margin-bottom: 18px; }
+
+        .list-panel,
+        .memo-panel {
+            padding: 22px;
+        }
+
+        .list-stack {
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        .list-item {
+            padding: 16px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .list-item strong,
+        .memo-event strong {
+            display: block;
+            line-height: 1.45;
+        }
+
+        .list-item p,
+        .memo-event p {
+            margin-top: 10px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .evidence-grid {
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .evidence-card {
+            width: calc(50% - 6px);
+            min-width: 210px;
+            padding: 16px;
+        }
+
+        .evidence-card span {
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .evidence-card strong {
+            display: block;
+            margin-top: 8px;
+            font-size: 24px;
+        }
+
+        .evidence-card p {
+            margin-top: 10px;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        .memo-stack {
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 18px;
+        }
+
+        .memo-block {
+            padding: 18px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            color: rgba(247, 241, 231, 0.88);
+            line-height: 1.7;
+        }
+
+        .memo-event {
+            padding: 18px;
+            border-radius: 18px;
+            border: 1px solid rgba(242, 184, 106, 0.18);
+            background: rgba(242, 184, 106, 0.06);
+        }
+
+        @media (max-width: 1080px) {
+            .topbar,
+            .provider-status,
+            .hero,
+            .anchor-shell,
+            .input-grid,
+            .compare-grid,
+            .content-grid,
+            .memo-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .coach-strip {
+                flex-direction: column;
+            }
+
+            .summary-item,
+            .evidence-card {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 720px) {
+            main {
+                width: min(100vw - 18px, 100%);
+                padding-top: 12px;
+            }
+
+            .topbar,
+            .provider-status,
+            .hero,
+            .anchor-panel,
+            .input-panel,
+            .list-panel,
+            .memo-panel {
+                border-radius: 18px;
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-links {
+                justify-content: flex-start;
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <section class="panel topbar">
+            <div class="brand">
+                <div class="brand-mark">RC</div>
+                <div class="brand-copy">
+                    <strong>Learning Reflection Coach</strong>
+                    <span>Independent metacognitive follow-up module</span>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="chip-switch" aria-label="Dataset switch">
+                    <button id="live-btn" class="active" type="button" onclick="switchDataset('live')">Live</button>
+                    <button id="demo-btn" type="button" onclick="switchDataset('demo')">Demo</button>
+                </div>
+                <select id="session-select" class="session-select" onchange="handleSessionChange()"></select>
+            </div>
+
+            <div class="nav-links">
+                <a class="nav-link" id="review-link" href="/review">Difficulty Review</a>
+                <a class="nav-link" href="/">Back to HUD</a>
+            </div>
+        </section>
+
+        <section class="panel provider-status">
+            <div class="provider-copy">
+                <div class="panel-eyebrow">Provider Status</div>
+                <h2 id="provider-state-title">Checking the local reflection provider...</h2>
+                <p id="provider-state-note">
+                    This strip tells you whether the page is actively using a local or remote model, or whether it has fallen back to heuristic mode.
+                </p>
+            </div>
+
+            <div class="status-grid">
+                <div class="status-pill">
+                    <span>Configured Default</span>
+                    <strong id="provider-configured">--</strong>
+                    <p id="provider-model">Model: --</p>
+                </div>
+                <div class="status-pill">
+                    <span>Active Mode</span>
+                    <strong id="provider-active">HEURISTIC</strong>
+                    <p id="provider-request">Requested provider: auto</p>
+                </div>
+                <div class="status-pill">
+                    <span>Fallback State</span>
+                    <strong id="provider-fallback">Ready</strong>
+                    <p id="provider-fallback-note">If the selected provider is down, the page will still return a reflection result.</p>
+                </div>
+                <div class="status-pill">
+                    <span>Last Result</span>
+                    <strong id="provider-result">Waiting</strong>
+                    <p id="provider-result-note">Generate the coach view to confirm the active provider on this machine.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel hero">
+            <div class="hero-copy">
+                <div class="hero-eyebrow">Reflection-first coaching</div>
+                <h1 id="headline">Read the session before planning the next one.</h1>
+                <p id="overview">
+                    This module translates learning-state evidence into reflection prompts and next-session experiments.
+                    It is meant to help the learner understand how the study process unfolded, not to reteach the material.
+                </p>
+                <div class="boundary-note" id="boundary-note">
+                    This module coaches reflection on learning process and self-regulation. It does not teach the content itself, replace tutoring, or overlap with note-taking features.
+                </div>
+            </div>
+
+            <div class="hero-summary">
+                <div class="hero-head">
+                    <div>
+                        <div class="panel-eyebrow">Session signature</div>
+                        <h2 id="signature-title" style="margin-top:10px;">Waiting for session data...</h2>
+                    </div>
+                    <div class="tone-badge tone-signal" id="signature-badge">Signal</div>
+                </div>
+
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <span>Session</span>
+                        <strong id="summary-session">--</strong>
+                        <p id="summary-mode">Primary mode: --</p>
+                    </div>
+                    <div class="summary-item">
+                        <span>Priority</span>
+                        <strong id="summary-priority">--</strong>
+                        <p id="summary-top">Top segment: --</p>
+                    </div>
+                    <div class="summary-item">
+                        <span>Load / Fatigue</span>
+                        <strong id="summary-load">0 / 0</strong>
+                        <p id="summary-signal">Low-confidence ratio: 0%</p>
+                    </div>
+                    <div class="summary-item">
+                        <span>Generation</span>
+                        <strong id="summary-generation">HEURISTIC</strong>
+                        <p id="summary-generation-note">Rule-based coaching is active.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel anchor-panel">
+            <div class="anchor-header">
+                <div>
+                    <div class="panel-eyebrow">Evidence Anchor</div>
+                    <h2 style="margin-top:10px;">The difficulty event this reflection is built around.</h2>
+                </div>
+                <p id="anchor-summary">
+                    The coach can inherit a specific event from the review page, or fall back to the strongest recorded segment in the session.
+                </p>
+            </div>
+            <div class="anchor-shell" id="anchor-shell"></div>
+        </section>
+
+        <section class="panel input-panel">
+            <div class="input-header">
+                <div>
+                    <div class="panel-eyebrow">Coach Input</div>
+                    <h2 style="margin-top:10px;">Add the learner's own reflection before generating the coach view.</h2>
+                </div>
+                <p>
+                    The coach works without any note, but a short learner note or next-session goal helps it become more specific.
+                    You can keep it fully heuristic, use a free local Ollama model, or later switch to a remote provider without changing the evidence base.
+                </p>
+            </div>
+
+            <div class="input-grid">
+                <div>
+                    <textarea id="learner-note" class="note-input" placeholder="Example: I felt okay at the start, but I started bouncing between PPT and notes when the explanation got denser."></textarea>
+                    <div class="control-row">
+                        <label class="checkbox-row">
+                            <input id="use-llm" type="checkbox">
+                            <span>Use provider-backed wording polish</span>
+                        </label>
+                        <button id="generate-btn" class="action-btn" type="button" onclick="loadCoach(true)">Generate coach view</button>
+                    </div>
+                </div>
+
+                <div>
+                    <input id="next-goal" class="goal-input" type="text" placeholder="Next session goal, e.g. keep one source stable for the first two minutes.">
+                    <div class="control-row">
+                        <select id="provider-select" class="session-select" onchange="handleProviderChange()">
+                            <option value="auto">Configured Default</option>
+                            <option value="heuristic">Heuristic Only</option>
+                            <option value="ollama">Ollama Local</option>
+                            <option value="remote">Remote API</option>
+                            <option value="openai">OpenAI</option>
+                        </select>
+                    </div>
+                    <div class="control-row">
+                        <select id="model-select" class="session-select" onchange="handleModelChange()">
+                            <option value="">Use configured default</option>
+                        </select>
+                    </div>
+                    <div class="control-row">
+                        <div class="meta-line" id="llm-status">Checking model-provider configuration...</div>
+                    </div>
+                    <div class="control-row">
+                        <div class="meta-line" id="model-status">Checking local model options...</div>
+                    </div>
+                    <div class="control-row">
+                        <div class="meta-line" id="coach-note">The page will generate a heuristic coach view automatically on load.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel compare-panel">
+            <div class="input-header">
+                <div>
+                    <div class="panel-eyebrow">Local Model Compare</div>
+                    <h2 style="margin-top:10px;">Run the same reflection request through two free local models.</h2>
+                </div>
+                <p>
+                    This comparison reuses the same session evidence, learner note, and next goal. It is meant to help us evaluate wording quality,
+                    reflection specificity, and generation time before we lock a deployment default.
+                </p>
+            </div>
+
+            <div class="compare-toolbar">
+                <select id="compare-model-select" class="session-select"></select>
+                <button id="compare-btn" class="action-btn" type="button" onclick="runLocalCompare()">Compare Local Models</button>
+                <button id="save-current-btn" class="action-btn" type="button" onclick="saveCurrentSnapshot()">Save Current Coach Snapshot</button>
+                <button id="save-compare-btn" class="action-btn" type="button" onclick="saveCompareSnapshot()" disabled>Save Compare Snapshot</button>
+            </div>
+
+            <div class="compare-status">
+                <div class="meta-line" id="compare-note">Use this section to compare the current local model against another installed Ollama model.</div>
+                <div class="meta-line" id="snapshot-note">No reflection snapshot saved yet.</div>
+                <div class="compare-links" id="snapshot-links"></div>
+            </div>
+
+            <div class="compare-grid" id="compare-grid"></div>
+        </section>
+
+        <section class="coach-strip" id="coach-strip"></section>
+
+        <section class="content-grid">
+            <section class="panel list-panel">
+                <div class="panel-eyebrow">Reflection Questions</div>
+                <h2 style="margin-top:10px;">Questions the learner should answer after the session.</h2>
+                <p>These prompts are intentionally process-focused, so they stay distinct from tutoring or content explanation features.</p>
+                <div class="list-stack" id="question-list"></div>
+            </section>
+
+            <section class="panel list-panel">
+                <div class="panel-eyebrow">Next-session Experiments</div>
+                <h2 style="margin-top:10px;">Small changes to test in the next attempt.</h2>
+                <p>Each experiment changes one part of the learning setup so the next session becomes easier to regulate and interpret.</p>
+                <div class="list-stack" id="experiment-list"></div>
+            </section>
+        </section>
+
+        <section class="memo-grid">
+            <section class="panel memo-panel">
+                <div class="panel-eyebrow">Evidence Map</div>
+                <h2 style="margin-top:10px;">Why the coach reached this reading.</h2>
+                <div class="evidence-grid" id="evidence-grid"></div>
+            </section>
+
+            <section class="panel memo-panel">
+                <div class="panel-eyebrow">Coach Memo</div>
+                <h2 style="margin-top:10px;">A concise reflection script for the learner or presentation.</h2>
+                <div class="memo-stack">
+                    <div class="memo-block" id="coach-memo">Waiting for reflection memo...</div>
+                    <div class="memo-event" id="event-focus">
+                        <strong>No replay target yet.</strong>
+                        <p>When a difficulty event exists, the strongest segment will appear here as the primary replay anchor.</p>
+                    </div>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <script>
+        const routeParams = new URLSearchParams(window.location.search);
+        let currentDataset = routeParams.get("dataset") === "demo" ? "demo" : "live";
+        let currentSessionId = routeParams.get("session_id") || "";
+        let currentEventId = routeParams.get("event_id") || "";
+        let latestProviderStatus = null;
+        let latestCoachPayload = null;
+        let latestComparePayload = null;
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function toneClass(tone) {
+            const normalized = String(tone || "signal").toLowerCase();
+            if (normalized === "good") return "tone-good";
+            if (normalized === "warn") return "tone-warn";
+            if (normalized === "high") return "tone-high";
+            if (normalized === "cool") return "tone-cool";
+            return "tone-signal";
+        }
+
+        function providerToneLabel(generation) {
+            const mode = String(generation.mode || "heuristic").toLowerCase();
+            if (mode === "ollama") return { title: "Local model is active.", tone: "tone-good" };
+            if (mode === "remote" || mode === "openai") return { title: "External provider is active.", tone: "tone-cool" };
+            if (generation.provider_available) return { title: "Fallback is active right now.", tone: "tone-warn" };
+            return { title: "Heuristic mode is carrying the page.", tone: "tone-signal" };
+        }
+
+        function switchDataset(dataset) {
+            currentDataset = dataset;
+            currentSessionId = "";
+            currentEventId = "";
+            document.getElementById("live-btn").classList.toggle("active", dataset === "live");
+            document.getElementById("demo-btn").classList.toggle("active", dataset === "demo");
+            syncReflectionRoute();
+            syncReviewLinks("");
+            resetCompareResults("Model compare cleared because the dataset changed.");
+            loadCoach(false, true);
+        }
+
+        function handleSessionChange() {
+            currentSessionId = document.getElementById("session-select").value || currentSessionId;
+            currentEventId = "";
+            syncReflectionRoute();
+            syncReviewLinks("");
+            resetCompareResults("Model compare cleared because the session changed.");
+            loadCoach(true);
+        }
+
+        function syncReflectionRoute() {
+            const query = new URLSearchParams({ dataset: currentDataset });
+            if (currentSessionId) query.set("session_id", currentSessionId);
+            if (currentEventId) query.set("event_id", currentEventId);
+            const nextUrl = `${window.location.pathname}?${query.toString()}`;
+            window.history.replaceState({}, "", nextUrl);
+        }
+
+        function buildReviewHref(eventId = "") {
+            const query = new URLSearchParams({ dataset: currentDataset });
+            if (currentSessionId) query.set("session_id", currentSessionId);
+            const normalizedEventId = String(eventId || "").trim();
+            if (normalizedEventId) query.set("event_id", normalizedEventId);
+            return `/review?${query.toString()}`;
+        }
+
+        function syncReviewLinks(eventId = "") {
+            const contextualHref = buildReviewHref(eventId || currentEventId || "");
+            const overviewHref = buildReviewHref("");
+            const reviewLink = document.getElementById("review-link");
+            if (reviewLink) reviewLink.href = contextualHref;
+            const anchorReviewLink = document.getElementById("anchor-review-link");
+            if (anchorReviewLink) anchorReviewLink.href = contextualHref;
+            const anchorOverviewLink = document.getElementById("anchor-review-overview");
+            if (anchorOverviewLink) anchorOverviewLink.href = overviewHref;
+        }
+
+        function prettyLabel(value, fallback = "--") {
+            const text = String(value || "").trim();
+            if (!text) return fallback;
+            return text
+                .replace(/[_-]+/g, " ")
+                .replace(/\s+/g, " ")
+                .replace(/\b\w/g, (char) => char.toUpperCase());
+        }
+
+        function formatMetric(value, suffix = "") {
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric)) return `--${suffix}`;
+            const rounded = Math.round(numeric);
+            return `${rounded}${suffix}`;
+        }
+
+        function anchorReason(payload, event) {
+            const requestedEventId = String(payload?.requested_event_id || "").trim();
+            const selectedEventId = String(payload?.selected_event_id || event?.event_id || "").trim();
+            if (!event) {
+                return "No specific difficulty event is selected yet, so the coach is reading the overall session rhythm.";
+            }
+            if (requestedEventId && requestedEventId === selectedEventId) {
+                return `This reflection is anchored to D${selectedEventId} because it was explicitly selected from the review flow.`;
+            }
+            if (requestedEventId && requestedEventId !== selectedEventId) {
+                return `Requested D${requestedEventId} was not found in this session, so the coach fell back to D${selectedEventId}, the strongest recorded difficulty segment.`;
+            }
+            return `No explicit event was passed in, so the coach anchored itself to D${selectedEventId}, the strongest difficulty segment in this session.`;
+        }
+
+        function currentPayload() {
+            return {
+                dataset: currentDataset,
+                session_id: currentSessionId,
+                event_id: currentEventId,
+                learner_note: document.getElementById("learner-note").value.trim(),
+                next_goal: document.getElementById("next-goal").value.trim(),
+                use_llm: document.getElementById("use-llm").checked,
+                provider_override: document.getElementById("provider-select").value,
+                model_override: document.getElementById("model-select").value,
+            };
+        }
+
+        function setSelectOptions(select, options, fallbackValue) {
+            const normalizedOptions = Array.isArray(options) ? options : [];
+            select.innerHTML = normalizedOptions.map((option) => `
+                <option value="${escapeHtml(option.value || "")}">${escapeHtml(option.label || option.value || "")}</option>
+            `).join("");
+
+            const targetValue = fallbackValue ?? "";
+            if ([...select.options].some((option) => option.value === targetValue)) {
+                select.value = targetValue;
+            } else if ([...select.options].some((option) => option.value === "")) {
+                select.value = "";
+            } else if (select.options.length) {
+                select.selectedIndex = 0;
+            }
+        }
+
+        function localModelLabel(model) {
+            const bits = [model?.name || ""].filter(Boolean);
+            if (model?.parameter_size) bits.push(model.parameter_size);
+            if (model?.size_label) bits.push(model.size_label);
+            return bits.join(" | ");
+        }
+
+        function resetCompareResults(message) {
+            latestComparePayload = null;
+            document.getElementById("save-compare-btn").disabled = true;
+            document.getElementById("compare-grid").innerHTML = `
+                <article class="compare-card">
+                    <div class="compare-card-head">
+                        <div>
+                            <div class="panel-eyebrow">Compare Output</div>
+                            <h3>Waiting for a local model compare.</h3>
+                        </div>
+                    </div>
+                    <p class="compare-card-note">Run a compare request to see two local model outputs side by side.</p>
+                </article>
+            `;
+            document.getElementById("compare-note").innerText =
+                message || "Use this section to compare the current local model against another installed Ollama model.";
+        }
+
+        function renderSnapshotLinks(result) {
+            const shell = document.getElementById("snapshot-links");
+            if (!result) {
+                shell.innerHTML = "";
+                return;
+            }
+            shell.innerHTML = `
+                <a class="nav-link" href="${escapeHtml(result.json_url || "#")}" target="_blank" rel="noreferrer">Open JSON Snapshot</a>
+                <a class="nav-link" href="${escapeHtml(result.md_url || "#")}" target="_blank" rel="noreferrer">Open Markdown Snapshot</a>
+            `;
+            document.getElementById("snapshot-note").innerText =
+                `Saved ${String(result.kind || "reflection")} snapshot at ${result.saved_at || "--"}.`;
+        }
+
+        function renderCompareResults(payload) {
+            const variants = Array.isArray(payload?.variants) ? payload.variants : [];
+            const shell = document.getElementById("compare-grid");
+            shell.innerHTML = variants.map((variant) => {
+                const signature = variant.signature || {};
+                const coachSummary = variant.coach_summary || {};
+                const generation = variant.generation || {};
+                const questions = Array.isArray(variant.reflection_questions) ? variant.reflection_questions : [];
+                const experiments = Array.isArray(variant.next_session_experiments) ? variant.next_session_experiments : [];
+                return `
+                    <article class="compare-card">
+                        <div class="compare-card-head">
+                            <div>
+                                <div class="panel-eyebrow">Local compare</div>
+                                <h3 class="${toneClass(signature.tone)}">${escapeHtml(variant.model || generation.model || "--")}</h3>
+                            </div>
+                            <div class="tone-badge ${toneClass(signature.tone)}">${escapeHtml(String(variant.duration_ms || 0))} ms</div>
+                        </div>
+                        <p class="compare-card-note">${escapeHtml(generation.note || "No provider note was returned.")}</p>
+
+                        <div class="compare-block">
+                            <span>Headline</span>
+                            <p>${escapeHtml(coachSummary.headline || "--")}</p>
+                        </div>
+
+                        <div class="compare-block">
+                            <span>Coach Memo</span>
+                            <p>${escapeHtml(variant.coach_memo || "--")}</p>
+                        </div>
+
+                        <div class="compare-block">
+                            <span>Reflection Questions</span>
+                            <div class="compare-card-list">
+                                ${questions.map((item, index) => `<div>Q${index + 1}. ${escapeHtml(item.question || "")}</div>`).join("") || "<div>No questions returned.</div>"}
+                            </div>
+                        </div>
+
+                        <div class="compare-block">
+                            <span>Experiments</span>
+                            <div class="compare-card-list">
+                                ${experiments.map((item) => `<div><strong>${escapeHtml(item.title || "")}</strong><br>${escapeHtml(item.detail || "")}</div>`).join("") || "<div>No experiments returned.</div>"}
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join("");
+        }
+
+        function renderSessionOptions(options, resolvedSessionId) {
+            const select = document.getElementById("session-select");
+            const normalizedOptions = Array.isArray(options) ? options : [];
+            const effectiveId = currentSessionId || resolvedSessionId || "";
+            select.innerHTML = normalizedOptions.map((item) => {
+                const sessionId = item.session_id || "";
+                const selected = sessionId === effectiveId ? "selected" : "";
+                return `<option value="${escapeHtml(sessionId)}" ${selected}>${escapeHtml(sessionId)}</option>`;
+            }).join("");
+
+            if (!normalizedOptions.length) {
+                select.innerHTML = `<option value="">No session data yet</option>`;
+            }
+
+            if (effectiveId) {
+                currentSessionId = effectiveId;
+                select.value = effectiveId;
+            } else if (normalizedOptions.length) {
+                currentSessionId = normalizedOptions[0].session_id || "";
+                select.value = currentSessionId;
+            }
+        }
+
+        function renderHero(payload) {
+            const summary = payload.summary || {};
+            const signature = payload.signature || {};
+            const highlightEvent = payload.highlight_event || null;
+            const generation = payload.generation || {};
+
+            document.getElementById("headline").innerText = payload.coach_summary?.headline || "Read the session before planning the next one.";
+            document.getElementById("overview").innerText = payload.coach_summary?.overview || "No coach summary is available yet.";
+            document.getElementById("boundary-note").innerText = payload.module_boundary || "";
+            document.getElementById("signature-title").innerText = signature.label || "Waiting for session data...";
+
+            const badge = document.getElementById("signature-badge");
+            badge.innerText = (signature.label || "Signal").toUpperCase();
+            badge.className = `tone-badge ${toneClass(signature.tone)}`;
+
+            document.getElementById("summary-session").innerText = payload.session_id || "--";
+            document.getElementById("summary-mode").innerText = `Primary mode: ${String(summary.primary_task_mode || "--").replace(/-/g, " ")}`;
+            document.getElementById("summary-priority").innerText = String(summary.review_priority || "--").toUpperCase();
+            document.getElementById("summary-top").innerText = highlightEvent ? `Top segment: D${highlightEvent.event_id}` : "Top segment: Clear";
+            document.getElementById("summary-load").innerText = `${Math.round(Number(summary.avg_load || 0))} / ${Math.round(Number(summary.avg_fatigue || 0))}`;
+            document.getElementById("summary-signal").innerText = `Low-confidence ratio: ${Math.round(Number(summary.low_confidence_ratio || 0))}%`;
+            document.getElementById("summary-generation").innerText = String(generation.mode || "heuristic").toUpperCase();
+            document.getElementById("summary-generation-note").innerText =
+                generation.note || (generation.used_llm ? "A configured provider polished the final wording." : "Rule-based coaching is active.");
+        }
+
+        function renderAnchor(payload) {
+            const shell = document.getElementById("anchor-shell");
+            const event = payload?.highlight_event || null;
+            document.getElementById("anchor-summary").innerText = anchorReason(payload, event);
+            syncReviewLinks(payload?.selected_event_id || event?.event_id || "");
+
+            if (!event) {
+                shell.innerHTML = `
+                    <article class="anchor-empty">
+                        <div class="anchor-meta">Session-wide reading</div>
+                        <h3 style="margin-top:12px;">No replay anchor has been selected yet.</h3>
+                        <p>The coach is currently reading the whole session rather than a single difficulty event. Open the review page if you want to choose a segment first.</p>
+                        <div class="anchor-links">
+                            <a class="nav-link" id="anchor-review-overview" href="${escapeHtml(buildReviewHref(""))}">Open Difficulty Review</a>
+                        </div>
+                    </article>
+                `;
+                return;
+            }
+
+            const requestedEventId = String(payload?.requested_event_id || "").trim();
+            const selectedEventId = String(payload?.selected_event_id || event.event_id || "").trim();
+            const anchorMeta = requestedEventId
+                ? requestedEventId === selectedEventId
+                    ? "Inherited from review selection"
+                    : `Fallback from requested D${requestedEventId}`
+                : "Auto-selected strongest event";
+            const tone = event.state_hint === "productive_struggle"
+                ? "tone-cool"
+                : event.severity === "high"
+                    ? "tone-high"
+                    : event.severity === "medium"
+                        ? "tone-warn"
+                        : "tone-signal";
+
+            shell.innerHTML = `
+                <article class="anchor-main">
+                    <div class="anchor-meta">${escapeHtml(anchorMeta)}</div>
+                    <h3 class="${tone}">D${escapeHtml(event.event_id)} | ${escapeHtml(event.time_window || "--")}</h3>
+                    <p>${escapeHtml(event.review_note || event.catch_up_action || "No anchor note is available yet.")}</p>
+                    <div class="anchor-metrics">
+                        <div class="anchor-chip"><strong>Severity</strong> ${escapeHtml(event.severity_label || prettyLabel(event.severity, "Clear"))}</div>
+                        <div class="anchor-chip"><strong>State</strong> ${escapeHtml(event.state_hint_label || prettyLabel(event.state_hint, "Stable"))}</div>
+                        <div class="anchor-chip"><strong>Mode</strong> ${escapeHtml(prettyLabel(event.task_mode, "--"))}</div>
+                        <div class="anchor-chip"><strong>Load</strong> ${escapeHtml(formatMetric(event.avg_load))}</div>
+                        <div class="anchor-chip"><strong>Fatigue</strong> ${escapeHtml(formatMetric(event.avg_fatigue))}</div>
+                        <div class="anchor-chip"><strong>Switching</strong> ${escapeHtml(formatMetric(event.avg_switching))}</div>
+                    </div>
+                    <div class="anchor-links">
+                        <a class="nav-link" id="anchor-review-link" href="${escapeHtml(buildReviewHref(selectedEventId))}">Back to This Event in Review</a>
+                        <a class="nav-link" id="anchor-review-overview" href="${escapeHtml(buildReviewHref(""))}">Open Full Review Map</a>
+                    </div>
+                </article>
+                <div class="anchor-side">
+                    <article class="anchor-side-card">
+                        <div class="card-eyebrow">Trigger</div>
+                        <h3>${escapeHtml(event.trigger_label || "Load rising")}</h3>
+                        <p>${escapeHtml(event.trigger_reason || "A state change pushed this segment into the review set.")}</p>
+                    </article>
+                    <article class="anchor-side-card">
+                        <div class="card-eyebrow">Catch-up Action</div>
+                        <h3>${escapeHtml(prettyLabel(event.phase, "Focus"))}</h3>
+                        <p>${escapeHtml(event.catch_up_action || "Replay this segment slowly before moving on.")}</p>
+                    </article>
+                </div>
+            `;
+        }
+
+        function renderCoachCards(cards) {
+            const strip = document.getElementById("coach-strip");
+            const normalizedCards = Array.isArray(cards) ? cards : [];
+            strip.innerHTML = normalizedCards.map((card) => `
+                <article class="coach-card">
+                    <div class="card-eyebrow">${escapeHtml(card.eyebrow || "Coach card")}</div>
+                    <h3 class="${toneClass(card.tone)}">${escapeHtml(card.title || "--")}</h3>
+                    <p>${escapeHtml(card.detail || "")}</p>
+                </article>
+            `).join("");
+        }
+
+        function renderQuestionList(items) {
+            const shell = document.getElementById("question-list");
+            shell.innerHTML = (Array.isArray(items) ? items : []).map((item, index) => `
+                <div class="list-item">
+                    <strong>Q${index + 1}. ${escapeHtml(item.question || "")}</strong>
+                </div>
+            `).join("");
+        }
+
+        function renderExperimentList(items) {
+            const shell = document.getElementById("experiment-list");
+            shell.innerHTML = (Array.isArray(items) ? items : []).map((item, index) => `
+                <div class="list-item">
+                    <strong>${index + 1}. ${escapeHtml(item.title || "")}</strong>
+                    <p>${escapeHtml(item.detail || "")}</p>
+                    <p><b>Success marker:</b> ${escapeHtml(item.success_marker || "")}</p>
+                </div>
+            `).join("");
+        }
+
+        function renderEvidence(items) {
+            const shell = document.getElementById("evidence-grid");
+            shell.innerHTML = (Array.isArray(items) ? items : []).map((item) => `
+                <article class="evidence-card">
+                    <span>${escapeHtml(item.label || "")}</span>
+                    <strong class="${toneClass(item.tone)}">${escapeHtml(item.value || "")}</strong>
+                    <p>${escapeHtml(item.detail || "")}</p>
+                </article>
+            `).join("");
+        }
+
+        function renderMemo(payload) {
+            document.getElementById("coach-memo").innerText = payload.coach_memo || "No memo is available.";
+            const event = payload.highlight_event || null;
+            const eventShell = document.getElementById("event-focus");
+            if (!event) {
+                eventShell.innerHTML = `
+                    <strong>No sustained replay target yet.</strong>
+                    <p>This session did not produce a standout difficulty event, so the coach is reading the overall rhythm instead.</p>
+                `;
+                return;
+            }
+
+            eventShell.innerHTML = `
+                <strong>D${escapeHtml(event.event_id)} | ${escapeHtml(event.time_window || "--")}</strong>
+                <p>${escapeHtml(event.review_note || event.catch_up_action || "")}</p>
+            `;
+        }
+
+        function syncCompareControls(status) {
+            const compareSelect = document.getElementById("compare-model-select");
+            const compareButton = document.getElementById("compare-btn");
+            const ollamaModels = Array.isArray(status?.ollama?.available_models) ? status.ollama.available_models : [];
+            const currentModel = status?.selected_model || status?.configured_model || "";
+            const currentValue = compareSelect.value || "";
+            const alternativeModels = ollamaModels.filter((item) => String(item?.name || "").trim() && String(item?.name || "").trim() !== currentModel);
+            const options = alternativeModels.map((item) => ({
+                value: item.name,
+                label: localModelLabel(item),
+            }));
+            const fallbackValue = options.some((item) => item.value === currentValue) ? currentValue : (options[0]?.value || "");
+
+            setSelectOptions(compareSelect, options, fallbackValue);
+            const canCompare = Boolean(status?.ollama?.reachable) && Boolean(currentModel) && options.length > 0;
+            compareSelect.disabled = !canCompare;
+            compareButton.disabled = !canCompare;
+            if (!canCompare) {
+                document.getElementById("save-compare-btn").disabled = true;
+            }
+        }
+
+        function syncProviderControls(status) {
+            if (!status) {
+                return;
+            }
+            const providerSelect = document.getElementById("provider-select");
+            const modelSelect = document.getElementById("model-select");
+            const selectedProvider = status?.requested_provider || providerSelect.value || "auto";
+            const modelOverride = status?.model_override || "";
+
+            setSelectOptions(providerSelect, status?.provider_options || [], selectedProvider);
+            setSelectOptions(modelSelect, status?.model_options || [{ value: "", label: "Use configured default" }], modelOverride);
+            modelSelect.disabled = !status?.supports_model_override;
+
+            const configuredLabel = status?.configured_label || "Configured Default";
+            const configuredModel = status?.configured_model || "";
+            const ollamaStatus = status?.ollama || {};
+            const ollamaCount = Array.isArray(ollamaStatus.available_models) ? ollamaStatus.available_models.length : 0;
+            const ollamaVersion = ollamaStatus.version ? `Ollama ${ollamaStatus.version}` : "Ollama version unknown";
+            document.getElementById("llm-status").innerText =
+                `Configured default: ${configuredLabel}${configuredModel ? ` (${configuredModel})` : ""}. ${ollamaStatus.note || "If the provider is unreachable, the coach will fall back to heuristic mode."}`;
+
+            if (status?.supports_model_override) {
+                const selectedModel = status?.selected_model || configuredModel || "--";
+                document.getElementById("model-status").innerText =
+                    `${ollamaVersion}. Local model picker is active with ${ollamaCount} detected model(s). Current selection: ${selectedModel}.`;
+            } else {
+                document.getElementById("model-status").innerText =
+                    "Local model override is available only when the requested provider resolves to Ollama Local.";
+            }
+            syncCompareControls(status);
+        }
+
+        function syncProviderStrip(status, generation) {
+            const effectiveProvider = String(status?.effective_provider || "heuristic").toLowerCase();
+            const requestedProvider = status?.requested_provider || generation?.requested_provider || "auto";
+            const configuredLabel = status?.configured_label || generation?.configured_label || "Configured Default";
+            const configuredModel = status?.configured_model || generation?.configured_model || generation?.model || "";
+            const activeMode = String(generation?.mode || effectiveProvider || "heuristic").toLowerCase();
+            const tone = generation ? providerToneLabel(generation) : (
+                activeMode === "ollama" && status?.provider_available
+                    ? { title: "Local model is ready.", tone: "tone-good" }
+                    : activeMode === "ollama"
+                        ? { title: "Local model is unavailable right now.", tone: "tone-warn" }
+                        : activeMode === "heuristic"
+                            ? { title: "Heuristic mode is ready.", tone: "tone-signal" }
+                            : status?.provider_available
+                                ? { title: "Configured provider is ready.", tone: "tone-cool" }
+                                : { title: "Configured provider needs setup.", tone: "tone-warn" }
+            );
+
+            document.getElementById("provider-state-title").innerText = tone.title;
+            document.getElementById("provider-state-title").className = tone.tone;
+            document.getElementById("provider-state-note").innerText =
+                generation?.note || status?.ollama?.note || "The provider status will update after each reflection request.";
+            document.getElementById("provider-configured").innerText = configuredLabel;
+            document.getElementById("provider-model").innerText = `Model: ${configuredModel || "--"}`;
+            document.getElementById("provider-active").innerText = String(generation?.mode || effectiveProvider || "heuristic").toUpperCase();
+            document.getElementById("provider-request").innerText = `Requested provider: ${requestedProvider}`;
+
+            if (generation) {
+                document.getElementById("provider-fallback").innerText =
+                    generation.mode === "heuristic" && generation.provider_available ? "Active now" : generation.provider_available ? "Standby" : "Only path";
+                document.getElementById("provider-fallback-note").innerText =
+                    generation.provider_available
+                        ? "A provider is configured, but the page can still fall back safely if it fails."
+                        : "No model provider is configured yet, so heuristic mode is the only active path.";
+                document.getElementById("provider-result").innerText = generation.provider_label || "Heuristic";
+                document.getElementById("provider-result-note").innerText =
+                    generation.used_llm
+                        ? `The last result was refined by ${generation.provider_label}${generation.model ? ` (${generation.model})` : ""}.`
+                        : "The last result came from the heuristic reflection engine.";
+                return;
+            }
+
+            document.getElementById("provider-fallback").innerText =
+                status?.provider_available ? "Standby" : effectiveProvider === "heuristic" ? "Only path" : "Unavailable";
+            document.getElementById("provider-fallback-note").innerText =
+                status?.provider_available
+                    ? "The requested provider looks reachable or configured, and heuristic fallback remains available."
+                    : "This provider is not ready yet, so the page will rely on heuristic mode if you generate now.";
+            document.getElementById("provider-result").innerText = "Waiting";
+            document.getElementById("provider-result-note").innerText = "Generate the coach view to confirm the active provider on this machine.";
+        }
+
+        function syncLlmControls(payload) {
+            const generation = payload.generation || {};
+            if (generation.configured_provider === "heuristic" && !generation.llm_available) {
+                document.getElementById("use-llm").checked = false;
+            }
+            syncProviderControls(latestProviderStatus);
+            syncProviderStrip(latestProviderStatus, generation);
+        }
+
+        async function loadProviderStatus() {
+            const params = new URLSearchParams({
+                provider_override: document.getElementById("provider-select").value || "auto",
+                model_override: document.getElementById("model-select").value || "",
+            });
+
+            try {
+                const response = await fetch(`/api/reflection_provider_status?${params.toString()}`);
+                const status = await response.json();
+                latestProviderStatus = status;
+                syncProviderControls(status);
+                syncProviderStrip(status, null);
+            } catch (error) {
+                latestProviderStatus = null;
+                document.getElementById("llm-status").innerText = "Provider status is unavailable because the Flask backend is offline.";
+                document.getElementById("model-status").innerText = "Local model options are unavailable until the backend is reachable.";
+                document.getElementById("provider-state-title").innerText = "Reflection backend is offline.";
+                document.getElementById("provider-state-title").className = "tone-warn";
+                document.getElementById("provider-state-note").innerText = "The page could not reach the Flask reflection endpoint, so provider status is unavailable.";
+                document.getElementById("compare-model-select").disabled = true;
+                document.getElementById("compare-btn").disabled = true;
+                document.getElementById("compare-note").innerText = "Local model compare is unavailable until the backend is reachable.";
+            }
+        }
+
+        function handleProviderChange() {
+            resetCompareResults("Model compare cleared because the provider selection changed.");
+            loadProviderStatus();
+        }
+
+        function handleModelChange() {
+            resetCompareResults("Model compare cleared because the model selection changed.");
+            loadProviderStatus();
+        }
+
+        async function saveCurrentSnapshot() {
+            if (!latestCoachPayload) {
+                document.getElementById("snapshot-note").innerText = "Generate a coach view first, then save the snapshot.";
+                return;
+            }
+            document.getElementById("snapshot-note").innerText = "Saving current coach snapshot...";
+            try {
+                const response = await fetch("/api/reflection_snapshot", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ kind: "single", payload: latestCoachPayload }),
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.message || "Could not save the current coach snapshot.");
+                }
+                renderSnapshotLinks(result);
+            } catch (error) {
+                document.getElementById("snapshot-note").innerText = error.message || "Could not save the current coach snapshot.";
+            }
+        }
+
+        async function saveCompareSnapshot() {
+            if (!latestComparePayload) {
+                document.getElementById("snapshot-note").innerText = "Run a local model compare first, then save the compare snapshot.";
+                return;
+            }
+            document.getElementById("snapshot-note").innerText = "Saving local compare snapshot...";
+            try {
+                const response = await fetch("/api/reflection_snapshot", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ kind: "compare", payload: latestComparePayload }),
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.message || "Could not save the compare snapshot.");
+                }
+                renderSnapshotLinks(result);
+            } catch (error) {
+                document.getElementById("snapshot-note").innerText = error.message || "Could not save the compare snapshot.";
+            }
+        }
+
+        async function runLocalCompare() {
+            await loadProviderStatus();
+            const status = latestProviderStatus;
+            const currentModel = status?.selected_model || status?.configured_model || "";
+            const compareModel = document.getElementById("compare-model-select").value || "";
+            if (!status?.ollama?.reachable) {
+                document.getElementById("compare-note").innerText = "Local Ollama is not reachable, so compare is unavailable.";
+                return;
+            }
+            if (!currentModel || !compareModel) {
+                document.getElementById("compare-note").innerText = "Select two local models before running compare.";
+                return;
+            }
+            if (currentModel === compareModel) {
+                document.getElementById("compare-note").innerText = "Choose a second local model that differs from the current model.";
+                return;
+            }
+
+            document.getElementById("compare-btn").disabled = true;
+            document.getElementById("compare-note").innerText = `Comparing ${currentModel} against ${compareModel}...`;
+            try {
+                const requestBody = {
+                    ...currentPayload(),
+                    models: [currentModel, compareModel],
+                };
+                const response = await fetch("/api/reflection_compare", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(requestBody),
+                });
+                const payload = await response.json();
+                if (!response.ok) {
+                    throw new Error(payload.message || "Could not compare the local models.");
+                }
+                latestComparePayload = payload;
+                renderCompareResults(payload);
+                document.getElementById("save-compare-btn").disabled = false;
+                document.getElementById("compare-note").innerText =
+                    `Compared ${payload.request?.models?.join(" vs ") || "local models"} on session ${payload.session_id || "--"}.`;
+            } catch (error) {
+                latestComparePayload = null;
+                document.getElementById("save-compare-btn").disabled = true;
+                document.getElementById("compare-note").innerText = error.message || "Could not compare the local models.";
+            } finally {
+                syncCompareControls(latestProviderStatus);
+            }
+        }
+
+        async function loadCoach(preserveSessionSelection, forceClearSession = false) {
+            const select = document.getElementById("session-select");
+            if (preserveSessionSelection && select.value) {
+                currentSessionId = select.value;
+            } else if (forceClearSession) {
+                currentSessionId = "";
+            }
+
+            document.getElementById("coach-note").innerText = "Generating reflection coach view...";
+
+            try {
+                const response = await fetch("/api/reflection_coach", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(currentPayload()),
+                });
+                const payload = await response.json();
+                if (!response.ok) {
+                    throw new Error(payload.message || "The reflection coach request failed.");
+                }
+                latestCoachPayload = payload;
+
+                renderSessionOptions(payload.session_options || [], payload.session_id || "");
+                currentEventId = String(payload.selected_event_id || currentEventId || payload.highlight_event?.event_id || "").trim();
+                syncReflectionRoute();
+                renderHero(payload);
+                renderAnchor(payload);
+                renderCoachCards(payload.coach_cards || []);
+                renderQuestionList(payload.reflection_questions || []);
+                renderExperimentList(payload.next_session_experiments || []);
+                renderEvidence(payload.evidence_cards || []);
+                renderMemo(payload);
+                syncLlmControls(payload);
+
+                document.getElementById("coach-note").innerText =
+                    payload.coach_summary?.next_boundary || "Coach view generated.";
+            } catch (error) {
+                latestCoachPayload = null;
+                document.getElementById("headline").innerText = "Reflection coach is offline.";
+                document.getElementById("overview").innerText =
+                    "Start the Flask backend on http://127.0.0.1:5000, then reload this page to generate the reflection module.";
+                document.getElementById("coach-note").innerText =
+                    error.message || "The page could not reach the local reflection endpoint.";
+                renderAnchor(null);
+                document.getElementById("provider-state-title").innerText = "Reflection backend is offline.";
+                document.getElementById("provider-state-title").className = "tone-warn";
+                document.getElementById("provider-state-note").innerText = "The page could not reach the Flask reflection endpoint, so provider status is unavailable.";
+            }
+        }
+
+        async function bootReflectionPage() {
+            document.getElementById("live-btn").classList.toggle("active", currentDataset === "live");
+            document.getElementById("demo-btn").classList.toggle("active", currentDataset === "demo");
+            resetCompareResults();
+            renderSnapshotLinks(null);
+            renderAnchor(null);
+            syncReviewLinks(currentEventId);
+            await loadProviderStatus();
+            await loadCoach(false, false);
+        }
+
+        bootReflectionPage();
+    </script>
+</body>
+</html>

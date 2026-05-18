@@ -101,6 +101,16 @@ Recommended structure:
     - `core/multimodal_schema.py`
   - explanation API:
     - `/api/multimodal_blueprint`
+- independent reflection coach module with:
+  - `/reflection`
+  - `/api/reflection_coach`
+  - rule-based session signature + metacognitive question generation
+  - switchable provider architecture:
+    - `heuristic`
+    - `ollama`
+    - `remote`
+    - `openai`
+  - free local-model-first default through `Ollama`
 
 ### Latest algorithm upgrade
 
@@ -240,6 +250,23 @@ Recommended structure:
 - learning-state sensing
 - adaptive regulation
 - attention heatmap / review
+
+### Independent follow-up module
+
+- `Learning Reflection Coach` should be presented as a separate follow-up surface
+- it uses the existing learning-state logs as evidence
+- it should stay process-focused:
+  - reflection
+  - self-regulation
+  - replay strategy
+  - next-session experiment design
+- it should not drift into:
+  - knowledge explanation
+  - AI tutoring dialogue
+  - writing correction
+  - language tutoring
+  - AI note taking
+  - gesture interaction
 
 ### Secondary supporting features
 

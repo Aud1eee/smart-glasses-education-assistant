@@ -847,6 +847,7 @@
             </div>
 
             <div class="nav-links">
+                <a class="nav-link" id="reflection-link" href="/reflection">Reflection Coach</a>
                 <a class="nav-link" id="debug-link" href="/rokid_debug">Rokid Debug</a>
                 <a class="nav-link" id="back-link" href="/">Back to HUD</a>
             </div>
@@ -984,16 +985,49 @@
     <script>
         const params = new URLSearchParams(window.location.search);
         let activeDataset = params.get("dataset") === "demo" ? "demo" : "live";
+        const initialSessionId = params.get("session_id") || "";
         let currentTimeline = null;
         let currentSummary = null;
         let currentEvents = [];
         let currentAssets = null;
+        let selectedEventId = params.get("event_id") || "";
         const APP_BASE_URL = window.location.protocol === "file:" ? "http://127.0.0.1:5000" : "";
 
         document.getElementById("back-link").href = `${APP_BASE_URL}/`;
+        document.getElementById("reflection-link").href = `${APP_BASE_URL}/reflection`;
+
+        function currentReviewSessionId() {
+            const select = document.getElementById("session-select");
+            return String(currentSummary?.session_id || select.value || initialSessionId || "").trim();
+        }
+
+        function buildReflectionHref(eventId = "") {
+            const query = new URLSearchParams({ dataset: activeDataset });
+            const sessionId = currentReviewSessionId();
+            const normalizedEventId = String(eventId || selectedEventId || "").trim();
+            if (sessionId) query.set("session_id", sessionId);
+            if (normalizedEventId) query.set("event_id", normalizedEventId);
+            return `${APP_BASE_URL}/reflection?${query.toString()}`;
+        }
+
+        function syncReflectionEntry(event = null) {
+            const targetEventId = event ? String(event.event_id || "").trim() : String(selectedEventId || "").trim();
+            document.getElementById("reflection-link").href = buildReflectionHref(targetEventId);
+        }
+
+        function syncReviewRoute() {
+            const query = new URLSearchParams({ dataset: activeDataset });
+            const sessionId = currentReviewSessionId();
+            if (sessionId) query.set("session_id", sessionId);
+            if (selectedEventId) query.set("event_id", String(selectedEventId));
+            const nextUrl = `${window.location.pathname}?${query.toString()}`;
+            window.history.replaceState({}, "", nextUrl);
+            syncReflectionEntry(currentEvents.find((event) => String(event.event_id) === String(selectedEventId)) || null);
+        }
 
         function switchDataset(dataset) {
             activeDataset = dataset === "demo" ? "demo" : "live";
+            selectedEventId = "";
             document.getElementById("live-btn").classList.toggle("active", activeDataset === "live");
             document.getElementById("demo-btn").classList.toggle("active", activeDataset === "demo");
             loadReview(true);
@@ -1102,6 +1136,7 @@
                         No flagged event is selected yet. Use the event list on the left to focus this panel, or keep the heatmap as a general reflection asset.
                     </div>
                 `;
+                syncReflectionEntry(null);
                 return;
             }
 
@@ -1149,6 +1184,9 @@
                         <p>${event.catch_up_action}</p>
                     </div>
                 </div>
+                <div class="asset-actions">
+                    <a class="asset-link" href="${buildReflectionHref(event.event_id)}">Open in Reflection Coach</a>
+                </div>
             `;
         }
 
@@ -1188,6 +1226,7 @@
 
         function selectEvent(eventId) {
             const selected = currentEvents.find((event) => String(event.event_id) === String(eventId)) || currentEvents[0] || null;
+            selectedEventId = selected ? String(selected.event_id) : "";
             document.querySelectorAll(".timeline-event").forEach((block) => {
                 block.classList.toggle("selected", selected && String(block.dataset.eventId) === String(selected.event_id));
             });
@@ -1199,6 +1238,7 @@
                 }
             });
             renderSpotlight(selected);
+            syncReviewRoute();
         }
 
         function renderTimeline(timeline) {
@@ -1244,7 +1284,7 @@
             });
         }
 
-        function renderEvents(events) {
+        function renderEvents(events, preferredEventId = "") {
             currentEvents = events || [];
             const host = document.getElementById("event-list");
             const empty = document.getElementById("event-empty");
@@ -1252,7 +1292,9 @@
 
             if (!currentEvents.length) {
                 empty.hidden = false;
+                selectedEventId = "";
                 renderSpotlight(null);
+                syncReviewRoute();
                 return;
             }
 
@@ -1331,7 +1373,11 @@
             });
 
             if (currentEvents.length) {
-                selectEvent(currentEvents[0].event_id);
+                const fallbackEventId = preferredEventId || currentEvents[0].event_id;
+                const targetEventId = currentEvents.some((event) => String(event.event_id) === String(selectedEventId))
+                    ? selectedEventId
+                    : fallbackEventId;
+                selectEvent(targetEventId);
             }
         }
 
@@ -1361,7 +1407,11 @@
 
         async function loadReview(resetSession = false) {
             const select = document.getElementById("session-select");
-            const sessionId = resetSession ? "" : (select.value || params.get("session_id") || "");
+            const previousSessionId = String(currentSummary?.session_id || initialSessionId || "").trim();
+            const sessionId = resetSession ? "" : (select.value || previousSessionId || "");
+            if (resetSession || (previousSessionId && sessionId && sessionId !== previousSessionId)) {
+                selectedEventId = "";
+            }
             const query = new URLSearchParams({ dataset: activeDataset });
             if (sessionId) query.set("session_id", sessionId);
 
@@ -1375,11 +1425,12 @@
                 renderTimeline(payload.timeline || null);
                 renderAssets(payload.assets || {});
                 renderActions(payload.next_actions || []);
-                renderEvents(payload.events || []);
+                renderEvents(payload.events || [], payload.highlight_event?.event_id || "");
             } catch (error) {
                 document.getElementById("timeline-note").innerText = "Review API unavailable. Start the local Flask app first.";
                 document.getElementById("hero-copy").innerText =
                     "This page can read local review data only after the Flask backend is running on http://127.0.0.1:5000.";
+                selectedEventId = "";
                 renderSummary({
                     session_id: "--",
                     primary_task_mode: "unknown",

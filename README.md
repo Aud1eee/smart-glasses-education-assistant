@@ -21,6 +21,7 @@ This prototype combines:
 - adaptive focus / recovery guidance
 - difficulty event marking
 - classroom attention timeline visualization
+- learning reflection coaching for post-session self-regulation
 - optional OCR-based word capture and note collection
 
 The current priority is the A/B/C learning-state workflow. OCR features are kept as supporting functions, not the main story.
@@ -33,10 +34,12 @@ The current priority is the A/B/C learning-state workflow. OCR features are kept
 - `core/posture.py`: posture metrics and cognitive load scoring
 - `core/focus_session.py`: adaptive focus-cycle engine
 - `core/difficulty_marker.py`: sustained difficulty event detection
+- `core/reflection_coach.py`: post-session reflection coaching engine
 - `core/vision.py`: OCR, translation, note capture
 - `utils/storage.py`: CSV logging
 - `analytics/analyze_report.py`: attention heatmap export
 - `web/index.html`: HUD interface
+- `web/reflection.html`: reflection coach page
 - `PROJECT_MEMORY.md`: condensed project context for future work
 
 ## Local Windows setup
@@ -112,6 +115,11 @@ System dependency:
 Optional dependency:
 
 - `pix2tex` is optional. If missing, the app falls back to basic OCR.
+- the reflection coach can run in three ways:
+  - `heuristic` only
+  - free local `Ollama` models such as `qwen3:4b`
+  - remote API providers
+- `OPENAI_API_KEY` remains optional if you want an OpenAI-backed wording provider, but it is no longer required for the reflection module.
 
 Demo-friendly default:
 
@@ -135,6 +143,8 @@ Demo-friendly default:
 - `README_WINDOWS.md`: short Windows-specific run note
 - `PROJECT_MEMORY.md`: project decisions, current scope, and next-step context
 - `PROJECT_EXPLANATION.md`: long-form explanation draft for defense and reporting
+- `OLLAMA_REFLECTION_SETUP.md`: free local-model reflection setup checklist
+- `REFLECTION_REMOTE_PROVIDER_CONTRACT.md`: remote provider interface contract
 - `ROKID_SCENE_CALIBRATION_PROTOCOL.md`: standard first-person scene calibration method
 
 ## Current scope
@@ -147,3 +157,45 @@ The main demo story should stay focused on:
 - after-class attention review
 
 Avoid presenting OCR and note capture as the core innovation, because those overlap more with teammates' content-assistance ideas.
+
+## Independent Reflection Module
+
+The project now also includes an independent page at `/reflection`:
+
+- it reads the logged learning-state session and difficulty events
+- it converts them into a reflection signature, metacognitive questions, and next-session experiments
+- it stays process-focused, so it does not overlap with tutoring, writing help, language coaching, note taking, or gesture input
+- it can run fully in heuristic mode
+- it can optionally use a free local Ollama model such as `qwen3:4b`
+- it can later be switched to a remote API provider for Rokid-side deployment without changing the reflection page structure
+- it can compare two local Ollama models on the same session from the `/reflection` page
+- it can export both single-run and compare snapshots to `exports/reflection_snapshots/` as JSON and Markdown
+
+Recommended free local setup:
+
+1. Install Ollama.
+2. Pull a local model such as `qwen3:4b`.
+3. Keep `.env` on:
+   - `LLM_PROVIDER=ollama`
+   - `OLLAMA_BASE_URL=http://127.0.0.1:11434/api`
+   - `OLLAMA_MODEL=qwen3:4b`
+4. Open `/reflection`, turn on provider-backed wording polish, and keep heuristic fallback enabled by default.
+
+If you want to test the future remote deployment path without a real server yet:
+
+1. Start `.\start_mock_reflection_provider.ps1`
+2. Set `LLM_PROVIDER=remote`
+3. Point `REFLECTION_REMOTE_URL` to `http://127.0.0.1:5051/reflect`
+
+See:
+
+- `OLLAMA_REFLECTION_SETUP.md`
+- `REFLECTION_REMOTE_PROVIDER_CONTRACT.md`
+
+Suggested local flow:
+
+1. Run a live session or generate demo assets.
+2. Open `/review` to inspect flagged segments.
+3. Open `/reflection` to generate a reflection coach view for the same session.
+4. Use the local compare panel to contrast `qwen3:4b` with another installed model such as `deepseek-r1:7b`.
+5. Save the current coach snapshot or compare snapshot for reporting, thesis material, or future Rokid-side replay.
