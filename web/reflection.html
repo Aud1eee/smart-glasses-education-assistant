@@ -956,7 +956,8 @@
                 </div>
                 <p>
                     This comparison reuses the same session evidence, learner note, and next goal. It is meant to help us evaluate wording quality,
-                    reflection specificity, and generation time before we lock a deployment default.
+                    reflection specificity, and generation time before we lock a deployment default. Saved snapshots now also produce a one-page card
+                    that is easier to open during a defense or demo.
                 </p>
             </div>
 
@@ -1192,9 +1193,10 @@
             shell.innerHTML = `
                 <a class="nav-link" href="${escapeHtml(result.json_url || "#")}" target="_blank" rel="noreferrer">Open JSON Snapshot</a>
                 <a class="nav-link" href="${escapeHtml(result.md_url || "#")}" target="_blank" rel="noreferrer">Open Markdown Snapshot</a>
+                ${result.card_url ? `<a class="nav-link" href="${escapeHtml(result.card_url)}" target="_blank" rel="noreferrer">${result.kind === "compare" ? "Open Compare Card" : "Open Summary Card"}</a>` : ""}
             `;
             document.getElementById("snapshot-note").innerText =
-                `Saved ${String(result.kind || "reflection")} snapshot at ${result.saved_at || "--"}.`;
+                `Saved ${String(result.kind || "reflection")} snapshot at ${result.saved_at || "--"} and generated a presentation-ready card.`;
         }
 
         function renderCompareResults(payload) {

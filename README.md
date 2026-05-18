@@ -67,6 +67,7 @@ Validation:
   - `exports/reflection_smoke_summary.md`
   - `exports/reflection_smoke_summary.json`
 - this boots a temporary reflection backend through the import-based Windows launcher and smoke-tests `/review`, `/reflection`, `/api/reflection_coach`, `/api/reflection_compare`, and `/api/reflection_snapshot`.
+- the reflection snapshot flow now also emits presentation-ready HTML cards alongside the JSON and Markdown exports.
 
 PowerShell commands also work:
 
@@ -174,7 +175,7 @@ The project now also includes an independent page at `/reflection`:
 - it can optionally use a free local Ollama model such as `qwen3:4b`
 - it can later be switched to a remote API provider for Rokid-side deployment without changing the reflection page structure
 - it can compare two local Ollama models on the same session from the `/reflection` page
-- it can export both single-run and compare snapshots to `exports/reflection_snapshots/` as JSON and Markdown
+- it can export both single-run and compare snapshots to `exports/reflection_snapshots/` as JSON, Markdown, and one-page HTML cards
 
 Recommended free local setup:
 
@@ -204,3 +205,4 @@ Suggested local flow:
 3. Open `/reflection` to generate a reflection coach view for the same session.
 4. Use the local compare panel to contrast `qwen3:4b` with another installed model such as `deepseek-r1:7b`.
 5. Save the current coach snapshot or compare snapshot for reporting, thesis material, or future Rokid-side replay.
+6. Open the exported HTML card when you need a cleaner one-page artifact for a defense, demo, or presentation appendix.

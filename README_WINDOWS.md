@@ -48,6 +48,7 @@ This smoke validator boots a temporary backend through the same import-based lau
 - `/api/reflection_compare`
 - `/api/reflection_snapshot`
 - evidence-anchor export behavior
+- presentation-ready HTML reflection cards
 
 ## Rokid frame stream test
 

@@ -247,6 +247,7 @@ def main():
             )
             snapshot_json = json.loads(Path(snapshot_result["json_path"]).read_text(encoding="utf-8"))
             snapshot_md = Path(snapshot_result["md_path"]).read_text(encoding="utf-8")
+            snapshot_card = Path(snapshot_result["card_path"]).read_text(encoding="utf-8")
             single_snapshot_ok = (
                 snapshot_status == 200
                 and snapshot_json.get("requested_event_id") == 99
@@ -254,13 +255,16 @@ def main():
                 and "## Evidence Anchor" in snapshot_md
                 and "Anchor reason:" in snapshot_md
                 and "## Replay Anchor" not in snapshot_md
+                and "Evidence Anchor" in snapshot_card
+                and "Coach Memo" in snapshot_card
+                and "Reflection Questions" in snapshot_card
             )
             payload["checks"].append(
                 _check(
                     "reflection-snapshot-single",
                     single_snapshot_ok,
-                    "single snapshot keeps the selected anchor ids and writes the evidence-anchor markdown section.",
-                    artifact=snapshot_result["md_path"],
+                    "single snapshot keeps the selected anchor ids and writes the evidence-anchor markdown plus HTML summary card.",
+                    artifact=snapshot_result["card_path"],
                 )
             )
 
@@ -300,18 +304,21 @@ def main():
                         timeout=compare_timeout,
                     )
                     compare_snapshot_md = Path(compare_snapshot_result["md_path"]).read_text(encoding="utf-8")
+                    compare_snapshot_card = Path(compare_snapshot_result["card_path"]).read_text(encoding="utf-8")
                     compare_snapshot_ok = (
                         compare_snapshot_status == 200
                         and "## Shared Evidence Anchor" in compare_snapshot_md
                         and "Anchor reason:" in compare_snapshot_md
                         and "## Replay Anchor" not in compare_snapshot_md
+                        and "Reflection Compare Card" in compare_snapshot_card
+                        and "Evidence Anchor" in compare_snapshot_card
                     )
                     payload["checks"].append(
                         _check(
                             "reflection-snapshot-compare",
                             compare_snapshot_ok,
-                            "compare snapshot writes the shared evidence-anchor section for the compared variants.",
-                            artifact=compare_snapshot_result["md_path"],
+                            "compare snapshot writes the shared evidence-anchor section and HTML compare card for the compared variants.",
+                            artifact=compare_snapshot_result["card_path"],
                         )
                     )
                 except Exception as exc:  # pragma: no cover - environment-sensitive

@@ -2,6 +2,7 @@ import json
 import os
 import re
 from datetime import datetime
+from html import escape as html_escape
 import time
 
 import bootstrap_windows_runtime  # noqa: F401
@@ -396,6 +397,19 @@ def _snapshot_metric(value, suffix=""):
     return f"{int(round(numeric))}{suffix}"
 
 
+def _snapshot_plain_text(value, fallback="--"):
+    text = str(value or "").strip()
+    return text or fallback
+
+
+def _snapshot_html_text(value, fallback="--"):
+    return html_escape(_snapshot_plain_text(value, fallback))
+
+
+def _snapshot_html_paragraph(value, fallback="--"):
+    return _snapshot_html_text(value, fallback).replace("\n", "<br>")
+
+
 def _reflection_anchor_reason(payload, event):
     event = event or {}
     requested_event_id = str(payload.get("requested_event_id", "") or "").strip()
@@ -545,6 +559,508 @@ def _build_compare_reflection_snapshot_markdown(bundle):
     return "\n".join(lines).strip() + "\n"
 
 
+def _reflection_card_question_items(items):
+    rows = []
+    for index, item in enumerate(items or [], start=1):
+        if isinstance(item, dict):
+            text = item.get("question") or item.get("title") or ""
+        else:
+            text = str(item or "")
+        text = str(text).strip()
+        if not text:
+            continue
+        rows.append(
+            f"<li><strong>Q{index}.</strong> <span>{_snapshot_html_paragraph(text)}</span></li>"
+        )
+    return "".join(rows) or "<li class=\"empty\">No reflection questions were generated.</li>"
+
+
+def _reflection_card_experiment_items(items):
+    rows = []
+    for index, item in enumerate(items or [], start=1):
+        if not isinstance(item, dict):
+            continue
+        title = _snapshot_plain_text(item.get("title"), f"Experiment {index}")
+        detail = _snapshot_plain_text(item.get("detail"), "")
+        success_marker = _snapshot_plain_text(item.get("success_marker"), "")
+        body = [
+            f"<strong>{_snapshot_html_text(title)}</strong>",
+        ]
+        if detail:
+            body.append(f"<p>{_snapshot_html_paragraph(detail)}</p>")
+        if success_marker:
+            body.append(
+                f"<p><span class=\"metric-label\">Success marker</span> {_snapshot_html_paragraph(success_marker)}</p>"
+            )
+        rows.append(f"<li>{''.join(body)}</li>")
+    return "".join(rows) or "<li class=\"empty\">No next-session experiments were generated.</li>"
+
+
+def _reflection_card_anchor_html(payload):
+    payload = payload if isinstance(payload, dict) else {}
+    event = payload.get("highlight_event") or {}
+    anchor_reason = _reflection_anchor_reason(payload, event)
+    if not event:
+        return f"""
+        <article class="anchor-card anchor-empty">
+            <div class="section-eyebrow">Evidence Anchor</div>
+            <h2>Session-wide reading</h2>
+            <p>{_snapshot_html_paragraph(anchor_reason)}</p>
+        </article>
+        """
+
+    severity_label = str(event.get("severity_label", "")).strip() or _snapshot_display_label(event.get("severity"), "Clear")
+    state_label = str(event.get("state_hint_label", "")).strip() or _snapshot_display_label(event.get("state_hint"), "Stable")
+    requested_event_id = str(payload.get("requested_event_id", "") or "").strip()
+    selected_event_id = str(payload.get("selected_event_id", "") or event.get("event_id", "") or "").strip()
+    anchor_meta = "Auto-selected strongest event"
+    if requested_event_id:
+        anchor_meta = "Inherited from review selection" if requested_event_id == selected_event_id else f"Fallback from requested D{requested_event_id}"
+
+    return f"""
+    <article class="anchor-card">
+        <div class="section-eyebrow">Evidence Anchor</div>
+        <div class="anchor-topline">
+            <span class="anchor-meta">{_snapshot_html_text(anchor_meta)}</span>
+            <span class="anchor-event">D{_snapshot_html_text(event.get('event_id'), '--')} | {_snapshot_html_text(event.get('time_window'), '--')}</span>
+        </div>
+        <p class="anchor-reason">{_snapshot_html_paragraph(anchor_reason)}</p>
+        <div class="metric-grid">
+            <div class="metric-chip"><span class="metric-label">Severity</span><strong>{_snapshot_html_text(severity_label)}</strong></div>
+            <div class="metric-chip"><span class="metric-label">State</span><strong>{_snapshot_html_text(state_label)}</strong></div>
+            <div class="metric-chip"><span class="metric-label">Mode</span><strong>{_snapshot_html_text(_snapshot_display_label(event.get('task_mode'), '--'))}</strong></div>
+            <div class="metric-chip"><span class="metric-label">Load</span><strong>{_snapshot_html_text(_snapshot_metric(event.get('avg_load')))}</strong></div>
+            <div class="metric-chip"><span class="metric-label">Fatigue</span><strong>{_snapshot_html_text(_snapshot_metric(event.get('avg_fatigue')))}</strong></div>
+            <div class="metric-chip"><span class="metric-label">Switching</span><strong>{_snapshot_html_text(_snapshot_metric(event.get('avg_switching')))}</strong></div>
+        </div>
+        <div class="anchor-details">
+            <div>
+                <span class="metric-label">Trigger</span>
+                <p>{_snapshot_html_paragraph(event.get('trigger_label'), '--')}</p>
+            </div>
+            <div>
+                <span class="metric-label">Trigger reason</span>
+                <p>{_snapshot_html_paragraph(event.get('trigger_reason'), '--')}</p>
+            </div>
+            <div>
+                <span class="metric-label">Review note</span>
+                <p>{_snapshot_html_paragraph(event.get('review_note'), '--')}</p>
+            </div>
+            <div>
+                <span class="metric-label">Catch-up action</span>
+                <p>{_snapshot_html_paragraph(event.get('catch_up_action'), '--')}</p>
+            </div>
+        </div>
+    </article>
+    """
+
+
+def _reflection_card_shell(title, subtitle, body_html):
+    title = _snapshot_html_text(title, "Reflection Summary Card")
+    subtitle = _snapshot_html_paragraph(subtitle, "Reflection summary")
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{title}</title>
+    <style>
+        :root {{
+            color-scheme: light;
+            --paper: #f7f3ea;
+            --panel: #fffaf3;
+            --line: #d8c9af;
+            --text: #1f2430;
+            --muted: #576172;
+            --accent: #a84f2f;
+            --accent-soft: #efe0d1;
+            --ink-soft: #e8f0ec;
+            --ink-strong: #27594a;
+            --warn-soft: #f6ead5;
+            --shadow: 0 20px 48px rgba(31, 36, 48, 0.08);
+        }}
+        * {{ box-sizing: border-box; }}
+        body {{
+            margin: 0;
+            font-family: "Segoe UI", "Noto Sans SC", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(168, 79, 47, 0.12), transparent 34%),
+                radial-gradient(circle at top right, rgba(39, 89, 74, 0.14), transparent 28%),
+                var(--paper);
+        }}
+        main {{
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 32px 24px 48px;
+        }}
+        .hero {{
+            display: grid;
+            gap: 18px;
+            padding: 28px;
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            background: linear-gradient(135deg, rgba(255, 250, 243, 0.98), rgba(247, 243, 234, 0.96));
+            box-shadow: var(--shadow);
+        }}
+        .hero-eyebrow, .section-eyebrow {{
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--accent);
+        }}
+        h1, h2, h3, p {{ margin: 0; }}
+        h1 {{
+            font-size: clamp(30px, 4vw, 48px);
+            line-height: 1.02;
+            letter-spacing: -0.04em;
+        }}
+        .hero-subtitle {{
+            max-width: 760px;
+            font-size: 16px;
+            line-height: 1.65;
+            color: var(--muted);
+        }}
+        .meta-row {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+        }}
+        .meta-card, .panel {{
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.82);
+            box-shadow: var(--shadow);
+        }}
+        .meta-card {{
+            padding: 16px 18px;
+        }}
+        .meta-card span, .metric-label {{
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }}
+        .meta-card strong {{
+            font-size: 16px;
+            line-height: 1.35;
+        }}
+        .content-grid {{
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+            gap: 18px;
+            margin-top: 18px;
+        }}
+        .panel {{
+            padding: 22px;
+        }}
+        .signature-panel {{
+            background: linear-gradient(160deg, rgba(239, 224, 209, 0.9), rgba(255, 250, 243, 0.94));
+        }}
+        .signature-panel h2 {{
+            margin-top: 12px;
+            font-size: 28px;
+            line-height: 1.15;
+        }}
+        .signature-detail {{
+            margin-top: 12px;
+            line-height: 1.7;
+            color: var(--muted);
+        }}
+        .summary-stack, .anchor-details, .variant-stack {{
+            display: grid;
+            gap: 12px;
+        }}
+        .summary-item {{
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: rgba(39, 89, 74, 0.07);
+        }}
+        .summary-item:nth-child(2n) {{
+            background: rgba(168, 79, 47, 0.08);
+        }}
+        .summary-item p {{
+            margin-top: 6px;
+            line-height: 1.6;
+            color: var(--muted);
+        }}
+        .anchor-card {{
+            grid-column: 1 / -1;
+            padding: 22px;
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            background: linear-gradient(180deg, rgba(255, 250, 243, 0.96), rgba(246, 234, 213, 0.78));
+            box-shadow: var(--shadow);
+        }}
+        .anchor-topline {{
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 14px;
+        }}
+        .anchor-meta {{
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--accent);
+        }}
+        .anchor-event {{
+            font-weight: 700;
+            font-size: 18px;
+        }}
+        .anchor-reason {{
+            margin-top: 12px;
+            line-height: 1.7;
+            color: var(--muted);
+        }}
+        .metric-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 16px;
+        }}
+        .metric-chip {{
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid rgba(216, 201, 175, 0.75);
+        }}
+        .metric-chip strong {{
+            font-size: 17px;
+        }}
+        .anchor-details {{
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            margin-top: 16px;
+        }}
+        .anchor-details div {{
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.68);
+        }}
+        .anchor-details p, .memo-body, .list-card li, .variant-block p {{
+            line-height: 1.7;
+            color: var(--muted);
+        }}
+        .lists-grid {{
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+            margin-top: 18px;
+        }}
+        .list-card ul {{
+            margin: 16px 0 0;
+            padding-left: 20px;
+        }}
+        .list-card li {{
+            margin-bottom: 14px;
+        }}
+        .list-card li.empty {{
+            list-style: none;
+            margin-left: -20px;
+        }}
+        .memo-panel {{
+            margin-top: 18px;
+            background: linear-gradient(180deg, rgba(232, 240, 236, 0.86), rgba(255, 255, 255, 0.9));
+        }}
+        .memo-body {{
+            margin-top: 14px;
+            font-size: 15px;
+        }}
+        .footer-note {{
+            margin-top: 18px;
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--muted);
+        }}
+        .compare-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 18px;
+            margin-top: 18px;
+        }}
+        .variant-panel {{
+            background: rgba(255, 255, 255, 0.86);
+        }}
+        .variant-topline {{
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: baseline;
+            margin-top: 12px;
+        }}
+        .variant-badge {{
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: var(--ink-soft);
+            color: var(--ink-strong);
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }}
+        .variant-block {{
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(216, 201, 175, 0.78);
+        }}
+        @media (max-width: 900px) {{
+            .content-grid,
+            .lists-grid {{
+                grid-template-columns: 1fr;
+            }}
+        }}
+        @media print {{
+            body {{ background: #fff; }}
+            main {{ max-width: none; padding: 0; }}
+            .hero, .panel, .anchor-card, .meta-card {{
+                box-shadow: none;
+                break-inside: avoid;
+            }}
+        }}
+    </style>
+</head>
+<body>
+    <main>
+        <section class="hero">
+            <div class="hero-eyebrow">Learning Reflection Coach</div>
+            <h1>{title}</h1>
+            <p class="hero-subtitle">{subtitle}</p>
+        </section>
+        {body_html}
+        <p class="footer-note">
+            This reflection card stays process-focused. It summarizes how the learning session unfolded and what to try next, without reteaching the study content itself.
+        </p>
+    </main>
+</body>
+</html>
+"""
+
+
+def _build_single_reflection_snapshot_html(bundle):
+    payload = bundle.get("payload", {}) or {}
+    summary = payload.get("summary", {}) or {}
+    generation = payload.get("generation", {}) or {}
+    coach_summary = payload.get("coach_summary", {}) or {}
+    signature = payload.get("signature", {}) or {}
+    body_html = f"""
+    <div class="meta-row" style="margin-top: 18px;">
+        <article class="meta-card"><span>Session</span><strong>{_snapshot_html_text(bundle.get('session_id'), '--')}</strong></article>
+        <article class="meta-card"><span>Dataset</span><strong>{_snapshot_html_text(bundle.get('dataset'), '--')}</strong></article>
+        <article class="meta-card"><span>Provider</span><strong>{_snapshot_html_text(generation.get('provider_label'), 'Heuristic')}</strong></article>
+        <article class="meta-card"><span>Model</span><strong>{_snapshot_html_text(generation.get('model'), '--')}</strong></article>
+        <article class="meta-card"><span>Saved At</span><strong>{_snapshot_html_text(bundle.get('saved_at'), '--')}</strong></article>
+        <article class="meta-card"><span>Primary Mode</span><strong>{_snapshot_html_text(summary.get('primary_task_mode'), '--')}</strong></article>
+    </div>
+    <div class="content-grid">
+        <article class="panel signature-panel">
+            <div class="section-eyebrow">Session Signature</div>
+            <h2>{_snapshot_html_text(signature.get('label'), '--')}</h2>
+            <p class="signature-detail">{_snapshot_html_paragraph(signature.get('detail'), 'No signature detail.')}</p>
+        </article>
+        <article class="panel">
+            <div class="section-eyebrow">Coach Summary</div>
+            <div class="summary-stack" style="margin-top: 12px;">
+                <div class="summary-item"><span class="metric-label">Headline</span><p>{_snapshot_html_paragraph(coach_summary.get('headline'), '--')}</p></div>
+                <div class="summary-item"><span class="metric-label">Overview</span><p>{_snapshot_html_paragraph(coach_summary.get('overview'), '--')}</p></div>
+                <div class="summary-item"><span class="metric-label">Why It Matters</span><p>{_snapshot_html_paragraph(coach_summary.get('why_it_matters'), '--')}</p></div>
+                <div class="summary-item"><span class="metric-label">Next Boundary</span><p>{_snapshot_html_paragraph(coach_summary.get('next_boundary'), '--')}</p></div>
+            </div>
+        </article>
+    </div>
+    {_reflection_card_anchor_html(payload)}
+    <div class="lists-grid">
+        <article class="panel list-card">
+            <div class="section-eyebrow">Reflection Questions</div>
+            <ul>{_reflection_card_question_items(payload.get('reflection_questions', []))}</ul>
+        </article>
+        <article class="panel list-card">
+            <div class="section-eyebrow">Next-session Experiments</div>
+            <ul>{_reflection_card_experiment_items(payload.get('next_session_experiments', []))}</ul>
+        </article>
+    </div>
+    <article class="panel memo-panel">
+        <div class="section-eyebrow">Coach Memo</div>
+        <p class="memo-body">{_snapshot_html_paragraph(payload.get('coach_memo'), 'No coach memo.')}</p>
+    </article>
+    """
+    title = signature.get("label") or "Reflection Summary Card"
+    subtitle = coach_summary.get("headline") or "A one-page summary of the session signature, anchor event, and next-session experiments."
+    return _reflection_card_shell(title, subtitle, body_html)
+
+
+def _build_compare_reflection_snapshot_html(bundle):
+    payload = bundle.get("payload", {}) or {}
+    variants = payload.get("variants", []) or []
+    anchor_payload = {}
+    for variant in variants:
+        candidate = variant.get("payload")
+        if isinstance(candidate, dict) and candidate:
+            anchor_payload = candidate
+            break
+
+    variant_html = []
+    for variant in variants:
+        generation = variant.get("generation", {}) or {}
+        coach_summary = variant.get("coach_summary", {}) or {}
+        variant_html.append(f"""
+        <article class="panel variant-panel">
+            <div class="section-eyebrow">Model Variant</div>
+            <div class="variant-topline">
+                <h2>{_snapshot_html_text(variant.get('model') or generation.get('model'), '--')}</h2>
+                <span class="variant-badge">{_snapshot_html_text(generation.get('mode'), 'heuristic')} | {_snapshot_html_text(variant.get('duration_ms'), '0')} ms</span>
+            </div>
+            <div class="variant-stack">
+                <div class="variant-block">
+                    <span class="metric-label">Headline</span>
+                    <p>{_snapshot_html_paragraph(coach_summary.get('headline'), '--')}</p>
+                </div>
+                <div class="variant-block">
+                    <span class="metric-label">Coach Memo</span>
+                    <p>{_snapshot_html_paragraph(variant.get('coach_memo'), 'No coach memo.')}</p>
+                </div>
+                <div class="variant-block">
+                    <span class="metric-label">Reflection Questions</span>
+                    <ul>{_reflection_card_question_items(variant.get('reflection_questions', []))}</ul>
+                </div>
+                <div class="variant-block">
+                    <span class="metric-label">Experiments</span>
+                    <ul>{_reflection_card_experiment_items(variant.get('next_session_experiments', []))}</ul>
+                </div>
+            </div>
+        </article>
+        """)
+
+    body_html = f"""
+    <div class="meta-row" style="margin-top: 18px;">
+        <article class="meta-card"><span>Session</span><strong>{_snapshot_html_text(bundle.get('session_id'), '--')}</strong></article>
+        <article class="meta-card"><span>Dataset</span><strong>{_snapshot_html_text(bundle.get('dataset'), '--')}</strong></article>
+        <article class="meta-card"><span>Provider</span><strong>{_snapshot_html_text((payload.get('request', {}) or {}).get('provider'), 'ollama')}</strong></article>
+        <article class="meta-card"><span>Compared At</span><strong>{_snapshot_html_text(payload.get('compared_at'), '--')}</strong></article>
+        <article class="meta-card"><span>Variant Count</span><strong>{_snapshot_html_text(len(variants), '0')}</strong></article>
+    </div>
+    {_reflection_card_anchor_html(anchor_payload)}
+    <div class="compare-grid">
+        {''.join(variant_html) or '<article class="panel variant-panel"><p class="memo-body">No compare variants were generated.</p></article>'}
+    </div>
+    """
+    title = "Reflection Compare Card"
+    subtitle = "A one-page contrast of local model outputs on the same evidence anchor."
+    return _reflection_card_shell(title, subtitle, body_html)
+
+
+def _build_reflection_snapshot_html(bundle):
+    if bundle.get("kind") == "compare":
+        return _build_compare_reflection_snapshot_html(bundle)
+    return _build_single_reflection_snapshot_html(bundle)
+
+
 def _build_reflection_snapshot_markdown(bundle):
     if bundle.get("kind") == "compare":
         return _build_compare_reflection_snapshot_markdown(bundle)
@@ -588,11 +1104,14 @@ def _save_reflection_snapshot(kind, payload):
     basename = f"{session_slug}-reflection-{kind}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
     json_path = os.path.join(REFLECTION_SNAPSHOT_DIR, f"{basename}.json")
     md_path = os.path.join(REFLECTION_SNAPSHOT_DIR, f"{basename}.md")
+    html_path = os.path.join(REFLECTION_SNAPSHOT_DIR, f"{basename}.html")
 
     with open(json_path, "w", encoding="utf-8") as handle:
         json.dump(bundle, handle, indent=2, ensure_ascii=False)
     with open(md_path, "w", encoding="utf-8") as handle:
         handle.write(_build_reflection_snapshot_markdown(bundle))
+    with open(html_path, "w", encoding="utf-8") as handle:
+        handle.write(_build_reflection_snapshot_html(bundle))
 
     return {
         "status": "ok",
@@ -601,8 +1120,10 @@ def _save_reflection_snapshot(kind, payload):
         "saved_at": bundle["saved_at"],
         "json_url": f"/exports/reflection_snapshots/{basename}.json",
         "md_url": f"/exports/reflection_snapshots/{basename}.md",
+        "card_url": f"/exports/reflection_snapshots/{basename}.html",
         "json_path": json_path,
         "md_path": md_path,
+        "card_path": html_path,
     }
 
 
