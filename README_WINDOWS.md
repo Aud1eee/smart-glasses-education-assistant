@@ -12,6 +12,7 @@ For the full project overview, setup steps, and current scope, read `README.md` 
 6. Open `http://127.0.0.1:5000`.
 
 `Run Focus Project` and `.\start_windows.ps1` now use **serve-only mode** by default, so the Flask HUD stays alive until you stop it with `Ctrl+C`.
+They also launch the backend through an import-based bootstrap path, which avoids the stale `app.py` process issue seen with direct script execution on this machine.
 If you still want the old console menu, use the `Run Focus Project Console` launch config or run `python run.py` manually.
 
 ## Validation module

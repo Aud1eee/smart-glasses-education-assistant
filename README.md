@@ -54,6 +54,7 @@ The current priority is the A/B/C learning-state workflow. OCR features are kept
 Notes:
 
 - `Run Focus Project` and `start_windows.ps1` now default to **serve-only mode**, which keeps the Flask HUD running for browser testing.
+- on this Windows setup, `start_windows.ps1` now boots the backend through an import-based launcher instead of direct `app.py` execution, because that path proved more reliable for the reflection snapshot exporter.
 - if you want the original console menu for analytics scripts, use the `Run Focus Project Console` launch config or run `python run.py` manually.
 
 Validation:

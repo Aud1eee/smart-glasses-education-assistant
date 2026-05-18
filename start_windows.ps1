@@ -8,4 +8,5 @@ Set-Location $projectRoot
 
 Write-FocusProjectRuntimeBanner -PythonExe $pythonExe
 
-& $pythonExe run.py --serve-only
+$serverBootstrap = "import bootstrap_windows_runtime; import serve_app; serve_app.main()"
+& $pythonExe -B -c $serverBootstrap
