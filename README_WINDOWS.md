@@ -50,6 +50,10 @@ This smoke validator boots a temporary backend through the same import-based lau
 - evidence-anchor export behavior
 - presentation-ready HTML reflection cards
 
+If the `/reflection` page shows a snapshot success message but does not expose an `Open Reflection Card` or `Open Compare Card` link, restart the Flask backend. On this machine, templates can refresh before an older long-running Python process picks up the newer snapshot exporter code.
+The provider strip now includes backend runtime and snapshot-exporter version hints, so you can tell whether the currently running Flask process is new enough before saving a snapshot.
+The top bar now also mirrors that status in a compact runtime badge, which is useful during demos because it is visible before you scroll.
+
 ## Rokid frame stream test
 
 When you want to simulate a Rokid-like continuous frame input path instead of the posture-only simulator:

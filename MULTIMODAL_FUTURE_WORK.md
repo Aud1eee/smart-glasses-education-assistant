@@ -1,51 +1,51 @@
-# 多模态算法未来工作框架
+# Multimodal Future Work Framework
 
-本文档用于说明 **Learning State Guardian** 从当前“姿态相关学习状态估计”逐步升级为“多模态学习状态感知系统”的路线。
+This document explains how **Learning State Guardian** can evolve from its current posture-centered learning-state estimator into a more complete multimodal learning-state sensing system.
 
-## 1. 当前阶段定位
+## 1. Current Stage Positioning
 
-当前系统已经实现的核心逻辑是：
+The current system already implements these core branches:
 
-- 基于姿态与稳定度的 `Behavioral_Alignment`
-- 基于姿态漂移与波动的 `Cognitive_Load`
-- 基于被动下垂和低运动窗口的 `Fatigue_Risk`
-- 基于预热与波动的 `Confidence / Uncertainty`
+- `Behavioral_Alignment` based on posture and stability
+- `Cognitive_Load` based on posture drift and variability
+- `Fatigue_Risk` based on passive downward drift and low-motion windows
+- `Confidence / Uncertainty` based on warmup and fluctuation patterns
 
-因此，当前版本更准确的定位是：
+Because of that, the most accurate description of the current version is:
 
-**任务模式感知的姿态代理学习状态模型**
+**a task-mode-aware posture-proxy learning-state model**
 
-而不是完整的多模态学习状态感知系统。
+not yet a full multimodal learning-state sensing system.
 
-## 2. 为什么需要多模态
+## 2. Why Multimodality Matters
 
-仅使用姿态数据存在天然局限：
+Using posture alone has natural limits:
 
-1. 低头并不一定等于不专注；
-2. 姿态稳定也不一定等于理解顺畅；
-3. 疲劳、认知负荷与分心可能在姿态层面出现混淆；
-4. 对真实课堂学习状态的解释力仍然有限。
+1. Looking down does not always mean the learner is disengaged.
+2. Stable posture does not always mean the learner understands the material smoothly.
+3. Fatigue, cognitive load, and distraction can be partially entangled at the posture level.
+4. Posture-only signals still have limited explanatory power for real classroom learning states.
 
-因此，后续更合理的方向不是“继续堆一个更复杂的姿态分数”，而是将学习状态拆成多个可解释分支，并逐步引入更多模态。
+So the next step should not be “build an even more complicated posture score.” A better direction is to decompose learning state into several interpretable branches and gradually add more modalities.
 
-## 3. 目标框架
+## 3. Target Framework
 
-建议的多模态框架由 4 个分支组成：
+The recommended multimodal framework has four branches.
 
 ### 3.1 Behavioral Alignment
 
-回答的问题是：
+Question answered:
 
-> 当前行为是否与当前学习任务相匹配？
+> Is the current behavior aligned with the active learning task?
 
-当前可用信号：
+Signals already available:
 
 - `pitch`
 - `variance`
 - `stability`
 - `task_mode`
 
-后续计划加入：
+Planned additions:
 
 - `yaw`
 - `roll`
@@ -54,17 +54,17 @@
 
 ### 3.2 Cognitive Effort
 
-回答的问题是：
+Question answered:
 
-> 学生现在是在费力理解，还是已经明显脱离学习目标？
+> Is the learner working through the content, or clearly drifting away from the learning goal?
 
-当前可用信号：
+Signals already available:
 
-- 姿态漂移代价
-- 姿态波动代价
-- 行为对齐损失
+- posture drift cost
+- posture fluctuation cost
+- behavioral alignment loss
 
-后续计划加入：
+Planned additions:
 
 - `pupil_feature`
 - `blink_rate`
@@ -73,17 +73,17 @@
 
 ### 3.3 Fatigue Risk
 
-回答的问题是：
+Question answered:
 
-> 当前状态更像“累了”，还是“正在努力理解”？
+> Does the current state look more like fatigue, or more like active conceptual effort?
 
-当前可用信号：
+Signals already available:
 
 - `passive_drift`
 - `low_motion_window`
 - `sustained_slump`
 
-后续计划加入：
+Planned additions:
 
 - `eye_openness`
 - `blink_duration_ms`
@@ -91,25 +91,25 @@
 
 ### 3.4 Confidence / Uncertainty
 
-回答的问题是：
+Question answered:
 
-> 当前估计是否可靠？是否应谨慎解释？
+> How reliable is the current estimate, and when should it be interpreted more cautiously?
 
-当前可用信号：
+Signals already available:
 
 - `warmup_window`
 - `variance_spike`
 - `mode_transition`
 
-后续计划加入：
+Planned additions:
 
 - `face_confidence`
 - `gaze_confidence`
 - `tracking_quality`
 
-## 4. 最终状态输出
+## 4. Final State Output
 
-在多模态阶段，推荐最终不再依赖单一“专注分”，而是输出更可解释的状态标签：
+In the multimodal stage, the final output should move away from a single “focus score” and instead expose interpretable state labels such as:
 
 - `Deep Focus`
 - `Productive Struggle`
@@ -117,66 +117,66 @@
 - `Fatigue Risk`
 - `Uncertain`
 
-这样的输出更适合智能眼镜 HUD，也更容易向教师或评委解释。
+This format fits a smart-glasses HUD better and is also easier to explain to teachers, reviewers, and thesis evaluators.
 
-## 5. 面向 Rokid 的接入路线
+## 5. Rokid-Oriented Integration Path
 
-为了贴合 Rokid 眼镜场景，建议按三阶段推进：
+To fit the Rokid glasses scenario, a three-phase path is recommended.
 
-### Phase 1：当前已完成
+### Phase 1: Already Completed
 
-- 姿态代理模型
-- task mode aware 逻辑
-- HUD、热力图、难点事件、回补页
+- posture-proxy model
+- task-mode-aware logic
+- HUD, heatmap, difficulty events, and review page
 
-### Phase 2：轻量视觉扩展
+### Phase 2: Lightweight Visual Expansion
 
-目标：
+Goals:
 
-- 接入 `face presence`
-- 接入 `face confidence`
-- 接入 `gaze proxy`
-- 接入 `eye openness`
+- integrate `face presence`
+- integrate `face confidence`
+- integrate `gaze proxy`
+- integrate `eye openness`
 
-这一步的重点不是一次性做重型视觉系统，而是先把“是否看向合理目标、是否存在可解释疲劳线索”加入状态判断。
+The focus at this phase is not to build a heavy computer-vision stack immediately. The goal is to add basic signals about whether the learner is looking at a reasonable target and whether there are interpretable fatigue cues.
 
-### Phase 3：更完整眼部特征
+### Phase 3: Richer Ocular Features
 
-目标：
+Goals:
 
 - `pupil_feature`
 - `blink_rate`
 - `blink_duration_ms`
 - `perclos`
 
-这一阶段才能更接近真正的多模态学习状态估计。
+This is the stage where the system gets closer to a genuinely multimodal learning-state estimator.
 
-## 6. 当前代码中的未来工作钩子
+## 6. Future-Work Hooks Already in the Codebase
 
-项目中已经加入了一个轻量的多模态蓝图层：
+The project already contains a lightweight multimodal blueprint layer:
 
 - [multimodal_schema.py](</C:/Users/11721/Desktop/focus_project_windows/core/multimodal_schema.py>)
 
-并提供了一个说明型 API：
+It also exposes an explanatory API:
 
-- [app.py](/C:/Users/11721/Desktop/focus_project_windows/app.py:1) 中的 `/api/multimodal_blueprint`
+- [app.py](/C:/Users/11721/Desktop/focus_project_windows/app.py:1) route `/api/multimodal_blueprint`
 
-该接口的作用不是立即参与算法推理，而是明确：
+The goal of that endpoint is not to participate in inference immediately. Instead, it makes three things explicit:
 
-- 当前系统已启用哪些信号；
-- 后续将扩展哪些模态；
-- 多模态融合准备如何分层进行。
+- which signals are already active now
+- which modalities are planned next
+- how multimodal fusion is expected to be layered over time
 
-这可以作为“未来工作不是空谈”的工程化证据。
+That helps show that the future-work story is backed by concrete engineering hooks rather than only verbal plans.
 
-## 7. 论文中可直接使用的未来工作表述
+## 7. Thesis-Ready Future Work Paragraph
 
-下面这段可以直接作为论文“未来工作”部分的基础版本：
+The paragraph below can be used as a starting point in a thesis future-work section:
 
-> 当前系统主要基于姿态相关特征构建任务模式感知的学习状态代理模型，能够完成行为对齐估计、认知负荷监测、疲劳风险估计以及难点事件标记。然而，仅依赖姿态信息仍存在局限，例如姿态变化无法完全区分分心、疲劳与高认知负荷等状态。后续工作将沿多模态方向展开，在保留当前姿态分支的基础上，逐步引入面部可见性、视线代理、眼睑开合、眨眼时长、PERCLOS 以及瞳孔相关特征，形成行为对齐、认知努力、疲劳风险与置信度四分支融合框架。该路线更符合 Rokid 智能眼镜的真实输入条件，也更有利于提升学习状态判断的可解释性与鲁棒性。
+> The current system mainly relies on posture-related features to build a task-mode-aware proxy model of learning state, enabling behavioral alignment estimation, cognitive-load monitoring, fatigue-risk estimation, and difficulty-event marking. However, posture-only signals remain limited, because posture changes cannot fully distinguish distraction, fatigue, and high cognitive load. Future work will therefore move toward a multimodal direction. While preserving the current posture branch, later versions will gradually integrate facial visibility, gaze proxies, eyelid openness, blink duration, PERCLOS, and pupil-related features, forming a four-branch fusion framework covering behavioral alignment, cognitive effort, fatigue risk, and confidence. This roadmap better matches the real input conditions of Rokid smart glasses and is more likely to improve the interpretability and robustness of learning-state estimation.
 
-## 8. 答辩可口述版本
+## 8. Defense-Friendly Spoken Version
 
-你答辩时可以这样说：
+You can explain it like this during a defense:
 
-> 目前这套系统已经完成了姿态相关的学习状态估计，但我没有把它直接说成真正的多模态系统。下一步我计划以 Rokid 眼镜为载体，在现有姿态分支上继续接入 face presence、gaze proxy、eye openness，再往后接 blink 和 pupil 相关特征。也就是说，当前版本已经完成了后端原型和验证平台，未来工作是把它逐步升级成一个更严谨的多模态学习状态感知系统。
+> At the moment, the system already completes posture-related learning-state estimation, but I do not describe it as a full multimodal system yet. The next step is to use Rokid glasses as the carrier and continue adding face presence, gaze proxy, and eye openness on top of the current posture branch, followed later by blink- and pupil-related features. In other words, the current version already delivers a backend prototype and validation platform, while the future-work path is to upgrade it step by step into a more rigorous multimodal learning-state sensing system.

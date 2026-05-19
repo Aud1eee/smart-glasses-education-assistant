@@ -26,6 +26,24 @@ This prototype combines:
 
 The current priority is the A/B/C learning-state workflow. OCR features are kept as supporting functions, not the main story.
 
+## Presentation story
+
+The project is easiest to explain as two connected surfaces:
+
+- **Live learning-state loop**
+  - sense the learner's state
+  - regulate the learning rhythm in real time
+  - record evidence for after-class review
+- **Post-session reflection loop**
+  - reopen the flagged session
+  - anchor reflection to the strongest difficulty event
+  - generate next-session experiments and export a clean reflection card
+
+In short:
+
+1. `Learning State Guardian` handles sensing, regulation, and review.
+2. `Learning Reflection Coach` handles post-session reflection and self-regulation planning.
+
 ## Main files
 
 - `app.py`: Flask app and status API
@@ -67,7 +85,9 @@ Validation:
   - `exports/reflection_smoke_summary.md`
   - `exports/reflection_smoke_summary.json`
 - this boots a temporary reflection backend through the import-based Windows launcher and smoke-tests `/review`, `/reflection`, `/api/reflection_coach`, `/api/reflection_compare`, and `/api/reflection_snapshot`.
-- the reflection snapshot flow now also emits presentation-ready HTML cards alongside the JSON and Markdown exports.
+- the reflection snapshot flow now also emits presentation-ready HTML reflection cards alongside the JSON and Markdown exports.
+- the `/reflection` page now also surfaces backend runtime info, so you can tell whether the current Flask process supports the latest HTML card exporter.
+- the reflection top bar also includes a compact runtime badge for demos, so you can point at the active backend/exporter state without scrolling into the provider strip.
 
 PowerShell commands also work:
 
@@ -164,6 +184,27 @@ The main demo story should stay focused on:
 
 Avoid presenting OCR and note capture as the core innovation, because those overlap more with teammates' content-assistance ideas.
 
+## Module boundaries
+
+This project should stay clearly separated from content-assistance directions.
+
+The core module does:
+
+- learning-state sensing
+- adaptive regulation
+- difficulty-event marking
+- after-class review
+- reflection on learning process
+
+The core module does **not** aim to become:
+
+- a knowledge-explanation assistant
+- an AI tutor chat surface
+- a writing-correction tool
+- a language-tutoring system
+- an AI note-taking workflow
+- a gesture-input feature
+
 ## Independent Reflection Module
 
 The project now also includes an independent page at `/reflection`:
@@ -202,7 +243,23 @@ Suggested local flow:
 
 1. Run a live session or generate demo assets.
 2. Open `/review` to inspect flagged segments.
-3. Open `/reflection` to generate a reflection coach view for the same session.
+3. Open `/reflection` to generate a reflection view for the same session.
 4. Use the local compare panel to contrast `qwen3:4b` with another installed model such as `deepseek-r1:7b`.
-5. Save the current coach snapshot or compare snapshot for reporting, thesis material, or future Rokid-side replay.
+5. Save the reflection snapshot or compare snapshot for reporting, thesis material, or future Rokid-side replay.
 6. Open the exported HTML card when you need a cleaner one-page artifact for a defense, demo, or presentation appendix.
+
+## Recommended defense demo flow
+
+If you need a short, repeatable demo path for a defense or checkpoint review, use this order:
+
+1. Start the HUD and run the deterministic presentation simulator.
+2. Show the live transition from stable focus to rising load and regulation.
+3. Open `/review` and highlight the strongest difficulty event.
+4. Jump into `/reflection` from that event.
+5. Generate a reflection view in `heuristic` mode first.
+6. Optionally enable local Ollama wording polish or compare two local models.
+7. Save the reflection snapshot and open the exported HTML reflection card.
+
+This sequence tells a clean product story:
+
+**sense -> regulate -> mark -> review -> reflect**

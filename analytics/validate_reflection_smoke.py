@@ -125,6 +125,7 @@ def _build_markdown(payload):
         )
 
     provider = payload.get("provider_status", {})
+    runtime = payload.get("runtime_info", {})
     ollama = provider.get("ollama", {})
     models = ", ".join(item.get("name", "") for item in ollama.get("available_models", []) if item.get("name")) or "--"
 
@@ -137,6 +138,8 @@ def _build_markdown(payload):
         f"- Validation port: `{payload['port']}`",
         f"- Demo session: `{payload['session_id']}`",
         f"- Provider requested: `{provider.get('requested_provider', '--')}`",
+        f"- Backend runtime: `{runtime.get('backend_version', '--')}`",
+        f"- Snapshot exporter: `{runtime.get('snapshot_exporter_version', '--')}`",
         f"- Ollama reachable: `{ollama.get('reachable', False)}`",
         f"- Ollama models: {models}",
         "",
@@ -173,6 +176,7 @@ def main():
         "session_id": session_id,
         "checks": [],
         "provider_status": {},
+        "runtime_info": {},
     }
 
     try:
@@ -187,6 +191,21 @@ def main():
                     "provider-status",
                     status == 200 and bool(provider_status.get("provider_options")),
                     f"reflection provider status responded with {len(provider_status.get('provider_options', []))} provider option(s).",
+                )
+            )
+
+            runtime_status, runtime_info = _http_json("GET", f"{base_url}/api/runtime_info")
+            payload["runtime_info"] = runtime_info
+            runtime_ok = (
+                runtime_status == 200
+                and bool(runtime_info.get("backend_version"))
+                and bool((runtime_info.get("feature_flags") or {}).get("snapshot_html_card_export"))
+            )
+            payload["checks"].append(
+                _check(
+                    "runtime-info",
+                    runtime_ok,
+                    f"runtime endpoint reported backend `{runtime_info.get('backend_version', '--')}` and snapshot exporter `{runtime_info.get('snapshot_exporter_version', '--')}`.",
                 )
             )
 
@@ -207,12 +226,18 @@ def main():
                 "GET",
                 f"{base_url}/reflection?dataset=demo&session_id={urllib.parse.quote(session_id)}&event_id=1",
             )
-            reflection_ok = reflection_status == 200 and "Evidence Anchor" in reflection_html and "function renderAnchor" in reflection_html
+            reflection_ok = (
+                reflection_status == 200
+                and "Evidence Anchor" in reflection_html
+                and "function renderAnchor" in reflection_html
+                and "Runtime Snapshot" in reflection_html
+                and "runtime-badge-title" in reflection_html
+            )
             payload["checks"].append(
                 _check(
                     "reflection-anchor-page",
                     reflection_ok,
-                    "reflection page renders the evidence-anchor panel and route-sync logic.",
+                    "reflection page renders the evidence-anchor panel, runtime badge, and route-sync logic.",
                 )
             )
 

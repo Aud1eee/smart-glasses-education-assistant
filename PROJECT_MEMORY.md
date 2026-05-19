@@ -48,6 +48,25 @@ Recommended structure:
 - B regulates the learning rhythm in real time
 - C supports after-class reflection and review
 
+## Current release checkpoint
+
+The project is now beyond the original phase-1 HUD prototype stage.
+
+The current demo-ready checkpoint includes:
+
+- `Learning State Guardian` live sensing and adaptive regulation
+- difficulty-event marking and the `/review` follow-up page
+- `Learning Reflection Coach` as an independent `/reflection` module
+- evidence-anchor linking from `/review -> /reflection`
+- local free-model support through `Ollama`
+- local model compare for the reflection module
+- JSON / Markdown / HTML reflection-card export
+- runtime badges and exporter-version hints in the reflection UI
+- Windows startup stabilization for the Flask backend
+- repeatable validation through:
+  - `generate_validation_report.ps1`
+  - `generate_reflection_smoke_report.ps1`
+
 ## Current implementation status
 
 ### Already implemented
@@ -111,6 +130,18 @@ Recommended structure:
     - `remote`
     - `openai`
   - free local-model-first default through `Ollama`
+  - review-linked `event_id` anchoring
+  - local compare mode for two Ollama models
+  - snapshot export to:
+    - JSON
+    - Markdown
+    - HTML reflection card
+  - runtime-info surface:
+    - `/api/runtime_info`
+    - runtime badge in `/reflection`
+  - reflection smoke validation:
+    - `exports/reflection_smoke_summary.md`
+    - `exports/reflection_smoke_summary.json`
 
 ### Latest algorithm upgrade
 
@@ -285,19 +316,15 @@ These should support the demo, but not dominate the project story.
 
 ## Recommended next steps
 
-1. Install Windows `Tesseract OCR` and add it to `PATH`
-2. Verify `run.py` and `simulate_motion.py` together in local VSCode
-3. Polish the HUD text for presentation screenshots
-4. Prepare a concise demo flow:
-   - launch HUD
-   - run motion simulator
-   - show cognitive load changes
-   - show adaptive guidance
-   - generate heatmap report
-5. Optionally add:
-   - difficulty event markers
-   - missed-content markers
-   - more classroom-like simulated states
+The next priorities are no longer basic feature creation. They are mostly presentation and integration tasks:
+
+1. lock a stable default local reflection model for demos
+2. prepare a fixed screenshot / export-card set for defense use
+3. keep the `/review -> /reflection -> HTML card` path as the main demo story
+4. decide whether the next deployment-facing step is:
+   - remote reflection provider hardening
+   - Rokid-side interface cleanup
+   - final GitHub PR / merge packaging
 
 ## Development roadmap
 
@@ -388,6 +415,20 @@ This is preferred when preparing screenshots or presentation materials, because 
 ### Demo asset verification
 
 The demo asset pipeline was run successfully on Windows local.
+
+### Reflection-coach completion note
+
+The independent reflection module should now be treated as a completed V1 rather than an experimental stub.
+
+Current V1 state:
+
+- session-aware reflection context is stable
+- difficulty-event anchoring is stable
+- heuristic fallback is stable
+- local Ollama path has been verified
+- compare and snapshot export flows are implemented
+- HTML reflection cards are available for defense use
+- smoke checks cover the main reflection endpoints and export behavior
 
 Latest generated summary:
 

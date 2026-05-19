@@ -36,6 +36,26 @@ Recommended one-line description:
 
 > Existing AI learning assistants mostly focus on what content to give students. This module focuses on whether the student is still in a good state to learn, when regulation is needed, and where review should happen afterward.
 
+## 1.1 Boundary against teammates' modules
+
+This project should be presented as a **learning-state intelligence** direction, not a general content-assistance direction.
+
+That means it is intentionally different from:
+
+- knowledge-extension assistants
+- AI tutor conversation
+- writing guidance
+- language tutoring
+- AI note-taking tools
+- gesture or air-writing input
+
+The project focuses on:
+
+- whether the learner is still in a learnable state
+- when regulation is needed
+- which segment should be reviewed later
+- how the learner should reflect on the process afterward
+
 ## 2. What this completed module does
 
 The completed A/B/C module forms a closed loop:
@@ -127,6 +147,22 @@ This matters for future deployment. The reflection logic does not need to be rew
 - if no model is available, it still falls back to the heuristic coach
 
 The evidence base still comes from the local learning-state logs. Model providers only refine the reflection wording and experiment framing.
+
+## 2.0.1 Reflection-coach demo path
+
+The reflection module is easiest to explain as a continuation of the review page:
+
+1. the live HUD records learning-state evidence
+2. the review page identifies the strongest difficulty segment
+3. the reflection page inherits that segment as an `Evidence Anchor`
+4. the reflection engine produces:
+   - a session signature
+   - a coach memo
+   - reflection questions
+   - next-session experiments
+5. the result can be exported as a one-page HTML reflection card
+
+This matters for defense logic, because the reflection module is not floating independently. It is grounded in the same session evidence already produced by the main learning-state pipeline.
 
 ## 2.1 Validation and experiment layer
 
@@ -773,6 +809,26 @@ Recommended longer explanation:
 Recommended wording for the difficulty-event marker:
 
 > Beyond continuous monitoring, the system also identifies sustained difficult segments. If cognitive load keeps rising or remains high for long enough, the system groups that period into a difficulty event and records it separately. This helps transform raw state changes into concrete review targets.
+
+Recommended wording for the reflection module:
+
+> After the review page identifies the most important difficulty segment, the independent Learning Reflection Coach reuses that evidence and turns it into a process-focused reflection view. Instead of reteaching content, it asks what happened in the learning process, what pattern the session showed, and what small experiment should be tried in the next attempt.
+
+## 7.1 Recommended defense sequence
+
+For a short live demo or defense walk-through, the cleanest path is:
+
+1. start the HUD and the deterministic simulator
+2. show stable focus, rising load, and regulation changes
+3. open `/review` and point to the strongest flagged event
+4. jump into `/reflection`
+5. show the `Evidence Anchor`
+6. generate the reflection view
+7. save and open the exported HTML reflection card
+
+This sequence presents the full product logic as:
+
+**state sensing -> adaptive regulation -> difficulty localization -> after-class reflection**
 
 ## 8. How to extend this document later
 

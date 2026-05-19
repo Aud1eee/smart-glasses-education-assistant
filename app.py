@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import sys
 from datetime import datetime
 from html import escape as html_escape
 import time
@@ -34,6 +35,9 @@ EXPORT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "exports")
 REFLECTION_SNAPSHOT_DIR = os.path.join(EXPORT_DIR, "reflection_snapshots")
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 ROKID_PROFILE_STORE_PATH = os.path.join(PROJECT_ROOT, "data", "rokid_scene_profiles.json")
+REFLECTION_RUNTIME_VERSION = "reflection-runtime-info-2026-05-19-v1"
+REFLECTION_SNAPSHOT_EXPORTER_VERSION = "reflection-html-card-2026-05-19-v1"
+APP_BOOTED_AT = datetime.now().isoformat(timespec="seconds")
 
 logger = DataLogger()
 posture = PostureEngine()
@@ -410,6 +414,24 @@ def _snapshot_html_paragraph(value, fallback="--"):
     return _snapshot_html_text(value, fallback).replace("\n", "<br>")
 
 
+def _runtime_info_payload():
+    return {
+        "status": "ok",
+        "service": "focus-project-reflection",
+        "backend_version": REFLECTION_RUNTIME_VERSION,
+        "snapshot_exporter_version": REFLECTION_SNAPSHOT_EXPORTER_VERSION,
+        "booted_at": APP_BOOTED_AT,
+        "pid": os.getpid(),
+        "python_version": sys.version.split()[0],
+        "python_executable": os.path.basename(sys.executable or "python"),
+        "feature_flags": {
+            "runtime_info_endpoint": True,
+            "snapshot_html_card_export": True,
+            "compare_html_card_export": True,
+        },
+    }
+
+
 def _reflection_anchor_reason(payload, event):
     event = event or {}
     requested_event_id = str(payload.get("requested_event_id", "") or "").strip()
@@ -499,7 +521,7 @@ def _build_single_reflection_snapshot_markdown(bundle):
     lines.extend(_reflection_markdown_lines(payload.get("reflection_questions", []), ""))
     lines.extend([
         "",
-        "## Next-session Experiments",
+        "## Next-Session Experiments",
         "",
     ])
     lines.extend(_reflection_experiment_lines(payload.get("next_session_experiments", [])))
@@ -551,7 +573,7 @@ def _build_compare_reflection_snapshot_markdown(bundle):
         lines.extend(_reflection_markdown_lines(variant.get("reflection_questions", []), ""))
         lines.extend([
             "",
-            "Experiments:",
+            "Next-Session Experiments:",
             "",
         ])
         lines.extend(_reflection_experiment_lines(variant.get("next_session_experiments", [])))
@@ -656,7 +678,7 @@ def _reflection_card_anchor_html(payload):
 
 
 def _reflection_card_shell(title, subtitle, body_html):
-    title = _snapshot_html_text(title, "Reflection Summary Card")
+    title = _snapshot_html_text(title, "Reflection Snapshot Card")
     subtitle = _snapshot_html_paragraph(subtitle, "Reflection summary")
     return f"""<!doctype html>
 <html lang="en">
@@ -981,7 +1003,7 @@ def _build_single_reflection_snapshot_html(bundle):
             <ul>{_reflection_card_question_items(payload.get('reflection_questions', []))}</ul>
         </article>
         <article class="panel list-card">
-            <div class="section-eyebrow">Next-session Experiments</div>
+            <div class="section-eyebrow">Next-Session Experiments</div>
             <ul>{_reflection_card_experiment_items(payload.get('next_session_experiments', []))}</ul>
         </article>
     </div>
@@ -990,7 +1012,7 @@ def _build_single_reflection_snapshot_html(bundle):
         <p class="memo-body">{_snapshot_html_paragraph(payload.get('coach_memo'), 'No coach memo.')}</p>
     </article>
     """
-    title = signature.get("label") or "Reflection Summary Card"
+    title = signature.get("label") or "Reflection Snapshot Card"
     subtitle = coach_summary.get("headline") or "A one-page summary of the session signature, anchor event, and next-session experiments."
     return _reflection_card_shell(title, subtitle, body_html)
 
@@ -1030,7 +1052,7 @@ def _build_compare_reflection_snapshot_html(bundle):
                     <ul>{_reflection_card_question_items(variant.get('reflection_questions', []))}</ul>
                 </div>
                 <div class="variant-block">
-                    <span class="metric-label">Experiments</span>
+                    <span class="metric-label">Next-Session Experiments</span>
                     <ul>{_reflection_card_experiment_items(variant.get('next_session_experiments', []))}</ul>
                 </div>
             </div>
@@ -1118,6 +1140,8 @@ def _save_reflection_snapshot(kind, payload):
         "kind": kind,
         "snapshot_id": basename,
         "saved_at": bundle["saved_at"],
+        "snapshot_exporter_version": REFLECTION_SNAPSHOT_EXPORTER_VERSION,
+        "supports_html_card_export": True,
         "json_url": f"/exports/reflection_snapshots/{basename}.json",
         "md_url": f"/exports/reflection_snapshots/{basename}.md",
         "card_url": f"/exports/reflection_snapshots/{basename}.html",
@@ -1503,6 +1527,11 @@ def reflection_coach_summary():
             model_override=model_override,
         )
     )
+
+
+@app.route("/api/runtime_info")
+def runtime_info():
+    return jsonify(_runtime_info_payload())
 
 
 @app.route("/api/reflection_provider_status")

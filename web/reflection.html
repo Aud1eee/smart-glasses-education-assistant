@@ -72,7 +72,7 @@
 
         .topbar {
             display: grid;
-            grid-template-columns: 1.2fr auto auto;
+            grid-template-columns: minmax(240px, 1.1fr) minmax(240px, 320px) minmax(280px, 360px) auto;
             gap: 18px;
             align-items: center;
             padding: 18px 22px;
@@ -115,6 +115,72 @@
             grid-template-columns: auto minmax(240px, 320px);
             gap: 12px;
             align-items: center;
+        }
+
+        .runtime-badge-shell,
+        .runtime-badge-copy,
+        .runtime-badge-meta {
+            display: flex;
+        }
+
+        .runtime-badge-shell {
+            flex-direction: column;
+            gap: 10px;
+            padding: 14px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.035);
+            min-height: 88px;
+        }
+
+        .runtime-badge-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .runtime-badge-copy {
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .runtime-badge-eyebrow {
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .runtime-badge-copy strong {
+            font-size: 15px;
+            line-height: 1.25;
+        }
+
+        .runtime-badge-shell p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.5;
+            font-size: 13px;
+        }
+
+        .runtime-badge-meta {
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .runtime-badge-meta span {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.3;
         }
 
         .chip-switch {
@@ -796,6 +862,21 @@
                 <select id="session-select" class="session-select" onchange="handleSessionChange()"></select>
             </div>
 
+            <div class="runtime-badge-shell">
+                <div class="runtime-badge-header">
+                    <div class="runtime-badge-copy">
+                        <span class="runtime-badge-eyebrow">Runtime Snapshot</span>
+                        <strong id="runtime-badge-title">Checking reflection runtime...</strong>
+                    </div>
+                    <div class="tone-badge tone-signal" id="runtime-badge-chip">Checking</div>
+                </div>
+                <p id="runtime-badge-body">The page will confirm whether this Flask backend supports the latest HTML card exporter before you save a snapshot.</p>
+                <div class="runtime-badge-meta">
+                    <span id="runtime-badge-version">Backend: --</span>
+                    <span id="runtime-badge-exporter-meta">Exporter: --</span>
+                </div>
+            </div>
+
             <div class="nav-links">
                 <a class="nav-link" id="review-link" href="/review">Difficulty Review</a>
                 <a class="nav-link" href="/">Back to HUD</a>
@@ -813,7 +894,7 @@
 
             <div class="status-grid">
                 <div class="status-pill">
-                    <span>Configured Default</span>
+                    <span>Default Provider</span>
                     <strong id="provider-configured">--</strong>
                     <p id="provider-model">Model: --</p>
                 </div>
@@ -830,7 +911,17 @@
                 <div class="status-pill">
                     <span>Last Result</span>
                     <strong id="provider-result">Waiting</strong>
-                    <p id="provider-result-note">Generate the coach view to confirm the active provider on this machine.</p>
+                    <p id="provider-result-note">Generate a reflection view to confirm the active provider on this machine.</p>
+                </div>
+                <div class="status-pill">
+                    <span>Backend Runtime</span>
+                    <strong id="runtime-version">Checking</strong>
+                    <p id="runtime-booted">Boot info will appear after the backend responds.</p>
+                </div>
+                <div class="status-pill">
+                    <span>Snapshot Exporter</span>
+                    <strong id="runtime-exporter">Unknown</strong>
+                    <p id="runtime-exporter-note">The page will confirm whether this backend supports HTML reflection cards.</p>
                 </div>
             </div>
         </section>
@@ -899,7 +990,7 @@
             <div class="input-header">
                 <div>
                     <div class="panel-eyebrow">Coach Input</div>
-                    <h2 style="margin-top:10px;">Add the learner's own reflection before generating the coach view.</h2>
+                    <h2 style="margin-top:10px;">Add the learner's own reflection before generating the reflection view.</h2>
                 </div>
                 <p>
                     The coach works without any note, but a short learner note or next-session goal helps it become more specific.
@@ -915,7 +1006,7 @@
                             <input id="use-llm" type="checkbox">
                             <span>Use provider-backed wording polish</span>
                         </label>
-                        <button id="generate-btn" class="action-btn" type="button" onclick="loadCoach(true)">Generate coach view</button>
+                        <button id="generate-btn" class="action-btn" type="button" onclick="loadCoach(true)">Generate Reflection View</button>
                     </div>
                 </div>
 
@@ -923,7 +1014,7 @@
                     <input id="next-goal" class="goal-input" type="text" placeholder="Next session goal, e.g. keep one source stable for the first two minutes.">
                     <div class="control-row">
                         <select id="provider-select" class="session-select" onchange="handleProviderChange()">
-                            <option value="auto">Configured Default</option>
+                            <option value="auto">Use Default Provider</option>
                             <option value="heuristic">Heuristic Only</option>
                             <option value="ollama">Ollama Local</option>
                             <option value="remote">Remote API</option>
@@ -932,17 +1023,17 @@
                     </div>
                     <div class="control-row">
                         <select id="model-select" class="session-select" onchange="handleModelChange()">
-                            <option value="">Use configured default</option>
+                            <option value="">Use default model</option>
                         </select>
                     </div>
                     <div class="control-row">
-                        <div class="meta-line" id="llm-status">Checking model-provider configuration...</div>
+                        <div class="meta-line" id="llm-status">Checking provider configuration...</div>
                     </div>
                     <div class="control-row">
                         <div class="meta-line" id="model-status">Checking local model options...</div>
                     </div>
                     <div class="control-row">
-                        <div class="meta-line" id="coach-note">The page will generate a heuristic coach view automatically on load.</div>
+                        <div class="meta-line" id="coach-note">The page will generate a heuristic reflection view automatically on load.</div>
                     </div>
                 </div>
             </div>
@@ -964,7 +1055,7 @@
             <div class="compare-toolbar">
                 <select id="compare-model-select" class="session-select"></select>
                 <button id="compare-btn" class="action-btn" type="button" onclick="runLocalCompare()">Compare Local Models</button>
-                <button id="save-current-btn" class="action-btn" type="button" onclick="saveCurrentSnapshot()">Save Current Coach Snapshot</button>
+                <button id="save-current-btn" class="action-btn" type="button" onclick="saveCurrentSnapshot()">Save Reflection Snapshot</button>
                 <button id="save-compare-btn" class="action-btn" type="button" onclick="saveCompareSnapshot()" disabled>Save Compare Snapshot</button>
             </div>
 
@@ -988,7 +1079,7 @@
             </section>
 
             <section class="panel list-panel">
-                <div class="panel-eyebrow">Next-session Experiments</div>
+                <div class="panel-eyebrow">Next-Session Experiments</div>
                 <h2 style="margin-top:10px;">Small changes to test in the next attempt.</h2>
                 <p>Each experiment changes one part of the learning setup so the next session becomes easier to regulate and interpret.</p>
                 <div class="list-stack" id="experiment-list"></div>
@@ -1022,6 +1113,7 @@
         let currentSessionId = routeParams.get("session_id") || "";
         let currentEventId = routeParams.get("event_id") || "";
         let latestProviderStatus = null;
+        let latestRuntimeInfo = null;
         let latestCoachPayload = null;
         let latestComparePayload = null;
 
@@ -1190,13 +1282,16 @@
                 shell.innerHTML = "";
                 return;
             }
+            const hasCard = Boolean(result.card_url);
             shell.innerHTML = `
                 <a class="nav-link" href="${escapeHtml(result.json_url || "#")}" target="_blank" rel="noreferrer">Open JSON Snapshot</a>
                 <a class="nav-link" href="${escapeHtml(result.md_url || "#")}" target="_blank" rel="noreferrer">Open Markdown Snapshot</a>
-                ${result.card_url ? `<a class="nav-link" href="${escapeHtml(result.card_url)}" target="_blank" rel="noreferrer">${result.kind === "compare" ? "Open Compare Card" : "Open Summary Card"}</a>` : ""}
+                ${hasCard ? `<a class="nav-link" href="${escapeHtml(result.card_url)}" target="_blank" rel="noreferrer">${result.kind === "compare" ? "Open Compare Card" : "Open Reflection Card"}</a>` : ""}
             `;
             document.getElementById("snapshot-note").innerText =
-                `Saved ${String(result.kind || "reflection")} snapshot at ${result.saved_at || "--"} and generated a presentation-ready card.`;
+                hasCard
+                    ? `Saved ${String(result.kind || "reflection")} snapshot at ${result.saved_at || "--"} and generated a presentation-ready reflection card.`
+                    : `Saved ${String(result.kind || "reflection")} snapshot at ${result.saved_at || "--"}, but this backend did not return an HTML reflection-card link yet. Restart the Flask backend to pick up the latest snapshot exporter.`;
         }
 
         function renderCompareResults(payload) {
@@ -1237,7 +1332,7 @@
                         </div>
 
                         <div class="compare-block">
-                            <span>Experiments</span>
+                            <span>Next-Session Experiments</span>
                             <div class="compare-card-list">
                                 ${experiments.map((item) => `<div><strong>${escapeHtml(item.title || "")}</strong><br>${escapeHtml(item.detail || "")}</div>`).join("") || "<div>No experiments returned.</div>"}
                             </div>
@@ -1457,10 +1552,10 @@
             const modelOverride = status?.model_override || "";
 
             setSelectOptions(providerSelect, status?.provider_options || [], selectedProvider);
-            setSelectOptions(modelSelect, status?.model_options || [{ value: "", label: "Use configured default" }], modelOverride);
+            setSelectOptions(modelSelect, status?.model_options || [{ value: "", label: "Use default model" }], modelOverride);
             modelSelect.disabled = !status?.supports_model_override;
 
-            const configuredLabel = status?.configured_label || "Configured Default";
+            const configuredLabel = status?.configured_label || "Default Provider";
             const configuredModel = status?.configured_model || "";
             const ollamaStatus = status?.ollama || {};
             const ollamaCount = Array.isArray(ollamaStatus.available_models) ? ollamaStatus.available_models.length : 0;
@@ -1479,10 +1574,74 @@
             syncCompareControls(status);
         }
 
+        function syncRuntimeStatus(runtimeInfo, options = {}) {
+            const providerOnline = Boolean(options.providerOnline);
+            let badgeTitle = "Checking reflection runtime...";
+            let badgeChip = "Checking";
+            let badgeTone = "tone-signal";
+            let badgeBody = "The page will confirm whether this Flask backend supports the latest HTML card exporter before you save a snapshot.";
+            let badgeVersion = "Backend: --";
+            let badgeExporter = "Exporter: --";
+
+            if (runtimeInfo) {
+                const supportsHtmlCards = Boolean(runtimeInfo.feature_flags?.snapshot_html_card_export);
+                document.getElementById("runtime-version").innerText = runtimeInfo.backend_version || "Unknown";
+                document.getElementById("runtime-booted").innerText =
+                    `Booted at: ${runtimeInfo.booted_at || "--"} | PID ${runtimeInfo.pid || "--"} | Python ${runtimeInfo.python_version || "--"}`;
+                document.getElementById("runtime-exporter").innerText =
+                    supportsHtmlCards ? "HTML CARD READY" : "LEGACY EXPORTER";
+                document.getElementById("runtime-exporter-note").innerText =
+                    supportsHtmlCards
+                        ? `Exporter ${runtimeInfo.snapshot_exporter_version || "--"} supports one-page reflection cards and compare cards.`
+                        : "This backend does not advertise HTML card export yet.";
+                badgeTitle = supportsHtmlCards ? "Runtime is card-ready." : "Runtime is behind the latest exporter.";
+                badgeChip = supportsHtmlCards ? "Card Ready" : "Legacy";
+                badgeTone = supportsHtmlCards ? "tone-good" : "tone-warn";
+                badgeBody = supportsHtmlCards
+                    ? `Backend booted at ${runtimeInfo.booted_at || "--"} and already supports HTML summary-card export.`
+                    : "This backend responded, but it does not advertise the HTML card exporter yet.";
+                badgeVersion = `Backend: ${runtimeInfo.backend_version || "--"}`;
+                badgeExporter = `Exporter: ${runtimeInfo.snapshot_exporter_version || "--"}`;
+            } else if (providerOnline) {
+                document.getElementById("runtime-version").innerText = "Legacy / Unknown";
+                document.getElementById("runtime-booted").innerText =
+                    "Provider status is reachable, but this backend does not expose /api/runtime_info yet.";
+                document.getElementById("runtime-exporter").innerText = "CHECK BACKEND";
+                document.getElementById("runtime-exporter-note").innerText =
+                    "Restart the Flask backend if the page looks newer than the snapshot exporter behind it.";
+                badgeTitle = "Legacy backend runtime is still running.";
+                badgeChip = "Restart";
+                badgeTone = "tone-warn";
+                badgeBody = "Provider status is reachable, but this process does not expose runtime-info metadata yet. Restart the Flask backend before trusting snapshot-card behavior.";
+                badgeVersion = "Backend: legacy / unknown";
+                badgeExporter = "Exporter: not advertised";
+            } else {
+                document.getElementById("runtime-version").innerText = "Offline";
+                document.getElementById("runtime-booted").innerText =
+                    "The Flask reflection backend is offline, so runtime version details are unavailable.";
+                document.getElementById("runtime-exporter").innerText = "Unavailable";
+                document.getElementById("runtime-exporter-note").innerText =
+                    "Snapshot exporter support will appear after the backend responds again.";
+                badgeTitle = "Reflection runtime is offline.";
+                badgeChip = "Offline";
+                badgeTone = "tone-high";
+                badgeBody = "Start the Flask backend to confirm the current runtime version, exporter status, and card-export readiness.";
+                badgeVersion = "Backend: offline";
+                badgeExporter = "Exporter: unavailable";
+            }
+
+            document.getElementById("runtime-badge-title").innerText = badgeTitle;
+            document.getElementById("runtime-badge-body").innerText = badgeBody;
+            document.getElementById("runtime-badge-version").innerText = badgeVersion;
+            document.getElementById("runtime-badge-exporter-meta").innerText = badgeExporter;
+            document.getElementById("runtime-badge-chip").innerText = badgeChip;
+            document.getElementById("runtime-badge-chip").className = `tone-badge ${badgeTone}`;
+        }
+
         function syncProviderStrip(status, generation) {
             const effectiveProvider = String(status?.effective_provider || "heuristic").toLowerCase();
             const requestedProvider = status?.requested_provider || generation?.requested_provider || "auto";
-            const configuredLabel = status?.configured_label || generation?.configured_label || "Configured Default";
+            const configuredLabel = status?.configured_label || generation?.configured_label || "Default Provider";
             const configuredModel = status?.configured_model || generation?.configured_model || generation?.model || "";
             const activeMode = String(generation?.mode || effectiveProvider || "heuristic").toLowerCase();
             const tone = generation ? providerToneLabel(generation) : (
@@ -1528,7 +1687,7 @@
                     ? "The requested provider looks reachable or configured, and heuristic fallback remains available."
                     : "This provider is not ready yet, so the page will rely on heuristic mode if you generate now.";
             document.getElementById("provider-result").innerText = "Waiting";
-            document.getElementById("provider-result-note").innerText = "Generate the coach view to confirm the active provider on this machine.";
+            document.getElementById("provider-result-note").innerText = "Generate a reflection view to confirm the active provider on this machine.";
         }
 
         function syncLlmControls(payload) {
@@ -1550,15 +1709,27 @@
                 const response = await fetch(`/api/reflection_provider_status?${params.toString()}`);
                 const status = await response.json();
                 latestProviderStatus = status;
+                latestRuntimeInfo = null;
+                try {
+                    const runtimeResponse = await fetch("/api/runtime_info");
+                    if (runtimeResponse.ok) {
+                        latestRuntimeInfo = await runtimeResponse.json();
+                    }
+                } catch (runtimeError) {
+                    latestRuntimeInfo = null;
+                }
                 syncProviderControls(status);
                 syncProviderStrip(status, null);
+                syncRuntimeStatus(latestRuntimeInfo, { providerOnline: true });
             } catch (error) {
                 latestProviderStatus = null;
+                latestRuntimeInfo = null;
                 document.getElementById("llm-status").innerText = "Provider status is unavailable because the Flask backend is offline.";
                 document.getElementById("model-status").innerText = "Local model options are unavailable until the backend is reachable.";
-                document.getElementById("provider-state-title").innerText = "Reflection backend is offline.";
+                document.getElementById("provider-state-title").innerText = "Reflection runtime is offline.";
                 document.getElementById("provider-state-title").className = "tone-warn";
                 document.getElementById("provider-state-note").innerText = "The page could not reach the Flask reflection endpoint, so provider status is unavailable.";
+                syncRuntimeStatus(null, { providerOnline: false });
                 document.getElementById("compare-model-select").disabled = true;
                 document.getElementById("compare-btn").disabled = true;
                 document.getElementById("compare-note").innerText = "Local model compare is unavailable until the backend is reachable.";
@@ -1577,10 +1748,10 @@
 
         async function saveCurrentSnapshot() {
             if (!latestCoachPayload) {
-                document.getElementById("snapshot-note").innerText = "Generate a coach view first, then save the snapshot.";
+                document.getElementById("snapshot-note").innerText = "Generate a reflection view first, then save the snapshot.";
                 return;
             }
-            document.getElementById("snapshot-note").innerText = "Saving current coach snapshot...";
+            document.getElementById("snapshot-note").innerText = "Saving reflection snapshot...";
             try {
                 const response = await fetch("/api/reflection_snapshot", {
                     method: "POST",
@@ -1589,11 +1760,11 @@
                 });
                 const result = await response.json();
                 if (!response.ok) {
-                    throw new Error(result.message || "Could not save the current coach snapshot.");
+                    throw new Error(result.message || "Could not save the current reflection snapshot.");
                 }
                 renderSnapshotLinks(result);
             } catch (error) {
-                document.getElementById("snapshot-note").innerText = error.message || "Could not save the current coach snapshot.";
+                document.getElementById("snapshot-note").innerText = error.message || "Could not save the current reflection snapshot.";
             }
         }
 
@@ -1675,7 +1846,7 @@
                 currentSessionId = "";
             }
 
-            document.getElementById("coach-note").innerText = "Generating reflection coach view...";
+            document.getElementById("coach-note").innerText = "Generating reflection view...";
 
             try {
                 const response = await fetch("/api/reflection_coach", {
@@ -1711,7 +1882,7 @@
                 document.getElementById("coach-note").innerText =
                     error.message || "The page could not reach the local reflection endpoint.";
                 renderAnchor(null);
-                document.getElementById("provider-state-title").innerText = "Reflection backend is offline.";
+                document.getElementById("provider-state-title").innerText = "Reflection runtime is offline.";
                 document.getElementById("provider-state-title").className = "tone-warn";
                 document.getElementById("provider-state-note").innerText = "The page could not reach the Flask reflection endpoint, so provider status is unavailable.";
             }

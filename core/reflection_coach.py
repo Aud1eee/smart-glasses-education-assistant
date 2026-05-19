@@ -934,7 +934,7 @@ class ReflectionCoach:
 
     def _provider_options(self):
         return [
-            {"value": "auto", "label": "Configured Default"},
+            {"value": "auto", "label": "Use Default Provider"},
             {"value": "heuristic", "label": "Heuristic Only"},
             {"value": "ollama", "label": "Ollama Local"},
             {"value": "remote", "label": "Remote API"},
@@ -996,7 +996,7 @@ class ReflectionCoach:
 
     def _provider_label(self, provider):
         mapping = {
-            "auto": "Configured Default",
+            "auto": "Default Provider",
             "heuristic": "Heuristic",
             "ollama": "Ollama Local",
             "remote": "Remote API",
@@ -1034,10 +1034,10 @@ class ReflectionCoach:
 
     def _model_options(self, configured_provider, supports_model_override, model_override="", ollama_status=None):
         if not supports_model_override:
-            return [{"value": "", "label": "Use configured default"}]
+            return [{"value": "", "label": "Use default model"}]
 
         configured_model = self._provider_model_name(configured_provider)
-        options = [{"value": "", "label": f"Use configured default ({configured_model or 'none'})"}]
+        options = [{"value": "", "label": f"Use default model ({configured_model or 'none'})"}]
         seen = {""}
         available_models = (ollama_status or {}).get("available_models", [])
         for item in available_models:
