@@ -164,6 +164,104 @@ The reflection module is easiest to explain as a continuation of the review page
 
 This matters for defense logic, because the reflection module is not floating independently. It is grounded in the same session evidence already produced by the main learning-state pipeline.
 
+## 2.0.2 Independent parallel module: Academic Presentation Companion
+
+The project now also includes a separate page called:
+
+**Academic Presentation Companion**
+
+This module is intentionally **independent** from the learning-state sensing story.
+It does not replace `Learning State Guardian` or `Learning Reflection Coach`.
+Instead, it supports a different student task:
+
+> How can a student prepare and rehearse one academic presentation task without turning the system into an AI tutor or an auto-script generator?
+
+Its workflow is:
+
+1. create a presentation mission from the assignment brief
+2. extract editable task fields from pasted assignment text
+3. let the student write the real outline, speaker notes, and cue cards
+4. map each section to:
+   - a slide or visual anchor
+   - an interaction goal for the audience
+5. run a rehearsal with browser audio or uploaded audio
+6. review transcript, timing, and feedback
+7. generate a lightweight HUD summary for future Rokid-side prompting
+
+This matters because it answers a presentation-preparation need while preserving the same project boundary discipline.
+The module still does **not** become:
+
+- an AI tutor
+- a content explainer
+- a one-click final speech writer
+- a generic writing-correction assistant
+- an AI note-taking workflow
+
+The key educational principle is:
+
+> the student still writes the real presentation content, while AI only supports extraction, structure, rehearsal review, and feedback.
+
+### Current runtime entry points
+
+- `/presentation`
+- `/api/presentation_missions`
+- `/api/presentation_missions/intake_extract`
+- `/api/presentation_missions/<mission_id>/script`
+- `/api/presentation_rehearsals`
+- `/api/presentation_rehearsals/<rehearsal_id>/analyze`
+- `/api/presentation_rehearsals/<rehearsal_id>/hud_summary`
+
+### Script-to-presentation mapping
+
+One important design point in this module is that the script workspace is **not** just a large text area.
+Each section stores:
+
+- a section name
+- a target duration
+- a slide or visual anchor
+- an interaction goal
+- the student's own outline
+- the student's own speaker notes
+- the student's own cue cards
+
+This solves two practical presentation questions:
+
+1. how does the script correspond to what is being shown?
+2. how does the student stay aware of audience interaction instead of only reading?
+
+The current answer is:
+
+- `slide / visual anchor` links the spoken section to the actual presentation content
+- `interaction goal` links the same section to delivery behavior such as:
+  - pause
+  - eye contact
+  - transition
+  - question cue
+  - emphasis point
+
+So the module is not just about writing text.
+It is about preparing spoken content, visual flow, and interaction rhythm together.
+
+### Rehearsal feedback boundary
+
+The rehearsal feedback can analyze:
+
+- pacing
+- section balance
+- strongest section
+- weakest section
+- one main issue
+- one main strength
+- one next action
+
+But it should not generate the student's final script.
+If no model provider is configured, heuristic fallback still keeps the full page usable through:
+
+- timing comparison
+- section timing comparison
+- transcript availability checks
+- basic phrasing and pacing heuristics
+
 ## 2.1 Validation and experiment layer
 
 The project now includes a **repeatable validation module** for the current learning-state algorithm.

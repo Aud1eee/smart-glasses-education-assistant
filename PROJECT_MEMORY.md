@@ -57,6 +57,7 @@ The current demo-ready checkpoint includes:
 - `Learning State Guardian` live sensing and adaptive regulation
 - difficulty-event marking and the `/review` follow-up page
 - `Learning Reflection Coach` as an independent `/reflection` module
+- `Academic Presentation Companion` as an independent `/presentation` module
 - evidence-anchor linking from `/review -> /reflection`
 - local free-model support through `Ollama`
 - local model compare for the reflection module
@@ -142,6 +143,34 @@ The current demo-ready checkpoint includes:
   - reflection smoke validation:
     - `exports/reflection_smoke_summary.md`
     - `exports/reflection_smoke_summary.json`
+- independent academic presentation module with:
+  - `/presentation`
+  - local mission brief creation
+  - editable intake extraction with heuristic fallback
+  - student-written script sections:
+    - outline
+    - speaker notes
+    - cue cards
+    - slide / visual anchors
+    - interaction goals
+  - rehearsal run storage:
+    - audio source
+    - total duration
+    - section timings
+    - transcript text
+    - self-rating
+    - notes
+  - rehearsal analysis output:
+    - pacing
+    - strongest / weakest section
+    - one main issue
+    - one main strength
+    - one next action
+    - section suggestions
+  - lightweight HUD summary payload for future Rokid-side prompts
+  - local JSON store:
+    - `data/presentation_companion_store.json`
+    - `data/presentation_audio/`
 
 ### Latest algorithm upgrade
 
@@ -298,6 +327,21 @@ The current demo-ready checkpoint includes:
   - language tutoring
   - AI note taking
   - gesture interaction
+
+### Separate independent module
+
+- `Academic Presentation Companion` should be presented as a parallel academic-preparation module rather than part of the learning-state pipeline
+- it focuses on:
+  - presentation-task understanding
+  - self-written outline / notes / cue cards
+  - rehearsal timing
+  - rehearsal transcript review
+  - audience-interaction planning
+- it should not drift into:
+  - auto-writing the final presentation script
+  - tutoring the academic content
+  - answering the assignment for the student
+  - replacing the student's own preparation work
 
 ### Secondary supporting features
 

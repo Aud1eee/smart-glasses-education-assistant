@@ -16,6 +16,7 @@ from core.edu import EduEngine
 from core.focus_session import FocusSessionEngine
 from core.multimodal_schema import build_multimodal_blueprint
 from core.posture import PostureEngine
+from core.presentation_companion import PresentationCompanion
 from core.reflection_coach import ReflectionCoach
 from core.rokid_adapter import (
     build_rokid_adapter_blueprint,
@@ -46,6 +47,7 @@ rokid_frame_adapter = RokidFrameAdapter()
 edu = EduEngine(logger.vocab_path)
 focus_session = FocusSessionEngine()
 reflection_coach = ReflectionCoach(logger)
+presentation_companion = PresentationCompanion()
 difficulty_marker = DifficultyEventMarker()
 auto_recall_enabled = os.getenv("ENABLE_AUTO_RECALL", "0").lower() in {"1", "true", "yes", "on"}
 sample_counter = 0
@@ -1293,6 +1295,12 @@ def reflection_page():
     return render_template("reflection.html")
 
 
+@app.route("/presentation")
+@app.route("/presentations")
+def presentation_page():
+    return render_template("presentation.html")
+
+
 @app.route("/rokid_debug")
 def rokid_debug_page():
     return render_template("rokid_debug.html")
@@ -1601,6 +1609,119 @@ def reflection_snapshot():
             "message": "Snapshot payload is required.",
         }), 400
     return jsonify(_save_reflection_snapshot(kind, snapshot_payload))
+
+
+@app.route("/api/presentation_missions", methods=["GET", "POST"])
+def presentation_missions():
+    if request.method == "GET":
+        return jsonify({
+            "status": "ok",
+            "missions": presentation_companion.list_missions(),
+        })
+
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.save_mission(payload)
+    return jsonify({
+        "status": "ok",
+        **result,
+    })
+
+
+@app.route("/api/presentation_missions/intake_extract", methods=["POST"])
+def presentation_intake_extract():
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.extract_intake(payload)
+    status_code = 400 if result.get("status") == "error" else 200
+    return jsonify(result), status_code
+
+
+@app.route("/api/presentation_missions/<mission_id>")
+def presentation_mission_detail(mission_id):
+    result = presentation_companion.get_mission_bundle(mission_id)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    return jsonify({
+        "status": "ok",
+        **result,
+    })
+
+
+@app.route("/api/presentation_missions/<mission_id>/script", methods=["POST"])
+def presentation_script_save(mission_id):
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.save_script(mission_id, payload.get("script_sections", []))
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    return jsonify({
+        "status": "ok",
+        **result,
+    })
+
+
+@app.route("/api/presentation_rehearsals", methods=["POST"])
+def presentation_rehearsals():
+    if request.files:
+        audio_file = request.files.get("audio")
+        try:
+            payload = json.loads(request.form.get("payload", "{}") or "{}")
+        except Exception:
+            payload = {}
+        audio_bytes = audio_file.read() if audio_file else None
+        audio_name = audio_file.filename if audio_file else ""
+        audio_type = audio_file.content_type if audio_file else ""
+    else:
+        payload = request.get_json(silent=True) or {}
+        audio_bytes = None
+        audio_name = ""
+        audio_type = ""
+
+    result = presentation_companion.create_rehearsal(
+        payload=payload,
+        audio_bytes=audio_bytes,
+        audio_filename=audio_name,
+        audio_content_type=audio_type,
+    )
+    status_code = 400 if result.get("status") == "error" else 200
+    return jsonify(result), status_code
+
+
+@app.route("/api/presentation_rehearsals/<rehearsal_id>")
+def presentation_rehearsal_detail(rehearsal_id):
+    result = presentation_companion.get_rehearsal_bundle(rehearsal_id)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation rehearsal not found.",
+        }), 404
+    return jsonify(result)
+
+
+@app.route("/api/presentation_rehearsals/<rehearsal_id>/analyze", methods=["POST"])
+def presentation_rehearsal_analyze(rehearsal_id):
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.analyze_rehearsal(rehearsal_id, payload)
+    status_code = 400 if result.get("status") == "error" else 200
+    return jsonify(result), status_code
+
+
+@app.route("/api/presentation_rehearsals/<rehearsal_id>/hud_summary")
+def presentation_hud_summary(rehearsal_id):
+    hud_summary = presentation_companion.get_hud_summary(rehearsal_id)
+    if not hud_summary:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation rehearsal not found.",
+        }), 404
+    return jsonify({
+        "status": "ok",
+        "hud_summary": hud_summary,
+    })
 
 
 @app.route("/api/multimodal_blueprint")

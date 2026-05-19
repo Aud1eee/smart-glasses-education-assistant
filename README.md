@@ -53,11 +53,14 @@ In short:
 - `core/focus_session.py`: adaptive focus-cycle engine
 - `core/difficulty_marker.py`: sustained difficulty event detection
 - `core/reflection_coach.py`: post-session reflection coaching engine
+- `core/presentation_companion.py`: presentation mission intake and rehearsal analysis engine
 - `core/vision.py`: OCR, translation, note capture
 - `utils/storage.py`: CSV logging
+- `utils/presentation_storage.py`: local JSON store for presentation missions and rehearsal runs
 - `analytics/analyze_report.py`: attention heatmap export
 - `web/index.html`: HUD interface
 - `web/reflection.html`: reflection coach page
+- `web/presentation.html`: academic presentation companion page
 - `PROJECT_MEMORY.md`: condensed project context for future work
 
 ## Local Windows setup
@@ -247,6 +250,60 @@ Suggested local flow:
 4. Use the local compare panel to contrast `qwen3:4b` with another installed model such as `deepseek-r1:7b`.
 5. Save the reflection snapshot or compare snapshot for reporting, thesis material, or future Rokid-side replay.
 6. Open the exported HTML card when you need a cleaner one-page artifact for a defense, demo, or presentation appendix.
+
+## Independent Presentation Module
+
+The project now also includes an independent page at `/presentation`:
+
+- it turns one academic presentation task into a `brief -> script -> rehearse` workflow
+- the student still writes the actual outline, speaker notes, and cue cards
+- AI can help with:
+  - task-intake field extraction
+  - section scaffold suggestions
+  - rehearsal transcript review
+  - rehearsal feedback wording
+- AI does **not** act as:
+  - an AI tutor
+  - a content explainer
+  - a one-click final-script generator
+  - a generic writing-correction tool
+  - an AI note-taking workflow
+- the detailed results stay on the web page, while the backend also returns a lightweight rehearsal HUD summary for future Rokid-side use
+- if no model provider is configured, the page still works through:
+  - heuristic intake extraction
+  - timing-based rehearsal feedback
+  - manual or browser-speech transcript input
+
+The core routes are:
+
+- `/presentation`
+- `/api/presentation_missions`
+- `/api/presentation_missions/intake_extract`
+- `/api/presentation_missions/<mission_id>/script`
+- `/api/presentation_rehearsals`
+- `/api/presentation_rehearsals/<rehearsal_id>/analyze`
+- `/api/presentation_rehearsals/<rehearsal_id>/hud_summary`
+
+Local artifact note:
+
+- presentation missions and rehearsal runs are stored in `data/presentation_companion_store.json`
+- uploaded rehearsal audio is stored in `data/presentation_audio/`
+- both should stay local and should not be committed
+
+Quick smoke verification:
+
+```powershell
+& "C:\Users\11721\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe" .\analytics\presentation_smoke_check.py
+```
+
+This checks:
+
+- mission creation
+- intake extraction fallback
+- script save
+- rehearsal save
+- rehearsal analysis
+- HUD summary output
 
 ## Recommended defense demo flow
 

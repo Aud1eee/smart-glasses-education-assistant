@@ -13,3 +13,5 @@ Thumbs.db
 exports/*.png
 data/difficulty_events.csv
 data/rokid_scene_profiles.json
+data/presentation_companion_store.json
+data/presentation_audio/
