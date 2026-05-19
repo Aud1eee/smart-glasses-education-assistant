@@ -242,6 +242,24 @@ The current answer is:
 So the module is not just about writing text.
 It is about preparing spoken content, visual flow, and interaction rhythm together.
 
+### Lightweight presentation control
+
+The current first implementation does not assume a complex full PPT controller.
+Instead, it uses a lightweight control model:
+
+- `phone` is the main controller
+- `rokid_button` is the lightweight glasses-side control scaffold
+
+The control actions are intentionally small:
+
+- next
+- previous
+- cue toggle
+- jump to a selected slide from the phone-side view
+
+This matters because it keeps the interaction realistic for an actual presentation.
+The speaker should not need to manage a complicated interface during delivery.
+
 ### Rehearsal feedback boundary
 
 The rehearsal feedback can analyze:

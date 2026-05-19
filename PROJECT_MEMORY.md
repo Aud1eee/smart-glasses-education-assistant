@@ -147,12 +147,23 @@ The current demo-ready checkpoint includes:
   - `/presentation`
   - local mission brief creation
   - editable intake extraction with heuristic fallback
-  - student-written script sections:
+  - student-written slide-linked script cards:
+    - `slide_index`
+    - `slide_title`
     - outline
     - speaker notes
     - cue cards
     - slide / visual anchors
     - interaction goals
+  - lightweight presentation control state:
+    - `presentation_mode`
+    - `control_source`
+    - `active_slide_index`
+    - `cue_view`
+  - phone-first presentation control with Rokid-button scaffolding for:
+    - next
+    - previous
+    - cue toggle
   - rehearsal run storage:
     - audio source
     - total duration

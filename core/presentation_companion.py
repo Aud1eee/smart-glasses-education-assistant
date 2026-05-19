@@ -53,6 +53,11 @@ class PresentationCompanion:
                 target_minutes=self._safe_float(payload.get("target_duration_minutes"), default=0),
                 deliverable_type=payload.get("deliverable_type", ""),
             )
+        presentation_state = self._normalize_presentation_state(
+            sections=script_sections,
+            incoming=payload.get("presentation_state"),
+            existing=(existing or {}).get("presentation_state"),
+        )
 
         now = datetime.now().isoformat(timespec="seconds")
         mission = {
@@ -67,6 +72,7 @@ class PresentationCompanion:
             "task_description": self._clean_text(payload.get("task_description", ""), max_length=6000, preserve_lines=True) or self._clean_text((existing or {}).get("task_description", ""), max_length=6000, preserve_lines=True),
             "intake_task_text": self._clean_text(payload.get("intake_task_text", ""), max_length=6000, preserve_lines=True) or self._clean_text((existing or {}).get("intake_task_text", ""), max_length=6000, preserve_lines=True),
             "script_sections": script_sections,
+            "presentation_state": presentation_state,
             "created_at": (existing or {}).get("created_at", now),
             "updated_at": now,
         }
@@ -78,9 +84,97 @@ class PresentationCompanion:
         if not mission:
             return None
         mission["script_sections"] = self._sanitize_sections(sections or mission.get("script_sections", []))
+        mission["presentation_state"] = self._normalize_presentation_state(
+            sections=mission.get("script_sections", []),
+            existing=mission.get("presentation_state"),
+        )
         mission["updated_at"] = datetime.now().isoformat(timespec="seconds")
         self.store.upsert_mission(mission)
         return self.get_mission_bundle(mission_id)
+
+    def get_presentation_state(self, mission_id):
+        mission = self.store.get_mission(mission_id)
+        if not mission:
+            return None
+        sections = self._sanitize_sections(mission.get("script_sections", []))
+        state = self._normalize_presentation_state(
+            sections=sections,
+            existing=mission.get("presentation_state"),
+        )
+        mission["presentation_state"] = state
+        self.store.upsert_mission(mission)
+        return {
+            "mission_id": mission_id,
+            "presentation_state": self._presentation_state_payload(state, sections),
+        }
+
+    def update_presentation_state(self, mission_id, payload):
+        mission = self.store.get_mission(mission_id)
+        if not mission:
+            return None
+        sections = self._sanitize_sections(mission.get("script_sections", []))
+        mission["presentation_state"] = self._normalize_presentation_state(
+            sections=sections,
+            incoming=payload,
+            existing=mission.get("presentation_state"),
+        )
+        mission["updated_at"] = datetime.now().isoformat(timespec="seconds")
+        self.store.upsert_mission(mission)
+        return {
+            "mission_id": mission_id,
+            "presentation_state": self._presentation_state_payload(mission["presentation_state"], sections),
+        }
+
+    def apply_presentation_control(self, mission_id, payload):
+        mission = self.store.get_mission(mission_id)
+        if not mission:
+            return None
+        payload = payload or {}
+        sections = self._sanitize_sections(mission.get("script_sections", []))
+        state = self._normalize_presentation_state(
+            sections=sections,
+            existing=mission.get("presentation_state"),
+        )
+        section_ids = [item.get("section_id", "") for item in sections if item.get("section_id", "")]
+        active_section_id = state.get("active_section_id", section_ids[0] if section_ids else "")
+        current_index = section_ids.index(active_section_id) if active_section_id in section_ids else 0
+        action = self._clean_text(payload.get("action", ""), max_length=40).lower()
+        control_source = self._normalize_control_source(payload.get("control_source", state.get("control_source", "")))
+
+        if action == "next":
+            current_index = min(len(section_ids) - 1, current_index + 1) if section_ids else 0
+            state["active_section_id"] = section_ids[current_index] if section_ids else ""
+        elif action == "previous":
+            current_index = max(0, current_index - 1)
+            state["active_section_id"] = section_ids[current_index] if section_ids else ""
+        elif action == "jump":
+            requested_section_id = self._clean_text(payload.get("section_id", ""), max_length=80)
+            requested_slide_index = self._safe_int(payload.get("slide_index"), default=0)
+            if requested_section_id and requested_section_id in section_ids:
+                state["active_section_id"] = requested_section_id
+            elif requested_slide_index > 0:
+                matched = next((item.get("section_id", "") for item in sections if self._safe_int(item.get("slide_index"), default=0) == requested_slide_index), "")
+                if matched:
+                    state["active_section_id"] = matched
+        elif action == "toggle_cue":
+            state["cue_view"] = "hidden" if state.get("cue_view") == "visible" else "visible"
+        elif action == "set_mode":
+            state["presentation_mode"] = self._normalize_presentation_mode(payload.get("presentation_mode", state.get("presentation_mode", "")))
+
+        state["control_source"] = control_source
+        state["last_control_source"] = control_source
+        state["last_action"] = action or "sync"
+        state["last_control_at"] = datetime.now().isoformat(timespec="seconds")
+        mission["presentation_state"] = self._normalize_presentation_state(
+            sections=sections,
+            existing=state,
+        )
+        mission["updated_at"] = datetime.now().isoformat(timespec="seconds")
+        self.store.upsert_mission(mission)
+        return {
+            "mission_id": mission_id,
+            "presentation_state": self._presentation_state_payload(mission["presentation_state"], sections),
+        }
 
     def extract_intake(self, payload):
         payload = payload or {}
@@ -301,6 +395,10 @@ class PresentationCompanion:
     def _mission_payload(self, mission, summary_only=False):
         mission = mission or {}
         sections = self._sanitize_sections(mission.get("script_sections", []))
+        presentation_state = self._normalize_presentation_state(
+            sections=sections,
+            existing=mission.get("presentation_state"),
+        )
         summary = self._build_script_summary(
             sections=sections,
             target_minutes=self._safe_float(mission.get("target_duration_minutes"), default=0),
@@ -320,6 +418,7 @@ class PresentationCompanion:
             "created_at": mission.get("created_at", ""),
             "updated_at": mission.get("updated_at", ""),
             "script_summary": summary,
+            "presentation_state": self._presentation_state_payload(presentation_state, sections),
         }
         if summary_only:
             return payload
@@ -347,6 +446,13 @@ class PresentationCompanion:
             "updated_at": rehearsal.get("updated_at", ""),
             "analysis": rehearsal.get("analysis", {}) or {},
             "mission_title": (mission or {}).get("title", ""),
+            "mission_presentation_state": self._presentation_state_payload(
+                self._normalize_presentation_state(
+                    sections=(mission or {}).get("script_sections", []),
+                    existing=(mission or {}).get("presentation_state"),
+                ),
+                self._sanitize_sections((mission or {}).get("script_sections", [])),
+            ) if mission else {},
         }
         if summary_only:
             payload.pop("analysis", None)
@@ -402,6 +508,8 @@ class PresentationCompanion:
             sections.append({
                 "section_id": self._build_id(f"section-{index}"),
                 "name": name,
+                "slide_index": index,
+                "slide_title": name,
                 "slide_anchor": slide_anchor,
                 "interaction_goal": interaction_goal,
                 "target_seconds": target,
@@ -421,9 +529,13 @@ class PresentationCompanion:
             while section_id in seen_ids:
                 section_id = self._build_id(f"section-{index}")
             seen_ids.add(section_id)
+            slide_index = max(1, self._safe_int(section.get("slide_index"), default=index))
+            slide_title = self._clean_text(section.get("slide_title", ""), max_length=120) or self._clean_text(section.get("name", ""), max_length=120) or f"Slide {slide_index}"
             normalized.append({
                 "section_id": section_id,
                 "name": self._clean_text(section.get("name", ""), max_length=120) or f"Section {index}",
+                "slide_index": slide_index,
+                "slide_title": slide_title,
                 "slide_anchor": self._clean_text(section.get("slide_anchor", ""), max_length=120),
                 "interaction_goal": self._clean_text(section.get("interaction_goal", ""), max_length=240),
                 "target_seconds": max(10, self._safe_int(section.get("target_seconds"), default=45)),
@@ -433,6 +545,7 @@ class PresentationCompanion:
             })
         if not normalized:
             return self._build_default_sections()
+        normalized.sort(key=lambda item: (self._safe_int(item.get("slide_index"), default=0), item.get("section_id", "")))
         return normalized
 
     def _build_script_summary(self, sections, target_minutes=0):
@@ -455,6 +568,8 @@ class PresentationCompanion:
             hint = self._section_duration_hint(estimated_seconds, section.get("target_seconds", 0))
             section_metrics.append({
                 "section_id": section.get("section_id", ""),
+                "slide_index": self._safe_int(section.get("slide_index"), default=0),
+                "slide_title": section.get("slide_title", ""),
                 "estimated_seconds": estimated_seconds,
                 "estimated_label": self._format_mmss(estimated_seconds),
                 "target_label": self._format_mmss(section.get("target_seconds", 0)),
@@ -467,6 +582,7 @@ class PresentationCompanion:
         overall_hint = self._section_duration_hint(estimated_total_seconds, target_total_seconds)
         return {
             "section_count": len(sections),
+            "slide_card_count": len(sections),
             "completed_sections": completed_sections,
             "interaction_sections": interaction_sections,
             "target_total_seconds": target_total_seconds,
@@ -682,6 +798,8 @@ class PresentationCompanion:
             normalized.append({
                 "section_id": self._build_id(f"section-llm-{index}"),
                 "name": self._clean_text(item.get("name", ""), max_length=120) or f"Section {index}",
+                "slide_index": max(1, self._safe_int(item.get("slide_index"), default=index)),
+                "slide_title": self._clean_text(item.get("slide_title", ""), max_length=120) or self._clean_text(item.get("name", ""), max_length=120) or f"Slide {index}",
                 "slide_anchor": self._clean_text(item.get("slide_anchor", ""), max_length=120),
                 "interaction_goal": self._clean_text(item.get("interaction_goal", ""), max_length=240),
                 "target_seconds": max(10, self._safe_int(item.get("target_seconds"), default=max(15, int(round(target_seconds / max(len(items), 1)))))),
@@ -722,6 +840,8 @@ class PresentationCompanion:
             resolved.append({
                 "section_id": section.get("section_id", ""),
                 "name": section.get("name", ""),
+                "slide_index": self._safe_int(section.get("slide_index"), default=0),
+                "slide_title": section.get("slide_title", ""),
                 "target_seconds": target_seconds,
                 "actual_seconds": round(actual_seconds, 1),
             })
@@ -738,6 +858,104 @@ class PresentationCompanion:
             item["delta_label"] = self._format_signed_mmss(delta)
             item["pace_status"] = self._section_pace_status(item.get("actual_seconds"), item.get("target_seconds"))
         return resolved
+
+    def _normalize_presentation_state(self, sections, incoming=None, existing=None):
+        sections = self._sanitize_sections(sections)
+        incoming = incoming or {}
+        existing = existing or {}
+        section_ids = [item.get("section_id", "") for item in sections if item.get("section_id", "")]
+        default_section_id = section_ids[0] if section_ids else ""
+        active_section_id = self._clean_text(
+            incoming.get("active_section_id", existing.get("active_section_id", default_section_id)),
+            max_length=80,
+        )
+        if active_section_id not in section_ids:
+            requested_slide_index = self._safe_int(incoming.get("active_slide_index", existing.get("active_slide_index", 0)), default=0)
+            matched = next((item.get("section_id", "") for item in sections if self._safe_int(item.get("slide_index"), default=0) == requested_slide_index), "")
+            active_section_id = matched or default_section_id
+        active_section = next((item for item in sections if item.get("section_id", "") == active_section_id), sections[0] if sections else {})
+        return {
+            "presentation_mode": self._normalize_presentation_mode(incoming.get("presentation_mode", existing.get("presentation_mode", "rehearse"))),
+            "control_source": self._normalize_control_source(incoming.get("control_source", existing.get("control_source", "phone"))),
+            "last_control_source": self._normalize_control_source(incoming.get("last_control_source", existing.get("last_control_source", "phone"))),
+            "active_section_id": active_section_id,
+            "active_slide_index": self._safe_int(active_section.get("slide_index"), default=0),
+            "cue_view": self._normalize_cue_view(incoming.get("cue_view", existing.get("cue_view", "visible"))),
+            "last_action": self._clean_text(incoming.get("last_action", existing.get("last_action", "sync")), max_length=40).lower() or "sync",
+            "last_control_at": self._clean_text(incoming.get("last_control_at", existing.get("last_control_at", "")), max_length=40),
+        }
+
+    def _presentation_state_payload(self, state, sections):
+        sections = self._sanitize_sections(sections)
+        state = self._normalize_presentation_state(sections, existing=state)
+        active_card = self._find_active_card(sections, state)
+        return {
+            **state,
+            "active_card": active_card,
+            "available_cards": [self._card_brief_payload(item) for item in sections],
+        }
+
+    def _find_active_card(self, sections, state):
+        sections = self._sanitize_sections(sections)
+        target_id = self._clean_text((state or {}).get("active_section_id", ""), max_length=80)
+        for item in sections:
+            if item.get("section_id", "") == target_id:
+                return self._card_payload(item, presentation_mode=(state or {}).get("presentation_mode", "rehearse"), cue_view=(state or {}).get("cue_view", "visible"))
+        return self._card_payload(sections[0], presentation_mode=(state or {}).get("presentation_mode", "rehearse"), cue_view=(state or {}).get("cue_view", "visible")) if sections else {}
+
+    def _card_brief_payload(self, section):
+        return {
+            "section_id": section.get("section_id", ""),
+            "name": section.get("name", ""),
+            "slide_index": self._safe_int(section.get("slide_index"), default=0),
+            "slide_title": section.get("slide_title", ""),
+            "slide_anchor": section.get("slide_anchor", ""),
+            "target_seconds": self._safe_int(section.get("target_seconds"), default=0),
+        }
+
+    def _card_payload(self, section, presentation_mode="rehearse", cue_view="visible"):
+        if not section:
+            return {}
+        payload = {
+            "section_id": section.get("section_id", ""),
+            "name": section.get("name", ""),
+            "slide_index": self._safe_int(section.get("slide_index"), default=0),
+            "slide_title": section.get("slide_title", ""),
+            "slide_anchor": section.get("slide_anchor", ""),
+            "interaction_goal": section.get("interaction_goal", ""),
+            "target_seconds": self._safe_int(section.get("target_seconds"), default=0),
+            "target_label": self._format_mmss(section.get("target_seconds", 0)),
+            "outline": section.get("outline", ""),
+            "speaker_notes": section.get("speaker_notes", ""),
+            "cue_cards": section.get("cue_cards", ""),
+            "presentation_mode": self._normalize_presentation_mode(presentation_mode),
+            "cue_view": self._normalize_cue_view(cue_view),
+        }
+        if payload["presentation_mode"] == "present":
+            payload["speaker_notes"] = ""
+            if payload["cue_view"] == "hidden":
+                payload["cue_cards"] = ""
+        elif payload["cue_view"] == "hidden":
+            payload["cue_cards"] = ""
+        return payload
+
+    def _normalize_presentation_mode(self, value):
+        normalized = str(value or "").strip().lower()
+        if normalized not in {"edit", "rehearse", "present"}:
+            return "rehearse"
+        return normalized
+
+    def _normalize_control_source(self, value):
+        normalized = str(value or "").strip().lower()
+        if normalized not in {"phone", "rokid_button"}:
+            return "phone"
+        return normalized
+
+    def _normalize_cue_view(self, value):
+        normalized = str(value or "").strip().lower()
+        if normalized not in {"visible", "hidden"}:
+            return "visible"
+        return normalized
 
     def _build_transcript_object(self, rehearsal):
         rehearsal = rehearsal or {}
@@ -1038,7 +1256,13 @@ class PresentationCompanion:
         return normalized
 
     def _build_hud_summary(self, mission, rehearsal, transcript, feedback):
-        target_seconds = self._mission_target_seconds(mission or {}, self._sanitize_sections((mission or {}).get("script_sections", [])))
+        sections = self._sanitize_sections((mission or {}).get("script_sections", []))
+        presentation_state = self._normalize_presentation_state(
+            sections=sections,
+            existing=(mission or {}).get("presentation_state"),
+        )
+        active_card = self._find_active_card(sections, presentation_state)
+        target_seconds = self._mission_target_seconds(mission or {}, sections)
         actual_seconds = self._safe_float(rehearsal.get("total_duration_seconds"), default=0)
         pace_status = feedback.get("pace_status", "unknown")
         if pace_status == "on_target":
@@ -1061,6 +1285,10 @@ class PresentationCompanion:
             "strength": self._shorten_line(feedback.get("one_main_strength", ""), 92),
             "issue": self._shorten_line(feedback.get("one_main_issue", ""), 92),
             "next_action": self._shorten_line(feedback.get("one_next_action", ""), 92),
+            "active_slide_index": active_card.get("slide_index", 0),
+            "active_slide_title": active_card.get("slide_title", ""),
+            "active_slide_anchor": active_card.get("slide_anchor", ""),
+            "control_source": presentation_state.get("control_source", "phone"),
             "transcript_status": transcript.get("status", "missing"),
             "generated_at": datetime.now().isoformat(timespec="seconds"),
         }
@@ -1107,6 +1335,8 @@ class PresentationCompanion:
             "sections": [
                 {
                     "name": section.get("name", ""),
+                    "slide_index": section.get("slide_index", 0),
+                    "slide_title": section.get("slide_title", ""),
                     "slide_anchor": section.get("slide_anchor", ""),
                     "interaction_goal": section.get("interaction_goal", ""),
                     "target_seconds": section.get("target_seconds", 0),
@@ -1149,6 +1379,8 @@ class PresentationCompanion:
             "suggested_sections": [
                 {
                     "name": "string",
+                    "slide_index": "number",
+                    "slide_title": "string",
                     "slide_anchor": "string",
                     "interaction_goal": "string",
                     "target_seconds": "number",

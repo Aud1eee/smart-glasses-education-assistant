@@ -511,6 +511,109 @@
             margin-top: 10px;
         }
 
+        .card-switcher,
+        .control-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .card-chip {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+            min-width: 140px;
+            padding: 12px 14px;
+            border-radius: 18px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.035);
+            color: var(--muted);
+            cursor: pointer;
+            transition: 180ms ease;
+        }
+
+        .card-chip.active {
+            background: linear-gradient(135deg, rgba(114, 212, 245, 0.22), rgba(255, 210, 122, 0.10));
+            border-color: var(--line-strong);
+            color: var(--ink);
+        }
+
+        .card-chip:hover {
+            transform: translateY(-1px);
+            border-color: var(--line-strong);
+        }
+
+        .card-chip strong {
+            font-size: 14px;
+        }
+
+        .focus-grid,
+        .controller-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 14px;
+        }
+
+        .stage-card {
+            border-radius: 22px;
+            border: 1px solid var(--line);
+            background:
+                radial-gradient(circle at 16% 18%, rgba(114, 212, 245, 0.12), transparent 28%),
+                rgba(255, 255, 255, 0.03);
+            padding: 18px;
+        }
+
+        .stage-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .stage-label {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.035);
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .stage-card h3 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .stage-copy {
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        .stage-block {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--line);
+        }
+
+        .stage-block strong {
+            display: block;
+            margin-bottom: 8px;
+            color: rgba(114, 212, 245, 0.9);
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .mini-label {
+            color: rgba(114, 212, 245, 0.84);
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
         .metric-chip {
             display: inline-flex;
             align-items: center;
@@ -802,19 +905,19 @@
                 <section class="panel tab-panel hidden" id="tab-script">
                     <div class="panel-head">
                         <div>
-                            <h2>Write Your Own Script Workspace</h2>
-                            <p>Each section maps your speaking plan to presentation content and audience interaction. Add only the structure you need: outline, speaker notes, cue cards, slide anchor, and cue goals.</p>
+                            <h2>Write Slide-Linked Script Cards</h2>
+                            <p>Each card should map to one PPT page or one clearly bounded speaking unit. Build the card around the slide it belongs to, then keep your audience cue and timing target beside it.</p>
                         </div>
                         <div class="action-row">
-                            <button class="ghost-btn" onclick="addSection()">Add Section</button>
-                            <button class="action-btn" onclick="saveScript()">Save Script</button>
+                            <button class="ghost-btn" onclick="addSection()">Add Slide Card</button>
+                            <button class="action-btn" onclick="saveScript()">Save Slide Cards</button>
                         </div>
                     </div>
 
                     <div class="status-shell">
                         <div class="status-card">
                             <strong id="script-summary-target">--</strong>
-                            <p>Target total duration from the mission brief and section plan.</p>
+                            <p>Target total duration from the mission brief and slide-card plan.</p>
                         </div>
                         <div class="status-card">
                             <strong id="script-summary-estimate">--</strong>
@@ -826,7 +929,19 @@
                         </div>
                     </div>
 
-                    <div class="section-grid" id="script-sections-host"></div>
+                    <div class="section-card">
+                        <header>
+                            <div>
+                                <strong>Slide Card Navigator</strong>
+                                <div class="meta-line">Use these cards like a phone-side preparation strip. Each card should correspond to one slide or one tightly linked speaking unit.</div>
+                            </div>
+                        </header>
+                        <div class="card-switcher" id="script-card-switcher-host"></div>
+                    </div>
+
+                    <div class="focus-grid">
+                        <div class="section-card" id="focused-card-host"></div>
+                    </div>
                 </section>
 
                 <section class="panel tab-panel hidden" id="tab-rehearse">
@@ -857,6 +972,46 @@
                                 </div>
                                 <div class="status-row">
                                     <span class="status-note" id="live-status">Ready for a live rehearsal or an uploaded audio file.</span>
+                                </div>
+                            </div>
+
+                            <div class="section-card">
+                                <header>
+                                    <div>
+                                        <strong>Presentation Controller</strong>
+                                        <div class="meta-line">Phone should be the main controller. Rokid button input should stay lightweight: next, previous, and cue toggle.</div>
+                                    </div>
+                                </header>
+                                <div class="controller-grid">
+                                    <div class="field-grid">
+                                        <div class="field">
+                                            <label for="controller-source">Control Source</label>
+                                            <select id="controller-source" onchange="syncPresentationStateFromUi()">
+                                                <option value="phone">phone</option>
+                                                <option value="rokid_button">rokid_button</option>
+                                            </select>
+                                        </div>
+                                        <div class="field">
+                                            <label for="presentation-mode">Presentation Mode</label>
+                                            <select id="presentation-mode" onchange="updatePresentationMode()">
+                                                <option value="rehearse">rehearse</option>
+                                                <option value="present">present</option>
+                                                <option value="edit">edit</option>
+                                            </select>
+                                        </div>
+                                        <div class="field">
+                                            <label for="jump-slide-select">Jump to Slide</label>
+                                            <select id="jump-slide-select" onchange="jumpToSelectedSlide()"></select>
+                                        </div>
+                                    </div>
+                                    <div class="control-strip">
+                                        <button class="action-btn" onclick="applyPresentationControl('previous')">Previous</button>
+                                        <button class="action-btn" onclick="applyPresentationControl('next')">Next</button>
+                                        <button class="ghost-btn" onclick="applyPresentationControl('toggle_cue')">Show / Hide Cue</button>
+                                    </div>
+                                    <div class="status-row">
+                                        <span class="status-note" id="controller-status">Phone control is ready. Switch to Rokid button mode when you want to simulate the glasses-side input path.</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -941,6 +1096,18 @@
                             <div class="result-card">
                                 <header>
                                     <div>
+                                        <strong>Current Slide Stage</strong>
+                                        <div class="meta-line">This card is the slide-linked presentation view. In `present` mode it stays lightweight enough for a Rokid-style HUD or quick phone glance.</div>
+                                    </div>
+                                </header>
+                                <div id="presentation-stage-host">
+                                    <div class="empty-state">Load a mission to activate the current slide stage.</div>
+                                </div>
+                            </div>
+
+                            <div class="result-card">
+                                <header>
+                                    <div>
                                         <strong>Feedback Snapshot</strong>
                                         <div class="meta-line">Overall pacing, strongest section, weakest section, next action, and section suggestions.</div>
                                     </div>
@@ -991,6 +1158,8 @@
             missions: [],
             currentMissionId: "",
             currentMission: null,
+            presentationState: null,
+            focusedCardId: "",
             rehearsalList: [],
             draftSections: [],
             suggestedSections: [],
@@ -1027,8 +1196,10 @@
             return `${minutes}:${seconds}`;
         }
 
-        function clamp(value, min, max) {
-            return Math.min(Math.max(value, min), max);
+        function formatSignedMmss(totalSeconds) {
+            const value = Number(totalSeconds) || 0;
+            const sign = value >= 0 ? "+" : "-";
+            return `${sign}${formatMmss(Math.abs(value))}`;
         }
 
         function switchTab(tab) {
@@ -1038,20 +1209,126 @@
             }
         }
 
-        function missionPayloadFromForm() {
+        function normalizeSection(section, index) {
             return {
-                mission_id: state.currentMissionId || "",
-                title: document.getElementById("mission-title").value.trim(),
-                course: document.getElementById("mission-course").value.trim(),
-                deadline: document.getElementById("mission-deadline").value.trim(),
-                deliverable_type: document.getElementById("mission-deliverable").value.trim(),
-                target_duration_minutes: Number(document.getElementById("mission-duration").value || 0),
-                audience: document.getElementById("mission-audience").value.trim(),
-                teacher_requirements: document.getElementById("mission-requirements").value.trim(),
-                task_description: document.getElementById("mission-description").value.trim(),
-                intake_task_text: document.getElementById("task-text").value.trim(),
-                script_sections: state.draftSections,
+                section_id: String(section?.section_id || `draft-${Date.now()}-${index}`),
+                name: String(section?.name || `Card ${index}`),
+                slide_index: Math.max(1, Number(section?.slide_index || index)),
+                slide_title: String(section?.slide_title || section?.name || `Slide ${index}`),
+                slide_anchor: String(section?.slide_anchor || ""),
+                interaction_goal: String(section?.interaction_goal || ""),
+                target_seconds: Math.max(10, Number(section?.target_seconds || 45)),
+                outline: String(section?.outline || ""),
+                speaker_notes: String(section?.speaker_notes || ""),
+                cue_cards: String(section?.cue_cards || ""),
             };
+        }
+
+        function normalizeSections(sections) {
+            const items = (sections || []).map((item, index) => normalizeSection(item, index + 1));
+            return items.sort((a, b) => a.slide_index - b.slide_index || a.name.localeCompare(b.name));
+        }
+
+        function buildDefaultDraftSections(targetMinutes = 5) {
+            const totalSeconds = Math.max(120, Math.round((Number(targetMinutes) || 5) * 60));
+            const skeleton = totalSeconds <= 240
+                ? [
+                    ["Opening", "Opening", "Slide 1", "Frame the task and preview the route.", 0.2],
+                    ["Main Point", "Main Point", "Slide 2", "State the key idea in your own words.", 0.32],
+                    ["Example", "Example", "Slide 3", "Slow down and guide the audience through the example.", 0.28],
+                    ["Conclusion", "Conclusion", "Slide 4", "Land the takeaway and leave a short pause.", 0.2],
+                ]
+                : [
+                    ["Opening", "Opening", "Slide 1", "Set the topic and the route for the audience.", 0.16],
+                    ["Background", "Background", "Slide 2", "Give the context the audience needs.", 0.18],
+                    ["Core Idea", "Core Idea", "Slide 3", "Explain the central point without reading full sentences.", 0.24],
+                    ["Evidence or Example", "Evidence or Example", "Slide 4", "Use one strong example and signpost the transition.", 0.24],
+                    ["Conclusion", "Conclusion", "Slide 5", "Close with the takeaway and invite one question.", 0.18],
+                ];
+            let remaining = totalSeconds;
+            return skeleton.map((item, index) => {
+                const target = index === skeleton.length - 1 ? remaining : Math.max(15, Math.round(totalSeconds * item[4]));
+                remaining -= target;
+                return normalizeSection({
+                    section_id: `draft-${Date.now()}-${index + 1}`,
+                    name: item[0],
+                    slide_index: index + 1,
+                    slide_title: item[1],
+                    slide_anchor: item[2],
+                    interaction_goal: item[3],
+                    target_seconds: target,
+                }, index + 1);
+            });
+        }
+
+        function defaultPresentationState(cards) {
+            const first = cards[0] || {};
+            return {
+                presentation_mode: "rehearse",
+                control_source: "phone",
+                last_control_source: "phone",
+                active_section_id: first.section_id || "",
+                active_slide_index: Number(first.slide_index || 0),
+                cue_view: "visible",
+                last_action: "sync",
+                last_control_at: "",
+            };
+        }
+
+        function normalizePresentationState(raw, cards) {
+            const safeCards = normalizeSections(cards || []);
+            const base = {
+                ...defaultPresentationState(safeCards),
+                ...(raw || {}),
+            };
+            const ids = safeCards.map((item) => item.section_id);
+            if (!ids.includes(base.active_section_id)) {
+                const matched = safeCards.find((item) => Number(item.slide_index || 0) === Number(base.active_slide_index || 0));
+                base.active_section_id = matched?.section_id || safeCards[0]?.section_id || "";
+            }
+            const activeCard = safeCards.find((item) => item.section_id === base.active_section_id) || safeCards[0] || null;
+            base.active_slide_index = Number(activeCard?.slide_index || 0);
+            if (!["edit", "rehearse", "present"].includes(String(base.presentation_mode || "").toLowerCase())) {
+                base.presentation_mode = "rehearse";
+            }
+            if (!["phone", "rokid_button"].includes(String(base.control_source || "").toLowerCase())) {
+                base.control_source = "phone";
+            }
+            if (!["phone", "rokid_button"].includes(String(base.last_control_source || "").toLowerCase())) {
+                base.last_control_source = base.control_source;
+            }
+            if (!["visible", "hidden"].includes(String(base.cue_view || "").toLowerCase())) {
+                base.cue_view = "visible";
+            }
+            return base;
+        }
+
+        function currentPresentationState() {
+            state.presentationState = normalizePresentationState(state.presentationState, state.draftSections);
+            return state.presentationState;
+        }
+
+        function currentActiveCard() {
+            const cards = normalizeSections(state.draftSections);
+            const presentationState = currentPresentationState();
+            return cards.find((item) => item.section_id === presentationState.active_section_id) || cards[0] || null;
+        }
+
+        function currentFocusedCard() {
+            const cards = normalizeSections(state.draftSections);
+            return cards.find((item) => item.section_id === state.focusedCardId) || currentActiveCard() || cards[0] || null;
+        }
+
+        function buildPresentationStateForSave() {
+            const cards = normalizeSections(state.draftSections);
+            const active = currentActiveCard() || cards[0] || {};
+            return normalizePresentationState({
+                ...state.presentationState,
+                active_section_id: active.section_id || "",
+                active_slide_index: Number(active.slide_index || 0),
+                control_source: document.getElementById("controller-source")?.value || state.presentationState?.control_source || "phone",
+                presentation_mode: document.getElementById("presentation-mode")?.value || state.presentationState?.presentation_mode || "rehearse",
+            }, cards);
         }
 
         function setMissionForm(mission = null) {
@@ -1067,54 +1344,24 @@
         }
 
         function newMissionDraft() {
+            stopLiveRehearsal();
             state.currentMissionId = "";
             state.currentMission = null;
             state.currentRehearsal = null;
             state.rehearsalList = [];
             state.suggestedSections = [];
             state.draftSections = buildDefaultDraftSections(Number(document.getElementById("mission-duration").value || 5));
+            state.presentationState = normalizePresentationState(null, state.draftSections);
+            state.focusedCardId = state.draftSections[0]?.section_id || "";
             state.recordedAudioBlob = null;
             state.uploadedAudioFile = null;
             state.uploadedDurationSeconds = 0;
             state.liveDurationSeconds = 0;
-            stopLiveRehearsal();
             setMissionForm(null);
             setBriefStatus("New draft started. Save the mission when the brief is ready.", "status-cool");
             setRehearsalStatus("No rehearsal run has been saved yet.", "status-cool");
+            setControllerStatus("Phone control is ready. Switch to Rokid button mode when you want to simulate the glasses-side input path.", "status-cool");
             renderAll();
-        }
-
-        function buildDefaultDraftSections(targetMinutes = 5) {
-            const totalSeconds = Math.max(120, Math.round((Number(targetMinutes) || 5) * 60));
-            const skeleton = totalSeconds <= 240
-                ? [
-                    ["Opening", "Slide 1", "Frame the task and preview the route.", 0.2],
-                    ["Main Point", "Slide 2", "State the key idea in your own words.", 0.32],
-                    ["Example", "Slide 3", "Slow down and guide the audience through the example.", 0.28],
-                    ["Conclusion", "Slide 4", "Land the takeaway and leave a short pause.", 0.2],
-                ]
-                : [
-                    ["Opening", "Slide 1", "Set the topic and the route for the audience.", 0.16],
-                    ["Background", "Slide 2", "Give the context the audience needs.", 0.18],
-                    ["Core Idea", "Slide 3", "Explain the central point without reading full sentences.", 0.24],
-                    ["Evidence or Example", "Slide 4", "Use one strong example and signpost the transition.", 0.24],
-                    ["Conclusion", "Slide 5", "Close with the takeaway and invite one question.", 0.18],
-                ];
-            let remaining = totalSeconds;
-            return skeleton.map((item, index) => {
-                const target = index === skeleton.length - 1 ? remaining : Math.max(15, Math.round(totalSeconds * item[3]));
-                remaining -= target;
-                return {
-                    section_id: `draft-${Date.now()}-${index + 1}`,
-                    name: item[0],
-                    slide_anchor: item[1],
-                    interaction_goal: item[2],
-                    target_seconds: target,
-                    outline: "",
-                    speaker_notes: "",
-                    cue_cards: "",
-                };
-            });
         }
 
         function weightedWordCount(section) {
@@ -1126,7 +1373,7 @@
         }
 
         function estimateSectionSeconds(section) {
-            const weightedWords = weightedWordCount(section);
+            const weightedWords = weightedWordCount(section || {});
             if (!weightedWords) return 0;
             return Math.max(10, Math.round(weightedWords / 2.35));
         }
@@ -1136,7 +1383,7 @@
                 return { status: "unknown", note: "Set a target time for a clearer pacing check." };
             }
             if (!estimatedSeconds) {
-                return { status: "empty", note: "This section still needs your own notes." };
+                return { status: "empty", note: "This card still needs your own notes." };
             }
             const ratio = estimatedSeconds / targetSeconds;
             if (ratio >= 1.2) {
@@ -1149,37 +1396,72 @@
         }
 
         function currentScriptSummary() {
-            const sections = state.draftSections || [];
-            const targetTotalSeconds = sections.reduce((sum, item) => sum + Number(item.target_seconds || 0), 0) || Math.round(Number(document.getElementById("mission-duration").value || 0) * 60);
-            const estimatedTotalSeconds = sections.reduce((sum, item) => sum + estimateSectionSeconds(item), 0);
-            const completedSections = sections.filter((item) => item.outline || item.speaker_notes || item.cue_cards).length;
-            const interactionSections = sections.filter((item) => item.interaction_goal).length;
-            const hint = durationHint(estimatedTotalSeconds, targetTotalSeconds);
+            const cards = normalizeSections(state.draftSections);
+            const targetTotalSeconds = cards.reduce((sum, item) => sum + Number(item.target_seconds || 0), 0) || Math.round(Number(document.getElementById("mission-duration").value || 0) * 60);
+            const estimatedTotalSeconds = cards.reduce((sum, item) => sum + estimateSectionSeconds(item), 0);
+            const completedCards = cards.filter((item) => item.outline || item.speaker_notes || item.cue_cards).length;
+            const interactionCards = cards.filter((item) => item.interaction_goal).length;
             return {
                 targetTotalSeconds,
                 estimatedTotalSeconds,
-                completedSections,
-                interactionSections,
-                hint,
+                completedCards,
+                interactionCards,
+                hint: durationHint(estimatedTotalSeconds, targetTotalSeconds),
             };
+        }
+
+        function missionPayloadFromForm() {
+            return {
+                mission_id: state.currentMissionId || "",
+                title: document.getElementById("mission-title").value.trim(),
+                course: document.getElementById("mission-course").value.trim(),
+                deadline: document.getElementById("mission-deadline").value.trim(),
+                deliverable_type: document.getElementById("mission-deliverable").value.trim(),
+                target_duration_minutes: Number(document.getElementById("mission-duration").value || 0),
+                audience: document.getElementById("mission-audience").value.trim(),
+                teacher_requirements: document.getElementById("mission-requirements").value.trim(),
+                task_description: document.getElementById("mission-description").value.trim(),
+                intake_task_text: document.getElementById("task-text").value.trim(),
+                script_sections: normalizeSections(state.draftSections),
+                presentation_state: buildPresentationStateForSave(),
+            };
+        }
+
+        function syncControllerInputs() {
+            const presentationState = currentPresentationState();
+            const sourceSelect = document.getElementById("controller-source");
+            const modeSelect = document.getElementById("presentation-mode");
+            if (sourceSelect) sourceSelect.value = presentationState.control_source || "phone";
+            if (modeSelect) modeSelect.value = presentationState.presentation_mode || "rehearse";
+
+            const jumpSelect = document.getElementById("jump-slide-select");
+            const cards = normalizeSections(state.draftSections);
+            if (jumpSelect) {
+                jumpSelect.innerHTML = cards.length
+                    ? cards.map((item) => `<option value="${escapeAttr(item.section_id)}">Slide ${item.slide_index}: ${escapeHtml(item.slide_title || item.name)}</option>`).join("")
+                    : `<option value="">No cards</option>`;
+                jumpSelect.value = presentationState.active_section_id || cards[0]?.section_id || "";
+            }
         }
 
         function renderHero() {
             const mission = state.currentMission;
             const summary = currentScriptSummary();
+            const activeCard = currentActiveCard();
             document.getElementById("hero-mission-title").innerText = mission?.title || "No mission selected";
             document.getElementById("hero-mission-meta").innerText = mission
-                ? `${mission.course || "Course not set"} · ${mission.deliverable_type || "presentation"} · ${mission.target_duration_minutes || "--"} min target`
+                ? `${mission.course || "Course not set"} | ${mission.deliverable_type || "presentation"} | ${mission.target_duration_minutes || "--"} min target`
                 : "Create a mission, then fill your own structure before rehearsal.";
             document.getElementById("hero-script-fit").innerText = summary.estimatedTotalSeconds
                 ? `${formatMmss(summary.estimatedTotalSeconds)} / ${formatMmss(summary.targetTotalSeconds)}`
                 : "--";
-            document.getElementById("hero-script-note").innerText =
-                summary.hint.note || "Duration hints will appear after you add sections and notes.";
+            document.getElementById("hero-script-note").innerText = activeCard
+                ? `${summary.hint.note} Active slide card: Slide ${activeCard.slide_index} | ${activeCard.slide_title || activeCard.name}.`
+                : summary.hint.note || "Duration hints will appear after you add cards and notes.";
             const hud = state.currentRehearsal?.analysis?.hud_summary;
             document.getElementById("hero-hud-status").innerText = hud?.current_or_final_status || "Waiting";
             document.getElementById("hero-hud-note").innerText = hud
-                ? `${hud.issue || "No issue reported yet."} Next: ${hud.next_action || "Analyze the next run."}`
+                ? `Slide ${hud.active_slide_index || "--"} | ${hud.issue || "No issue reported yet."} Next: ${hud.next_action || "Analyze the next run."}`
                 : "Analyze a rehearsal run to produce the lightweight Rokid summary payload.";
         }
 
@@ -1189,113 +1471,142 @@
                 host.innerHTML = `<div class="empty-state">No presentation mission has been saved yet. Start with the brief tab and save the first mission.</div>`;
                 return;
             }
-            host.innerHTML = state.missions.map((mission) => `
-                <button class="mission-link ${mission.mission_id === state.currentMissionId ? "active" : ""}" onclick="loadMission('${escapeAttr(mission.mission_id)}')">
-                    <strong>${escapeHtml(mission.title || "Untitled mission")}</strong>
-                    <span>${escapeHtml(mission.course || "Course not set")}</span>
-                    <span>${escapeHtml(mission.deliverable_type || "presentation")} · ${mission.target_duration_minutes || "--"} min · ${escapeHtml(mission.script_summary?.duration_hint || "waiting")}</span>
-                </button>
-            `).join("");
-        }
-
-        function renderScriptSummary() {
-            const summary = currentScriptSummary();
-            document.getElementById("script-summary-target").innerText = summary.targetTotalSeconds ? formatMmss(summary.targetTotalSeconds) : "--";
-            document.getElementById("script-summary-estimate").innerText = summary.estimatedTotalSeconds ? formatMmss(summary.estimatedTotalSeconds) : "--";
-            document.getElementById("script-summary-hint").innerText = summary.hint.status.toUpperCase();
-            document.getElementById("script-summary-note").innerText =
-                `${summary.hint.note} Completed sections: ${summary.completedSections}/${state.draftSections.length}. Interaction cues: ${summary.interactionSections}/${state.draftSections.length}.`;
-        }
-
-        function renderScriptSections() {
-            const host = document.getElementById("script-sections-host");
-            if (!state.draftSections.length) {
-                host.innerHTML = `<div class="empty-state">No sections yet. Save a mission or load a suggested section scaffold from the brief tab.</div>`;
-                return;
-            }
-            host.innerHTML = state.draftSections.map((section, index) => {
-                const estimatedSeconds = estimateSectionSeconds(section);
-                const hint = durationHint(estimatedSeconds, Number(section.target_seconds || 0));
+            host.innerHTML = state.missions.map((mission) => {
+                const activeSlide = mission.presentation_state?.active_slide_index ? ` | active slide ${mission.presentation_state.active_slide_index}` : "";
                 return `
-                    <article class="section-card">
-                        <header>
-                            <div>
-                                <strong>${escapeHtml(section.name || `Section ${index + 1}`)}</strong>
-                                <div class="meta-line">Map the section to what appears in the presentation and how you want to interact with the audience.</div>
-                            </div>
-                            <div class="action-row">
-                                <button class="ghost-btn" onclick="duplicateSection(${index})">Duplicate</button>
-                                <button class="ghost-btn" onclick="removeSection(${index})">Remove</button>
-                            </div>
-                        </header>
-
-                        <div class="field-grid">
-                            <div class="field">
-                                <label>Section Name</label>
-                                <input value="${escapeAttr(section.name || "")}" oninput="updateSectionField(${index}, 'name', this.value)">
-                            </div>
-                            <div class="field">
-                                <label>Slide or Visual Anchor</label>
-                                <input value="${escapeAttr(section.slide_anchor || "")}" oninput="updateSectionField(${index}, 'slide_anchor', this.value)" placeholder="Slide 3 · Method Chart">
-                            </div>
-                            <div class="field">
-                                <label>Target Seconds</label>
-                                <input type="number" min="10" step="5" value="${escapeAttr(section.target_seconds || 45)}" oninput="updateSectionField(${index}, 'target_seconds', this.value)">
-                            </div>
-                            <div class="field wide">
-                                <label>Interaction Goal</label>
-                                <input value="${escapeAttr(section.interaction_goal || "")}" oninput="updateSectionField(${index}, 'interaction_goal', this.value)" placeholder="Pause for eye contact before moving to the example.">
-                            </div>
-                            <div class="field">
-                                <label>Outline</label>
-                                <textarea oninput="updateSectionField(${index}, 'outline', this.value)" placeholder="Short bullet structure only.">${escapeHtml(section.outline || "")}</textarea>
-                            </div>
-                            <div class="field">
-                                <label>Speaker Notes</label>
-                                <textarea oninput="updateSectionField(${index}, 'speaker_notes', this.value)" placeholder="What you want to say in your own words.">${escapeHtml(section.speaker_notes || "")}</textarea>
-                            </div>
-                            <div class="field">
-                                <label>Cue Cards</label>
-                                <textarea oninput="updateSectionField(${index}, 'cue_cards', this.value)" placeholder="Short prompts, transitions, pauses, and reminders.">${escapeHtml(section.cue_cards || "")}</textarea>
-                            </div>
-                        </div>
-
-                        <div class="section-metrics">
-                            <div class="metric-chip"><strong>${formatMmss(Number(section.target_seconds || 0))}</strong> target</div>
-                            <div class="metric-chip"><strong>${estimatedSeconds ? formatMmss(estimatedSeconds) : "--"}</strong> estimated</div>
-                            <div class="metric-chip"><strong>${hint.status}</strong> ${escapeHtml(hint.note)}</div>
-                        </div>
-                    </article>
+                    <button class="mission-link ${mission.mission_id === state.currentMissionId ? "active" : ""}" onclick="loadMission('${escapeAttr(mission.mission_id)}')">
+                        <strong>${escapeHtml(mission.title || "Untitled mission")}</strong>
+                        <span>${escapeHtml(mission.course || "Course not set")}</span>
+                        <span>${escapeHtml(mission.deliverable_type || "presentation")} | ${mission.target_duration_minutes || "--"} min | ${mission.script_summary?.slide_card_count || mission.script_summary?.section_count || 0} cards${activeSlide}</span>
+                    </button>
                 `;
             }).join("");
         }
 
+        function renderScriptSummary() {
+            const summary = currentScriptSummary();
+            const activeCard = currentActiveCard();
+            document.getElementById("script-summary-target").innerText = summary.targetTotalSeconds ? formatMmss(summary.targetTotalSeconds) : "--";
+            document.getElementById("script-summary-estimate").innerText = summary.estimatedTotalSeconds ? formatMmss(summary.estimatedTotalSeconds) : "--";
+            document.getElementById("script-summary-hint").innerText = activeCard ? `S${activeCard.slide_index}` : summary.hint.status.toUpperCase();
+            document.getElementById("script-summary-note").innerText =
+                `${summary.hint.note} Completed cards: ${summary.completedCards}/${state.draftSections.length}. Interaction cues: ${summary.interactionCards}/${state.draftSections.length}.`;
+        }
+
+        function renderScriptCardSwitcher() {
+            const host = document.getElementById("script-card-switcher-host");
+            const cards = normalizeSections(state.draftSections);
+            if (!cards.length) {
+                host.innerHTML = `<div class="empty-state">No slide cards yet. Save a mission or load a suggested card scaffold from the brief tab.</div>`;
+                return;
+            }
+            host.innerHTML = cards.map((card) => `
+                <button class="card-chip ${card.section_id === state.focusedCardId ? "active" : ""}" onclick="setFocusedCard('${escapeAttr(card.section_id)}', true)">
+                    <span class="mini-label">Slide ${card.slide_index}</span>
+                    <strong>${escapeHtml(card.slide_title || card.name)}</strong>
+                    <span>${escapeHtml(card.slide_anchor || "No anchor set")}</span>
+                </button>
+            `).join("");
+        }
+
+        function renderFocusedCard() {
+            const host = document.getElementById("focused-card-host");
+            const card = currentFocusedCard();
+            if (!card) {
+                host.innerHTML = `<div class="empty-state">No focused slide card yet.</div>`;
+                return;
+            }
+            const estimatedSeconds = estimateSectionSeconds(card);
+            const hint = durationHint(estimatedSeconds, Number(card.target_seconds || 0));
+            host.innerHTML = `
+                <header>
+                    <div>
+                        <strong>Focused Slide Card</strong>
+                        <div class="meta-line">This editor is centered on one PPT-linked card so the script can follow the actual deck page by page.</div>
+                    </div>
+                    <div class="action-row">
+                        <button class="ghost-btn" onclick="focusAdjacentCard(-1)">Previous Card</button>
+                        <button class="ghost-btn" onclick="focusAdjacentCard(1)">Next Card</button>
+                        <button class="ghost-btn" onclick="duplicateFocusedCard()">Duplicate</button>
+                        <button class="ghost-btn" onclick="removeFocusedCard()">Remove</button>
+                    </div>
+                </header>
+
+                <div class="field-grid">
+                    <div class="field">
+                        <label>Card Name</label>
+                        <input value="${escapeAttr(card.name || "")}" oninput="updateFocusedCardField('name', this.value)">
+                    </div>
+                    <div class="field">
+                        <label>Slide Number</label>
+                        <input type="number" min="1" step="1" value="${escapeAttr(card.slide_index || 1)}" oninput="updateFocusedCardField('slide_index', this.value)">
+                    </div>
+                    <div class="field">
+                        <label>Slide Title</label>
+                        <input value="${escapeAttr(card.slide_title || "")}" oninput="updateFocusedCardField('slide_title', this.value)">
+                    </div>
+                    <div class="field">
+                        <label>Slide Anchor</label>
+                        <input value="${escapeAttr(card.slide_anchor || "")}" oninput="updateFocusedCardField('slide_anchor', this.value)" placeholder="Slide 3 | Method Chart">
+                    </div>
+                    <div class="field">
+                        <label>Target Seconds</label>
+                        <input type="number" min="10" step="5" value="${escapeAttr(card.target_seconds || 45)}" oninput="updateFocusedCardField('target_seconds', this.value)">
+                    </div>
+                    <div class="field wide">
+                        <label>Interaction Goal</label>
+                        <input value="${escapeAttr(card.interaction_goal || "")}" oninput="updateFocusedCardField('interaction_goal', this.value)" placeholder="Pause for eye contact before the example.">
+                    </div>
+                    <div class="field">
+                        <label>Outline</label>
+                        <textarea oninput="updateFocusedCardField('outline', this.value)" placeholder="Short bullet structure only.">${escapeHtml(card.outline || "")}</textarea>
+                    </div>
+                    <div class="field">
+                        <label>Speaker Notes</label>
+                        <textarea oninput="updateFocusedCardField('speaker_notes', this.value)" placeholder="What you want to say in your own words.">${escapeHtml(card.speaker_notes || "")}</textarea>
+                    </div>
+                    <div class="field">
+                        <label>Cue Cards</label>
+                        <textarea oninput="updateFocusedCardField('cue_cards', this.value)" placeholder="Short prompts, pauses, and transitions.">${escapeHtml(card.cue_cards || "")}</textarea>
+                    </div>
+                </div>
+
+                <div class="section-metrics">
+                    <div class="metric-chip"><strong>Slide ${card.slide_index}</strong> ${escapeHtml(card.slide_title || card.name)}</div>
+                    <div class="metric-chip"><strong>${formatMmss(Number(card.target_seconds || 0))}</strong> target</div>
+                    <div class="metric-chip"><strong>${estimatedSeconds ? formatMmss(estimatedSeconds) : "--"}</strong> estimated</div>
+                    <div class="metric-chip"><strong>${hint.status}</strong> ${escapeHtml(hint.note)}</div>
+                </div>
+            `;
+        }
+
         function renderSectionTimings() {
             const host = document.getElementById("section-timing-host");
-            if (!state.draftSections.length) {
-                host.innerHTML = `<div class="empty-state">Section timings will appear after the mission script has sections.</div>`;
+            const cards = normalizeSections(state.draftSections);
+            if (!cards.length) {
+                host.innerHTML = `<div class="empty-state">Section timings will appear after the mission script has cards.</div>`;
                 return;
             }
             const currentMap = new Map((state.currentRehearsal?.section_timings || []).map((item) => [item.section_id, item]));
-            host.innerHTML = state.draftSections.map((section) => {
-                const current = currentMap.get(section.section_id) || {};
-                const actual = Number(current.actual_seconds || section.target_seconds || 45);
+            host.innerHTML = cards.map((card) => {
+                const current = currentMap.get(card.section_id) || {};
+                const actual = Number(current.actual_seconds || card.target_seconds || 45);
                 return `
                     <div class="timing-card">
                         <header>
                             <div>
-                                <strong>${escapeHtml(section.name)}</strong>
-                                <div class="meta-line">${escapeHtml(section.slide_anchor || "No visual anchor set")} · ${escapeHtml(section.interaction_goal || "No interaction goal set")}</div>
+                                <strong>Slide ${card.slide_index}: ${escapeHtml(card.slide_title || card.name)}</strong>
+                                <div class="meta-line">${escapeHtml(card.slide_anchor || "No visual anchor set")} | ${escapeHtml(card.interaction_goal || "No interaction goal set")}</div>
                             </div>
                         </header>
                         <div class="two-col">
                             <div class="key-value">
                                 <span>Target</span>
-                                <strong>${formatMmss(Number(section.target_seconds || 0))}</strong>
+                                <strong>${formatMmss(Number(card.target_seconds || 0))}</strong>
                             </div>
                             <div class="field">
                                 <label>Actual Seconds</label>
-                                <input type="number" min="0" step="1" value="${escapeAttr(actual)}" data-section-id="${escapeAttr(section.section_id)}" class="actual-section-seconds">
+                                <input type="number" min="0" step="1" value="${escapeAttr(actual)}" data-section-id="${escapeAttr(card.section_id)}" class="actual-section-seconds">
                             </div>
                         </div>
                     </div>
@@ -1306,12 +1617,62 @@
         function collectSectionTimings() {
             const inputs = Array.from(document.querySelectorAll(".actual-section-seconds"));
             const map = new Map(inputs.map((input) => [input.dataset.sectionId, Number(input.value || 0)]));
-            return (state.draftSections || []).map((section) => ({
-                section_id: section.section_id,
-                name: section.name,
-                target_seconds: Number(section.target_seconds || 0),
-                actual_seconds: Number(map.get(section.section_id) || section.target_seconds || 0),
+            return normalizeSections(state.draftSections).map((card) => ({
+                section_id: card.section_id,
+                name: card.name,
+                slide_index: card.slide_index,
+                slide_title: card.slide_title,
+                target_seconds: Number(card.target_seconds || 0),
+                actual_seconds: Number(map.get(card.section_id) || card.target_seconds || 0),
             }));
+        }
+
+        function renderPresentationStage() {
+            const host = document.getElementById("presentation-stage-host");
+            const card = currentActiveCard();
+            const presentationState = currentPresentationState();
+            if (!card) {
+                host.innerHTML = `<div class="empty-state">Load a mission to activate the current slide stage.</div>`;
+                return;
+            }
+            const estimatedSeconds = estimateSectionSeconds(card);
+            const compactMode = presentationState.presentation_mode === "present";
+            const cueVisible = presentationState.cue_view === "visible";
+            host.innerHTML = `
+                <div class="stage-card">
+                    <div class="stage-meta">
+                        <span class="stage-label">Mode: ${escapeHtml(presentationState.presentation_mode)}</span>
+                        <span class="stage-label">Source: ${escapeHtml(presentationState.control_source)}</span>
+                        <span class="stage-label">Slide ${card.slide_index}</span>
+                        <span class="stage-label">Target ${formatMmss(card.target_seconds)}</span>
+                        <span class="stage-label">Cue ${cueVisible ? "visible" : "hidden"}</span>
+                    </div>
+                    <h3>Slide ${card.slide_index}: ${escapeHtml(card.slide_title || card.name)}</h3>
+                    <p class="stage-copy">${escapeHtml(card.slide_anchor || "No slide anchor set yet.")}</p>
+                    <div class="stage-block">
+                        <strong>Interaction Goal</strong>
+                        <div class="stage-copy">${escapeHtml(card.interaction_goal || "No interaction goal has been written yet.")}</div>
+                    </div>
+                    ${compactMode ? "" : `
+                        <div class="stage-block">
+                            <strong>Outline</strong>
+                            <div class="stage-copy">${escapeHtml(card.outline || "No outline yet.")}</div>
+                        </div>
+                        <div class="stage-block">
+                            <strong>Speaker Notes</strong>
+                            <div class="stage-copy">${escapeHtml(card.speaker_notes || "No speaker notes yet.")}</div>
+                        </div>
+                    `}
+                    <div class="stage-block">
+                        <strong>${cueVisible ? "Cue Cards" : "Cue Cards Hidden"}</strong>
+                        <div class="stage-copy">${cueVisible ? escapeHtml(card.cue_cards || "No cue cards yet.") : "Cue cards are hidden for the current view."}</div>
+                    </div>
+                    <div class="stage-block">
+                        <strong>Timing Check</strong>
+                        <div class="stage-copy">Estimated ${estimatedSeconds ? formatMmss(estimatedSeconds) : "--"} against a target of ${formatMmss(card.target_seconds)}.</div>
+                    </div>
+                </div>
+            `;
         }
 
         function renderRecentRehearsals() {
@@ -1325,7 +1686,7 @@
                     <header>
                         <div>
                             <strong>${escapeHtml(run.total_duration_label || "--")}</strong>
-                            <div class="meta-line">${escapeHtml(run.audio_source || "browser_mic")} · transcript ${escapeHtml(run.transcript_status || "missing")} · ${escapeHtml(run.created_at || "")}</div>
+                            <div class="meta-line">${escapeHtml(run.audio_source || "browser_mic")} | transcript ${escapeHtml(run.transcript_status || "missing")} | ${escapeHtml(run.created_at || "")}</div>
                         </div>
                         <div class="action-row">
                             <button class="ghost-btn" onclick="loadRehearsal('${escapeAttr(run.rehearsal_id)}')">Load</button>
@@ -1343,7 +1704,7 @@
             const hudView = document.getElementById("hud-summary-view");
 
             if (!analysis?.feedback) {
-                host.innerHTML = `<div class="empty-state">Analyze a saved rehearsal run to see pacing, section balance, and next-step feedback.</div>`;
+                host.innerHTML = `<div class="empty-state">Analyze a saved run to see pacing, slide-card balance, and next-step feedback.</div>`;
                 transcriptView.innerText = state.currentRehearsal?.transcript_text || "No transcript available yet.";
                 hudView.innerText = "No HUD summary yet.";
                 return;
@@ -1358,11 +1719,11 @@
                 </div>
                 <div class="two-col">
                     <div class="result-card">
-                        <header><strong>Strongest Section</strong></header>
+                        <header><strong>Strongest Card</strong></header>
                         <div class="tiny"><strong>${escapeHtml(feedback.strongest_section || "--")}</strong><br>${escapeHtml(feedback.strongest_section_note || "")}</div>
                     </div>
                     <div class="result-card">
-                        <header><strong>Weakest Section</strong></header>
+                        <header><strong>Weakest Card</strong></header>
                         <div class="tiny"><strong>${escapeHtml(feedback.weakest_section || "--")}</strong><br>${escapeHtml(feedback.weakest_section_note || "")}</div>
                     </div>
                 </div>
@@ -1379,11 +1740,11 @@
                     <div class="tiny">${escapeHtml(feedback.one_next_action || "--")}</div>
                 </div>
                 <div class="result-card">
-                    <header><strong>Section Suggestions</strong></header>
+                    <header><strong>Card Suggestions</strong></header>
                     ${
                         suggestions.length
-                            ? `<div class="stack">${suggestions.map((item) => `<div class="tiny"><strong>${escapeHtml(item.section_name || "Section")}</strong>: ${escapeHtml(item.suggestion || "")}</div>`).join("")}</div>`
-                            : `<div class="tiny">No extra section suggestions were generated.</div>`
+                            ? `<div class="stack">${suggestions.map((item) => `<div class="tiny"><strong>${escapeHtml(item.section_name || "Card")}</strong>: ${escapeHtml(item.suggestion || "")}</div>`).join("")}</div>`
+                            : `<div class="tiny">No extra card suggestions were generated.</div>`
                     }
                 </div>
                 <div class="result-card">
@@ -1398,11 +1759,14 @@
         }
 
         function renderAll() {
+            syncControllerInputs();
             renderHero();
             renderMissionList();
             renderScriptSummary();
-            renderScriptSections();
+            renderScriptCardSwitcher();
+            renderFocusedCard();
             renderSectionTimings();
+            renderPresentationStage();
             renderRecentRehearsals();
             renderFeedback();
         }
@@ -1431,6 +1795,109 @@
             host.className = `status-note ${className}`;
         }
 
+        function setControllerStatus(message, className = "status-cool") {
+            const host = document.getElementById("controller-status");
+            host.innerText = message;
+            host.className = `status-note ${className}`;
+        }
+
+        function setFocusedCard(sectionId, syncPresentation = false) {
+            const cards = normalizeSections(state.draftSections);
+            const fallback = cards[0]?.section_id || "";
+            state.focusedCardId = cards.some((item) => item.section_id === sectionId) ? sectionId : fallback;
+            if (syncPresentation) {
+                state.presentationState = normalizePresentationState({
+                    ...state.presentationState,
+                    active_section_id: state.focusedCardId,
+                }, cards);
+            }
+            renderAll();
+        }
+
+        function focusAdjacentCard(offset) {
+            const cards = normalizeSections(state.draftSections);
+            if (!cards.length) return;
+            const currentId = state.focusedCardId || cards[0].section_id;
+            const currentIndex = Math.max(0, cards.findIndex((item) => item.section_id === currentId));
+            const nextIndex = Math.min(cards.length - 1, Math.max(0, currentIndex + offset));
+            setFocusedCard(cards[nextIndex].section_id, true);
+        }
+
+        function updateFocusedCardField(key, value) {
+            const cards = normalizeSections(state.draftSections);
+            const nextCards = cards.map((card) => {
+                if (card.section_id !== state.focusedCardId) return card;
+                return normalizeSection({
+                    ...card,
+                    [key]: key === "slide_index" || key === "target_seconds" ? Number(value || 0) : value,
+                }, card.slide_index || 1);
+            });
+            state.draftSections = nextCards;
+            state.presentationState = normalizePresentationState(state.presentationState, nextCards);
+            renderAll();
+        }
+
+        function addSection() {
+            const cards = normalizeSections(state.draftSections);
+            const nextSlideIndex = cards.length ? Math.max(...cards.map((item) => Number(item.slide_index || 0))) + 1 : 1;
+            const nextCard = normalizeSection({
+                section_id: `draft-${Date.now()}-${nextSlideIndex}`,
+                name: `Card ${nextSlideIndex}`,
+                slide_index: nextSlideIndex,
+                slide_title: `Slide ${nextSlideIndex}`,
+                slide_anchor: `Slide ${nextSlideIndex}`,
+                interaction_goal: "",
+                target_seconds: 45,
+                outline: "",
+                speaker_notes: "",
+                cue_cards: "",
+            }, nextSlideIndex);
+            state.draftSections = [...cards, nextCard];
+            state.focusedCardId = nextCard.section_id;
+            state.presentationState = normalizePresentationState({
+                ...state.presentationState,
+                active_section_id: nextCard.section_id,
+            }, state.draftSections);
+            renderAll();
+        }
+
+        function duplicateFocusedCard() {
+            const card = currentFocusedCard();
+            if (!card) return;
+            const cards = normalizeSections(state.draftSections);
+            const nextSlideIndex = Math.max(...cards.map((item) => Number(item.slide_index || 0))) + 1;
+            const clone = normalizeSection({
+                ...card,
+                section_id: `draft-${Date.now()}-${nextSlideIndex}`,
+                name: `${card.name} Copy`,
+                slide_index: nextSlideIndex,
+                slide_title: `${card.slide_title || card.name} Copy`,
+            }, nextSlideIndex);
+            state.draftSections = [...cards, clone];
+            state.focusedCardId = clone.section_id;
+            state.presentationState = normalizePresentationState({
+                ...state.presentationState,
+                active_section_id: clone.section_id,
+            }, state.draftSections);
+            renderAll();
+        }
+
+        function removeFocusedCard() {
+            const cards = normalizeSections(state.draftSections);
+            if (cards.length <= 1) {
+                setBriefStatus("Keep at least one slide card in the script workspace.", "status-warn");
+                return;
+            }
+            const nextCards = cards.filter((item) => item.section_id !== state.focusedCardId);
+            state.draftSections = nextCards;
+            state.focusedCardId = nextCards[0]?.section_id || "";
+            state.presentationState = normalizePresentationState({
+                ...state.presentationState,
+                active_section_id: state.focusedCardId,
+            }, nextCards);
+            renderAll();
+        }
+
         async function loadMissions(selectFirst = true) {
             const response = await fetch("/api/presentation_missions");
             const result = await response.json();
@@ -1451,13 +1918,16 @@
             }
             state.currentMissionId = result.mission.mission_id;
             state.currentMission = result.mission;
-            state.draftSections = result.mission.script_sections || [];
+            state.draftSections = normalizeSections(result.mission.script_sections || []);
+            state.presentationState = normalizePresentationState(result.mission.presentation_state, state.draftSections);
+            state.focusedCardId = state.presentationState.active_section_id || state.draftSections[0]?.section_id || "";
             state.rehearsalList = result.rehearsals || [];
             state.currentRehearsal = null;
             state.suggestedSections = [];
             setMissionForm(result.mission);
             setBriefStatus("Mission loaded. You can keep editing and save again at any time.", "status-cool");
             setRehearsalStatus("Select or save a rehearsal run for analysis.", "status-cool");
+            setControllerStatus(`Controller synced. Active slide is ${state.presentationState.active_slide_index || "--"} via ${state.presentationState.control_source || "phone"}.`, "status-cool");
             renderAll();
         }
 
@@ -1490,23 +1960,29 @@
             document.getElementById("mission-audience").value = candidates.audience || document.getElementById("mission-audience").value;
             document.getElementById("mission-requirements").value = candidates.teacher_requirements || document.getElementById("mission-requirements").value;
             document.getElementById("mission-description").value = candidates.task_description || document.getElementById("mission-description").value;
-            state.suggestedSections = result.suggested_sections || [];
+            state.suggestedSections = normalizeSections(result.suggested_sections || []);
             if (!state.currentMissionId && state.suggestedSections.length) {
                 state.draftSections = state.suggestedSections.map((item) => ({ ...item }));
+                state.presentationState = normalizePresentationState(null, state.draftSections);
+                state.focusedCardId = state.draftSections[0]?.section_id || "";
             }
-            setIntakeStatus(result.generation?.note || "Suggested values were loaded into the editable form.", response.ok ? "status-cool" : "status-high");
+            setIntakeStatus(result.generation?.note || "Suggested values were loaded into the editable form.", "status-cool");
             renderAll();
         }
 
         function loadSuggestedSectionsIntoScript() {
             if (state.suggestedSections.length) {
                 state.draftSections = state.suggestedSections.map((item) => ({ ...item }));
-                setBriefStatus("Suggested section scaffold loaded into the script workspace.", "status-cool");
+                state.presentationState = normalizePresentationState(state.presentationState, state.draftSections);
+                state.focusedCardId = state.draftSections[0]?.section_id || "";
+                setBriefStatus("Suggested slide-card scaffold loaded into the script workspace.", "status-cool");
             } else if (!state.draftSections.length) {
                 state.draftSections = buildDefaultDraftSections(Number(document.getElementById("mission-duration").value || 5));
-                setBriefStatus("A default section scaffold was created from the current target duration.", "status-cool");
+                state.presentationState = normalizePresentationState(null, state.draftSections);
+                state.focusedCardId = state.draftSections[0]?.section_id || "";
+                setBriefStatus("A default slide-card scaffold was created from the current target duration.", "status-cool");
             } else {
-                setBriefStatus("The current draft sections are already available in the script workspace.", "status-cool");
+                setBriefStatus("The current slide cards are already available in the script workspace.", "status-cool");
             }
             renderAll();
             switchTab("script");
@@ -1530,17 +2006,19 @@
             }
             state.currentMissionId = result.mission.mission_id;
             state.currentMission = result.mission;
-            state.draftSections = result.mission.script_sections || [];
+            state.draftSections = normalizeSections(result.mission.script_sections || []);
+            state.presentationState = normalizePresentationState(result.mission.presentation_state, state.draftSections);
+            state.focusedCardId = state.presentationState.active_section_id || state.draftSections[0]?.section_id || "";
             state.rehearsalList = result.rehearsals || state.rehearsalList;
             setMissionForm(result.mission);
-            setBriefStatus("Mission saved. You can now refine the script or start a rehearsal.", "status-good");
+            setBriefStatus("Mission saved. You can now refine the slide cards or start a rehearsal.", "status-good");
             await loadMissions(false);
             renderAll();
         }
 
         async function saveScript() {
             if (!state.currentMissionId) {
-                setBriefStatus("Save the mission first, then save the script sections.", "status-high");
+                setBriefStatus("Save the mission first, then save the slide cards.", "status-high");
                 switchTab("brief");
                 return;
             }
@@ -1548,76 +2026,141 @@
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    script_sections: state.draftSections,
+                    script_sections: normalizeSections(state.draftSections),
                 }),
             });
             const result = await response.json();
             if (!response.ok) {
-                setBriefStatus(result.message || "Script save failed.", "status-high");
+                setBriefStatus(result.message || "Slide-card save failed.", "status-high");
                 return;
             }
             state.currentMission = result.mission;
-            state.draftSections = result.mission.script_sections || [];
-            setBriefStatus("Script sections saved.", "status-good");
+            state.draftSections = normalizeSections(result.mission.script_sections || []);
+            state.presentationState = normalizePresentationState(result.mission.presentation_state, state.draftSections);
+            state.focusedCardId = state.presentationState.active_section_id || state.draftSections[0]?.section_id || "";
+            setBriefStatus("Slide cards saved.", "status-good");
             await loadMissions(false);
             renderAll();
         }
 
-        function updateSectionField(index, key, value) {
-            const next = [...state.draftSections];
-            next[index] = {
-                ...next[index],
-                [key]: key === "target_seconds" ? Number(value || 0) : value,
-            };
-            state.draftSections = next;
-            renderHero();
-            renderScriptSummary();
-            renderSectionTimings();
-        }
-
-        function addSection() {
-            state.draftSections = [
-                ...state.draftSections,
-                {
-                    section_id: `draft-${Date.now()}-${state.draftSections.length + 1}`,
-                    name: `Section ${state.draftSections.length + 1}`,
-                    slide_anchor: "",
-                    interaction_goal: "",
-                    target_seconds: 45,
-                    outline: "",
-                    speaker_notes: "",
-                    cue_cards: "",
-                },
-            ];
+        async function syncPresentationStateFromUi() {
+            state.presentationState = normalizePresentationState({
+                ...state.presentationState,
+                control_source: document.getElementById("controller-source").value,
+            }, state.draftSections);
             renderAll();
         }
 
-        function duplicateSection(index) {
-            const source = state.draftSections[index];
-            if (!source) return;
-            const copy = { ...source, section_id: `draft-${Date.now()}-${index + 1}` };
-            state.draftSections = [
-                ...state.draftSections.slice(0, index + 1),
-                copy,
-                ...state.draftSections.slice(index + 1),
-            ];
-            renderAll();
-        }
-
-        function removeSection(index) {
-            if (state.draftSections.length <= 1) {
-                setBriefStatus("Keep at least one section in the script workspace.", "status-warn");
+        async function updatePresentationMode() {
+            const nextMode = document.getElementById("presentation-mode").value;
+            if (!state.currentMissionId) {
+                state.presentationState = normalizePresentationState({
+                    ...state.presentationState,
+                    presentation_mode: nextMode,
+                }, state.draftSections);
+                renderAll();
                 return;
             }
-            state.draftSections = state.draftSections.filter((_, itemIndex) => itemIndex !== index);
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/presentation_state`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    presentation_mode: nextMode,
+                    control_source: document.getElementById("controller-source").value || "phone",
+                    active_section_id: currentActiveCard()?.section_id || "",
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not update the presentation mode.", "status-high");
+                return;
+            }
+            applyPresentationStateResult(result.presentation_state, "Presentation mode updated.");
+        }
+
+        async function jumpToSelectedSlide() {
+            const sectionId = document.getElementById("jump-slide-select").value;
+            if (!sectionId) return;
+            if (!state.currentMissionId) {
+                state.presentationState = normalizePresentationState({
+                    ...state.presentationState,
+                    active_section_id: sectionId,
+                }, state.draftSections);
+                state.focusedCardId = sectionId;
+                renderAll();
+                return;
+            }
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/presentation_control`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "jump",
+                    section_id: sectionId,
+                    control_source: document.getElementById("controller-source").value || "phone",
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not jump to the selected slide.", "status-high");
+                return;
+            }
+            applyPresentationStateResult(result.presentation_state, "Jumped to the selected slide card.");
+        }
+
+        function applyPresentationStateResult(presentationState, message) {
+            state.presentationState = normalizePresentationState(presentationState, state.draftSections);
+            state.focusedCardId = state.presentationState.active_section_id || state.focusedCardId;
+            if (state.currentMission) {
+                state.currentMission.presentation_state = state.presentationState;
+            }
+            setControllerStatus(message || `Controller synced through ${state.presentationState.last_control_source || state.presentationState.control_source}.`, "status-good");
             renderAll();
+        }
+
+        async function applyPresentationControl(action) {
+            const payload = {
+                action,
+                control_source: document.getElementById("controller-source").value || "phone",
+                presentation_mode: document.getElementById("presentation-mode").value || currentPresentationState().presentation_mode,
+            };
+            if (!state.currentMissionId) {
+                const cards = normalizeSections(state.draftSections);
+                const current = currentPresentationState();
+                const ids = cards.map((item) => item.section_id);
+                let nextIndex = Math.max(0, ids.indexOf(current.active_section_id));
+                if (action === "next") nextIndex = Math.min(cards.length - 1, nextIndex + 1);
+                if (action === "previous") nextIndex = Math.max(0, nextIndex - 1);
+                const nextCard = cards[nextIndex] || cards[0] || null;
+                state.presentationState = normalizePresentationState({
+                    ...current,
+                    active_section_id: nextCard?.section_id || current.active_section_id,
+                    control_source: payload.control_source,
+                    last_control_source: payload.control_source,
+                    last_action: action,
+                    presentation_mode: payload.presentation_mode,
+                    cue_view: action === "toggle_cue" ? (current.cue_view === "visible" ? "hidden" : "visible") : current.cue_view,
+                }, cards);
+                state.focusedCardId = state.presentationState.active_section_id || state.focusedCardId;
+                renderAll();
+                return;
+            }
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/presentation_control`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not apply the presentation control.", "status-high");
+                return;
+            }
+            applyPresentationStateResult(result.presentation_state, `${payload.control_source} applied ${action}.`);
         }
 
         function currentRunDurationSeconds() {
             if (state.liveDurationSeconds > 0) return state.liveDurationSeconds;
             if (state.uploadedDurationSeconds > 0) return state.uploadedDurationSeconds;
-            const sectionTotal = collectSectionTimings().reduce((sum, item) => sum + Number(item.actual_seconds || 0), 0);
-            return sectionTotal;
+            return collectSectionTimings().reduce((sum, item) => sum + Number(item.actual_seconds || 0), 0);
         }
 
         async function startLiveRehearsal() {
@@ -1673,7 +2216,9 @@
 
         function stopSpeechRecognition() {
             if (state.speechRecognition) {
-                try { state.speechRecognition.stop(); } catch (error) {}
+                try {
+                    state.speechRecognition.stop();
+                } catch (error) {}
                 state.speechRecognition = null;
             }
         }
@@ -1717,7 +2262,9 @@
             }
             stopSpeechRecognition();
             if (state.mediaRecorder && state.mediaRecorder.state !== "inactive") {
-                try { state.mediaRecorder.stop(); } catch (error) {}
+                try {
+                    state.mediaRecorder.stop();
+                } catch (error) {}
             }
         }
 
@@ -1732,9 +2279,9 @@
             try {
                 const duration = await readAudioDuration(file);
                 state.uploadedDurationSeconds = duration;
-                document.getElementById("audio-meta").innerText = `${file.name} loaded · ${formatMmss(duration)} · ${(file.size / 1024).toFixed(1)} KB`;
+                document.getElementById("audio-meta").innerText = `${file.name} loaded | ${formatMmss(duration)} | ${(file.size / 1024).toFixed(1)} KB`;
             } catch (error) {
-                document.getElementById("audio-meta").innerText = `${file.name} loaded · duration could not be read in the browser`;
+                document.getElementById("audio-meta").innerText = `${file.name} loaded | duration could not be read in the browser`;
             }
         }
 
@@ -1853,14 +2400,36 @@
             document.getElementById("self-rating").value = result.rehearsal.self_rating || 0;
             state.liveDurationSeconds = Number(result.rehearsal.total_duration_seconds || 0);
             document.getElementById("live-timer").innerText = formatMmss(state.liveDurationSeconds);
-            renderSectionTimings();
-            renderFeedback();
-            renderHero();
+            renderAll();
             setRehearsalStatus("Rehearsal run loaded.", "status-cool");
         }
 
+        function shouldIgnoreShortcutTarget(target) {
+            if (!target) return false;
+            const tag = String(target.tagName || "").toLowerCase();
+            return tag === "input" || tag === "textarea" || tag === "select" || target.isContentEditable;
+        }
+
+        document.addEventListener("keydown", async (event) => {
+            if (shouldIgnoreShortcutTarget(event.target) || document.getElementById("tab-rehearse").classList.contains("hidden")) {
+                return;
+            }
+            if (event.code === "ArrowRight" || event.code === "Space" || event.code === "KeyK") {
+                event.preventDefault();
+                await applyPresentationControl("next");
+            } else if (event.code === "ArrowLeft" || event.code === "KeyJ") {
+                event.preventDefault();
+                await applyPresentationControl("previous");
+            } else if (event.code === "KeyC") {
+                event.preventDefault();
+                await applyPresentationControl("toggle_cue");
+            }
+        });
+
         async function bootPresentationPage() {
             state.draftSections = buildDefaultDraftSections(5);
+            state.presentationState = normalizePresentationState(null, state.draftSections);
+            state.focusedCardId = state.draftSections[0]?.section_id || "";
             renderAll();
             await loadMissions(true);
             renderAll();

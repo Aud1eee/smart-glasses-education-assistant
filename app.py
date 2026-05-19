@@ -1664,6 +1664,39 @@ def presentation_script_save(mission_id):
     })
 
 
+@app.route("/api/presentation_missions/<mission_id>/presentation_state", methods=["GET", "POST"])
+def presentation_state(mission_id):
+    if request.method == "GET":
+        result = presentation_companion.get_presentation_state(mission_id)
+    else:
+        payload = request.get_json(silent=True) or {}
+        result = presentation_companion.update_presentation_state(mission_id, payload)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    return jsonify({
+        "status": "ok",
+        **result,
+    })
+
+
+@app.route("/api/presentation_missions/<mission_id>/presentation_control", methods=["POST"])
+def presentation_control(mission_id):
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.apply_presentation_control(mission_id, payload)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    return jsonify({
+        "status": "ok",
+        **result,
+    })
+
+
 @app.route("/api/presentation_rehearsals", methods=["POST"])
 def presentation_rehearsals():
     if request.files:

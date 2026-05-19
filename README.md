@@ -257,6 +257,10 @@ The project now also includes an independent page at `/presentation`:
 
 - it turns one academic presentation task into a `brief -> script -> rehearse` workflow
 - the student still writes the actual outline, speaker notes, and cue cards
+- the script workspace now supports `slide-linked cards`, so each card can map to one PPT page or one tightly linked speaking unit
+- the rehearsal page now also includes a lightweight `presentation controller` with:
+  - `phone` as the default main control source
+  - `rokid_button` as a lightweight next / previous / cue-toggle scaffold
 - AI can help with:
   - task-intake field extraction
   - section scaffold suggestions
@@ -301,6 +305,8 @@ This checks:
 - mission creation
 - intake extraction fallback
 - script save
+- presentation-state save
+- presentation next / previous / cue-toggle control
 - rehearsal save
 - rehearsal analysis
 - HUD summary output
