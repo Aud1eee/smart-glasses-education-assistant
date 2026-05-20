@@ -1772,9 +1772,30 @@ class PresentationCompanion:
             session_id=sync_state.get("session_id", ""),
             existing=sync_state.get("pairing_state"),
         )
+        pairing_status = pairing_state.get("pairing_status", "inactive")
+        seconds_left = self._seconds_until_iso(pairing_state.get("pairing_expires_at", ""))
+        if pairing_status == "waiting":
+            status_label = "Waiting for device join"
+            if seconds_left and seconds_left > 0:
+                next_step = "Enter the join code on the companion surface before the timer ends."
+            else:
+                next_step = "Stay on the phone controller and wait for the companion surface to join."
+        elif pairing_status == "paired":
+            status_label = "Companion joined"
+            next_step = "Keep the phone as the main controller and use the paired surface for lightweight prompts."
+        elif pairing_status == "expired":
+            status_label = "Pairing code expired"
+            next_step = "Start a fresh pairing window from the phone controller."
+        else:
+            status_label = "Pairing inactive"
+            next_step = "Start pairing when you are ready to connect the companion surface."
         return {
             **pairing_state,
-            "pairing_expires_in_seconds": self._seconds_until_iso(pairing_state.get("pairing_expires_at", "")),
+            "pairing_expires_in_seconds": seconds_left,
+            "countdown_label": self._format_mmss(seconds_left) if seconds_left is not None and seconds_left > 0 else "",
+            "status_label": status_label,
+            "next_step": next_step,
+            "join_ready": pairing_status == "waiting" and bool(pairing_state.get("pairing_code", "")),
             "owner_surface": self._normalize_claimed_surface(sync_state.get("claimed_surface", "")),
         }
 
@@ -2282,11 +2303,14 @@ class PresentationCompanion:
             "bridge_pin": self._clean_text(companion_sync.get("bridge_pin", ""), max_length=16),
             "bridge_key": self._clean_text(companion_sync.get("bridge_key", ""), max_length=24),
             "pairing_status": pairing_state.get("pairing_status", "inactive"),
+            "pairing_status_label": pairing_state.get("status_label", "Pairing inactive"),
             "pairing_code": pairing_state.get("pairing_code", ""),
             "pairing_expires_at": pairing_state.get("pairing_expires_at", ""),
             "pairing_expires_in_seconds": pairing_state.get("pairing_expires_in_seconds"),
+            "pairing_countdown_label": pairing_state.get("countdown_label", ""),
             "paired_surface": pairing_state.get("paired_surface", ""),
             "paired_device_label": pairing_state.get("paired_device_label", ""),
+            "pairing_next_step": pairing_state.get("next_step", ""),
             "claimed_surface": self._normalize_claimed_surface(companion_sync.get("claimed_surface", "")),
             "claimed_device_label": self._clean_text(companion_sync.get("claimed_device_label", ""), max_length=80),
             "owner_surface": pairing_state.get("owner_surface", ""),

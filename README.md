@@ -309,6 +309,13 @@ The core routes are:
 - `/api/presentation_rehearsals/<rehearsal_id>/analyze`
 - `/api/presentation_rehearsals/<rehearsal_id>/hud_summary`
 
+The phone-side controller now also includes a lightweight pairing sheet:
+
+- large join code display for the current session
+- readable pairing lifecycle labels and next-step guidance
+- auto-refresh while a pairing window is waiting or already paired
+- explicit separation between `owner_surface` and the joined companion surface
+
 Local artifact note:
 
 - presentation missions and rehearsal runs are stored in `data/presentation_companion_store.json`

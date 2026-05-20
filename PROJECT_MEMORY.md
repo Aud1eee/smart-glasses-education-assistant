@@ -174,6 +174,11 @@ The current demo-ready checkpoint includes:
     - `bridge_release`
     - `rokid_event`
     - `live_hud`
+  - join UX polish:
+    - phone-side pairing sheet with large join code
+    - readable `status_label` and `next_step`
+    - auto-refresh while pairing is waiting / paired / expired
+    - explicit joined-surface vs owner-surface visibility
   - phone-first presentation control with Rokid-button scaffolding for:
     - next
     - previous

@@ -285,6 +285,13 @@ The current handoff layer now adds:
   - `expired`
 - lightweight session visibility in both the phone workspace and the live HUD payload
 
+The latest polish layer keeps that handoff usable during a real presentation setup:
+
+- the phone controller now renders a clearer pairing sheet instead of only raw API chips
+- the pairing payload exposes readable fields like `status_label`, `countdown_label`, and `next_step`
+- the controller auto-refreshes pairing state while the join window is open or a companion surface is already connected
+- the UI now keeps `owner_surface` separate from the joined companion surface so it is easier to understand who controls slides and who only mirrors HUD prompts
+
 ### Rehearsal feedback boundary
 
 The rehearsal feedback can analyze:

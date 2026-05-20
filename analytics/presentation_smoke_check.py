@@ -92,6 +92,8 @@ def main():
     assert pairing_state_response.status_code == 200, pairing_state_response.get_data(as_text=True)
     pairing_state_payload = pairing_state_response.get_json()
     assert pairing_state_payload["pairing_state"]["pairing_status"] == "inactive", "Pairing state should start inactive."
+    assert pairing_state_payload["pairing_state"]["status_label"] == "Pairing inactive", "Expected a readable inactive pairing label."
+    assert pairing_state_payload["pairing_state"]["next_step"], "Expected a next-step hint for pairing."
 
     pairing_start_short_response = client.post(
         f"/api/presentation_missions/{mission_id}/pairing_start",
@@ -104,6 +106,8 @@ def main():
     pairing_start_short_payload = pairing_start_short_response.get_json()
     assert pairing_start_short_payload["pairing_state"]["pairing_status"] == "waiting", "Short pairing window should open in waiting mode."
     assert pairing_start_short_payload["pairing_state"]["pairing_code"], "Short pairing window should issue a code."
+    assert pairing_start_short_payload["pairing_state"]["join_ready"] is True, "Waiting pairing state should be join-ready."
+    assert pairing_start_short_payload["pairing_state"]["countdown_label"], "Waiting pairing state should expose a countdown label."
 
     time.sleep(3)
 
@@ -111,6 +115,7 @@ def main():
     assert pairing_expired_response.status_code == 200, pairing_expired_response.get_data(as_text=True)
     pairing_expired_payload = pairing_expired_response.get_json()
     assert pairing_expired_payload["pairing_state"]["pairing_status"] == "expired", "Pairing window should expire after the short timeout."
+    assert pairing_expired_payload["pairing_state"]["status_label"] == "Pairing code expired", "Expected an expired pairing label."
 
     pairing_join_expired_response = client.post(
         f"/api/presentation_missions/{mission_id}/pairing_join",
@@ -147,6 +152,7 @@ def main():
     pairing_join_payload = pairing_join_response.get_json()
     assert pairing_join_payload["pairing_state"]["pairing_status"] == "paired", "Expected pairing join to move into paired mode."
     assert pairing_join_payload["pairing_state"]["paired_surface"] == "rokid_hud", "Expected Rokid HUD to be the paired surface."
+    assert pairing_join_payload["pairing_state"]["status_label"] == "Companion joined", "Expected a paired pairing label."
 
     bridge_state_response = client.get(f"/api/presentation_missions/{mission_id}/bridge_state")
     assert bridge_state_response.status_code == 200, bridge_state_response.get_data(as_text=True)
@@ -284,6 +290,7 @@ def main():
     assert live_hud_payload["live_hud"]["surface_status"]["rokid_hud"] in {"active", "idle"}, "Live HUD pull should mark the Rokid HUD surface as seen."
     assert live_hud_payload["live_hud"]["claimed_surface"] == "phone", "Live HUD should reflect the current bridge owner."
     assert live_hud_payload["live_hud"]["pairing_status"] == "paired", "Live HUD should reflect the active paired session."
+    assert live_hud_payload["live_hud"]["pairing_status_label"] == "Companion joined", "Live HUD should expose the pairing status label."
     assert live_hud_payload["live_hud"]["paired_surface"] == "rokid_hud", "Live HUD should expose the paired Rokid surface."
     assert live_hud_payload["live_hud"]["owner_surface"] == "phone", "Live HUD should expose the bridge owner surface."
 

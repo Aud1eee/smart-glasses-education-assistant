@@ -593,6 +593,126 @@
             gap: 10px;
         }
 
+        .pairing-sheet {
+            margin-bottom: 14px;
+            padding: 18px;
+            border-radius: 22px;
+            border: 1px solid rgba(109, 191, 213, 0.2);
+            background:
+                radial-gradient(circle at 12% 20%, rgba(114, 212, 245, 0.16), transparent 28%),
+                radial-gradient(circle at 88% 18%, rgba(255, 210, 122, 0.14), transparent 24%),
+                rgba(255, 255, 255, 0.04);
+        }
+
+        .pairing-sheet.waiting {
+            border-color: rgba(255, 196, 106, 0.4);
+        }
+
+        .pairing-sheet.paired {
+            border-color: rgba(140, 229, 176, 0.34);
+        }
+
+        .pairing-sheet.expired {
+            border-color: rgba(255, 143, 107, 0.4);
+        }
+
+        .pairing-sheet-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+            align-items: flex-start;
+        }
+
+        .pairing-sheet-head strong {
+            display: block;
+            font-size: 18px;
+            margin-bottom: 6px;
+        }
+
+        .pairing-sheet-head p {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+            max-width: 620px;
+        }
+
+        .pairing-badge {
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--muted);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .pairing-badge strong {
+            display: inline;
+            margin: 0;
+            font-size: 12px;
+            color: var(--ink);
+        }
+
+        .pairing-sheet-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .pairing-code-card,
+        .pairing-status-card {
+            border-radius: 18px;
+            border: 1px solid rgba(109, 191, 213, 0.16);
+            background: rgba(255, 255, 255, 0.03);
+            padding: 14px;
+        }
+
+        .pairing-code-card span,
+        .pairing-status-card span {
+            display: block;
+            color: rgba(114, 212, 245, 0.84);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            margin-bottom: 8px;
+        }
+
+        .pairing-code-value {
+            font-size: clamp(28px, 7vw, 42px);
+            line-height: 1;
+            letter-spacing: 0.18em;
+            font-weight: 800;
+        }
+
+        .pairing-code-meta,
+        .pairing-status-card p {
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .pairing-steps {
+            display: grid;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .pairing-step {
+            padding: 10px 12px;
+            border-radius: 14px;
+            border: 1px solid rgba(109, 191, 213, 0.14);
+            background: rgba(255, 255, 255, 0.025);
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .pairing-step strong {
+            color: var(--ink);
+        }
+
         .sync-chip {
             border-radius: 16px;
             border: 1px solid rgba(109, 191, 213, 0.16);
@@ -903,6 +1023,7 @@
             .status-shell,
             .controller-summary-shell,
             .stage-kpi-grid,
+            .pairing-sheet-grid,
             .sync-grid {
                 grid-template-columns: 1fr;
             }
@@ -1381,6 +1502,7 @@
             recordedChunks: [],
             speechRecognition: null,
             companionHeartbeatHandle: null,
+            pairingMonitorHandle: null,
         };
 
         function escapeHtml(value) {
@@ -1538,13 +1660,17 @@
                 bridge_claim_api_path: "",
                 bridge_release_api_path: "",
                 pairing_state: {
-                    pairing_status: "inactive",
-                    pairing_code: "",
-                    pairing_expires_at: "",
-                    pairing_expires_in_seconds: null,
-                    paired_surface: "",
-                    paired_device_label: "",
-                    paired_at: "",
+                pairing_status: "inactive",
+                pairing_code: "",
+                pairing_expires_at: "",
+                pairing_expires_in_seconds: null,
+                countdown_label: "",
+                status_label: "Pairing inactive",
+                next_step: "Start pairing when you are ready to connect the companion surface.",
+                join_ready: false,
+                paired_surface: "",
+                paired_device_label: "",
+                paired_at: "",
                     pairing_revision: 0,
                     pairing_window_seconds: 180,
                     last_pairing_start_at: "",
@@ -1580,6 +1706,10 @@
                     ? String(value.pairing_status).toLowerCase()
                     : fallback.pairing_status,
                 pairing_code: String(value.pairing_code || "").toUpperCase(),
+                countdown_label: String(value.countdown_label || ""),
+                status_label: String(value.status_label || fallback.status_label),
+                next_step: String(value.next_step || fallback.next_step),
+                join_ready: Boolean(value.join_ready),
                 pairing_window_seconds: Math.max(1, Number(value.pairing_window_seconds || fallback.pairing_window_seconds)),
             };
         }
@@ -1626,11 +1756,14 @@
                 sync_status: "ready",
                 sync_revision: 1,
                 pairing_status: "inactive",
+                pairing_status_label: "Pairing inactive",
                 pairing_code: "",
                 pairing_expires_at: "",
                 pairing_expires_in_seconds: null,
+                pairing_countdown_label: "",
                 paired_surface: "",
                 paired_device_label: "",
+                pairing_next_step: "",
                 bridge_status: "waiting",
                 bridge_pin: "",
                 bridge_key: "",
@@ -1967,14 +2100,50 @@
                 : "No paired surface";
             const pairingCodeLabel = pairing.pairing_code || "------";
             const pairingExpiryLabel = pairing.pairing_status === "waiting" && pairing.pairing_expires_in_seconds > 0
-                ? `${formatMmss(pairing.pairing_expires_in_seconds)} left | ${formatSeen(pairing.pairing_expires_at)}`
+                ? `${pairing.countdown_label || formatMmss(pairing.pairing_expires_in_seconds)} left | ${formatSeen(pairing.pairing_expires_at)}`
                 : pairing.pairing_status === "expired"
                     ? `Expired | ${formatSeen(pairing.pairing_expires_at)}`
                     : pairing.pairing_expires_at
                         ? formatSeen(pairing.pairing_expires_at)
                         : "No active pairing window";
+            const ownerLabel = liveHud.owner_surface || pairing.owner_surface || "unclaimed";
             const thisSurface = phoneControllerMode ? "phone" : "web";
             host.innerHTML = `
+                <div class="pairing-sheet ${escapeAttr(pairing.pairing_status || "inactive")}">
+                    <div class="pairing-sheet-head">
+                        <div>
+                            <span class="eyebrow">Paired Session Handoff</span>
+                            <strong>${escapeHtml(pairing.status_label || "Pairing inactive")}</strong>
+                            <p>${escapeHtml(pairing.next_step || "Start pairing when you are ready to connect the companion surface.")}</p>
+                        </div>
+                        <div class="pairing-badge">Owner <strong>${escapeHtml(ownerLabel)}</strong></div>
+                    </div>
+                    <div class="pairing-sheet-grid">
+                        <div class="pairing-code-card">
+                            <span>Join Code</span>
+                            <div class="pairing-code-value">${escapeHtml(pairingCodeLabel)}</div>
+                            <div class="pairing-code-meta">${escapeHtml(pairingExpiryLabel)}</div>
+                        </div>
+                        <div class="pairing-status-card">
+                            <span>Join State</span>
+                            <strong>${escapeHtml(pairedLabel)}</strong>
+                            <p>${escapeHtml(
+                                pairing.pairing_status === "paired"
+                                    ? "The companion surface is connected. Keep the phone as the main controller."
+                                    : pairing.pairing_status === "waiting"
+                                        ? "Read the code from the phone and enter it on the companion surface."
+                                        : pairing.pairing_status === "expired"
+                                            ? "The last code has expired. Start a new window before the next join attempt."
+                                            : "No device is paired yet. Open a pairing window when you want the companion surface to join."
+                            )}</p>
+                        </div>
+                    </div>
+                    <div class="pairing-steps">
+                        <div class="pairing-step"><strong>1.</strong> Start pairing on the phone controller to open a short join window.</div>
+                        <div class="pairing-step"><strong>2.</strong> Enter the code on the Rokid or companion surface and wait for confirmation here.</div>
+                        <div class="pairing-step"><strong>3.</strong> Keep the phone as the main controller. Use the paired surface only for lightweight HUD prompts.</div>
+                    </div>
+                </div>
                 <div class="sync-grid">
                     <div class="sync-chip">
                         <span>Session</span>
@@ -2021,7 +2190,7 @@
                     <div class="metric-chip"><strong>Live HUD</strong> ${escapeHtml(liveHud.status_line || "Current slide ready")}</div>
                     <div class="metric-chip"><strong>Active</strong> Slide ${escapeHtml(liveHud.active_slide_index || "--")} ${escapeHtml(liveHud.active_slide_title || "")}</div>
                     <div class="metric-chip"><strong>Next</strong> ${liveHud.next_slide_index ? `Slide ${escapeHtml(liveHud.next_slide_index)} ${escapeHtml(liveHud.next_slide_title || "")}` : "Final card"}</div>
-                    <div class="metric-chip"><strong>Owner</strong> ${escapeHtml(liveHud.owner_surface || pairing.owner_surface || "unclaimed")}</div>
+                    <div class="metric-chip"><strong>Owner</strong> ${escapeHtml(ownerLabel)}</div>
                     <div class="metric-chip"><strong>Last event</strong> ${escapeHtml(sync.last_event || "initialized")}</div>
                 </div>
                 <div class="link-stack">
@@ -2045,9 +2214,9 @@
                     <div class="field">
                         <label for="pairing-join-surface">Join Surface</label>
                         <select id="pairing-join-surface">
-                            <option value="rokid_hud">rokid_hud</option>
-                            <option value="phone">phone</option>
-                            <option value="web">web</option>
+                            <option value="rokid_hud" ${pairing.paired_surface === "rokid_hud" || !pairing.paired_surface ? "selected" : ""}>rokid_hud</option>
+                            <option value="phone" ${pairing.paired_surface === "phone" ? "selected" : ""}>phone</option>
+                            <option value="web" ${pairing.paired_surface === "web" ? "selected" : ""}>web</option>
                         </select>
                     </div>
                     <div class="field">
@@ -2586,6 +2755,7 @@
         }
 
         function applyCompanionBundle(result, statusMessage = "") {
+            const previousPairing = currentPairingState();
             if (!result) return;
             if (result.presentation_state) {
                 state.presentationState = normalizePresentationState(result.presentation_state, state.draftSections);
@@ -2605,7 +2775,19 @@
             }
             if (statusMessage) {
                 setControllerStatus(statusMessage, "status-good");
+            } else {
+                const nextPairing = currentPairingState();
+                if (previousPairing.pairing_status !== nextPairing.pairing_status) {
+                    if (nextPairing.pairing_status === "paired") {
+                        setControllerStatus(`${nextPairing.paired_surface || "Companion surface"} joined the presentation session.`, "status-good");
+                    } else if (nextPairing.pairing_status === "expired") {
+                        setControllerStatus("The pairing window expired. Start a fresh code when you are ready.", "status-warn");
+                    } else if (nextPairing.pairing_status === "inactive" && previousPairing.pairing_status === "paired") {
+                        setControllerStatus("The pairing session ended. The phone controller remains active.", "status-cool");
+                    }
+                }
             }
+            restartPairingMonitor();
             renderAll();
         }
 
@@ -2638,6 +2820,19 @@
                 return;
             }
             applyCompanionBundle(result);
+        }
+
+        async function refreshPairingState(silent = true) {
+            if (!state.currentMissionId) return;
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/pairing_state`);
+            const result = await response.json();
+            if (!response.ok) {
+                if (!silent) {
+                    setControllerStatus(result.message || "Could not refresh the pairing state.", "status-high");
+                }
+                return;
+            }
+            applyCompanionBundle(result, silent ? "" : "Pairing state refreshed.");
         }
 
         async function startPairingWindow() {
@@ -2775,6 +2970,20 @@
             applyCompanionBundle(result, `Rokid event ${buttonEvent} applied as ${result.rokid_event?.mapped_action || "control"}.`);
         }
 
+        function restartPairingMonitor() {
+            if (state.pairingMonitorHandle) {
+                clearInterval(state.pairingMonitorHandle);
+                state.pairingMonitorHandle = null;
+            }
+            if (!state.currentMissionId) return;
+            const pairing = currentPairingState();
+            if (!["waiting", "paired", "expired"].includes(pairing.pairing_status)) return;
+            const intervalMs = pairing.pairing_status === "waiting" ? 2500 : 5000;
+            state.pairingMonitorHandle = setInterval(() => {
+                refreshPairingState(true);
+            }, intervalMs);
+        }
+
         function restartCompanionHeartbeat() {
             if (state.companionHeartbeatHandle) {
                 clearInterval(state.companionHeartbeatHandle);
@@ -2836,6 +3045,7 @@
             setRehearsalStatus("Select or save a rehearsal run for analysis.", "status-cool");
             setControllerStatus(`Controller synced. Active slide is ${state.presentationState.active_slide_index || "--"} via ${state.presentationState.control_source || "phone"}.`, "status-cool");
             restartCompanionHeartbeat();
+            restartPairingMonitor();
             await touchCompanionSync(phoneControllerMode ? "phone_open" : "workspace_open");
             await ensurePhoneBridgeClaim();
             renderAll();
@@ -2925,6 +3135,7 @@
             setBriefStatus("Mission saved. You can now refine the slide cards or start a rehearsal.", "status-good");
             await loadMissions(false);
             restartCompanionHeartbeat();
+            restartPairingMonitor();
             await touchCompanionSync("mission_saved");
             renderAll();
         }
@@ -3367,6 +3578,9 @@
         window.addEventListener("beforeunload", () => {
             if (state.companionHeartbeatHandle) {
                 clearInterval(state.companionHeartbeatHandle);
+            }
+            if (state.pairingMonitorHandle) {
+                clearInterval(state.pairingMonitorHandle);
             }
         });
 
