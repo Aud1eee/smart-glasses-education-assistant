@@ -274,6 +274,17 @@ The next scaffold layer now adds:
 - `rokid_event` as the button-event-to-action mapping endpoint
 - `live_hud` as the future glasses-side pull endpoint for the current slide
 
+The current handoff layer now adds:
+
+- `pairing_state`, `pairing_start`, `pairing_join`, and `pairing_end`
+- a short-lived join-code flow so the phone controller can open a pairing window and a Rokid-side surface can join it
+- explicit pairing lifecycle states:
+  - `inactive`
+  - `waiting`
+  - `paired`
+  - `expired`
+- lightweight session visibility in both the phone workspace and the live HUD payload
+
 ### Rehearsal feedback boundary
 
 The rehearsal feedback can analyze:

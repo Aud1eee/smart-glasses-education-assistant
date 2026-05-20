@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+import time
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
@@ -85,6 +86,67 @@ def main():
     assert sync_payload["companion_sync"]["controller_path"].endswith(f"mission_id={mission_id}"), "Missing phone controller path."
     assert sync_payload["live_hud"]["mode"] == "presentation_live", "Expected live presentation HUD payload."
     assert sync_payload["companion_sync"]["bridge_state"]["bridge_pin"], "Missing bridge pairing pin."
+    assert sync_payload["companion_sync"]["pairing_state"]["pairing_status"] == "inactive", "Pairing should start inactive."
+
+    pairing_state_response = client.get(f"/api/presentation_missions/{mission_id}/pairing_state")
+    assert pairing_state_response.status_code == 200, pairing_state_response.get_data(as_text=True)
+    pairing_state_payload = pairing_state_response.get_json()
+    assert pairing_state_payload["pairing_state"]["pairing_status"] == "inactive", "Pairing state should start inactive."
+
+    pairing_start_short_response = client.post(
+        f"/api/presentation_missions/{mission_id}/pairing_start",
+        json={
+            "surface": "phone",
+            "window_seconds": 2,
+        },
+    )
+    assert pairing_start_short_response.status_code == 200, pairing_start_short_response.get_data(as_text=True)
+    pairing_start_short_payload = pairing_start_short_response.get_json()
+    assert pairing_start_short_payload["pairing_state"]["pairing_status"] == "waiting", "Short pairing window should open in waiting mode."
+    assert pairing_start_short_payload["pairing_state"]["pairing_code"], "Short pairing window should issue a code."
+
+    time.sleep(3)
+
+    pairing_expired_response = client.get(f"/api/presentation_missions/{mission_id}/pairing_state")
+    assert pairing_expired_response.status_code == 200, pairing_expired_response.get_data(as_text=True)
+    pairing_expired_payload = pairing_expired_response.get_json()
+    assert pairing_expired_payload["pairing_state"]["pairing_status"] == "expired", "Pairing window should expire after the short timeout."
+
+    pairing_join_expired_response = client.post(
+        f"/api/presentation_missions/{mission_id}/pairing_join",
+        json={
+            "surface": "rokid_hud",
+            "device_label": "expired_attempt",
+            "pairing_code": pairing_start_short_payload["pairing_state"]["pairing_code"],
+        },
+    )
+    assert pairing_join_expired_response.status_code == 400, pairing_join_expired_response.get_data(as_text=True)
+
+    pairing_start_response = client.post(
+        f"/api/presentation_missions/{mission_id}/pairing_start",
+        json={
+            "surface": "phone",
+            "window_seconds": 180,
+        },
+    )
+    assert pairing_start_response.status_code == 200, pairing_start_response.get_data(as_text=True)
+    pairing_start_payload = pairing_start_response.get_json()
+    pairing_code = pairing_start_payload["pairing_state"]["pairing_code"]
+    assert pairing_start_payload["pairing_state"]["pairing_status"] == "waiting", "Expected the second pairing window to open."
+    assert pairing_code, "Missing active pairing code."
+
+    pairing_join_response = client.post(
+        f"/api/presentation_missions/{mission_id}/pairing_join",
+        json={
+            "surface": "rokid_hud",
+            "device_label": "smoke_rokid_hud",
+            "pairing_code": pairing_code,
+        },
+    )
+    assert pairing_join_response.status_code == 200, pairing_join_response.get_data(as_text=True)
+    pairing_join_payload = pairing_join_response.get_json()
+    assert pairing_join_payload["pairing_state"]["pairing_status"] == "paired", "Expected pairing join to move into paired mode."
+    assert pairing_join_payload["pairing_state"]["paired_surface"] == "rokid_hud", "Expected Rokid HUD to be the paired surface."
 
     bridge_state_response = client.get(f"/api/presentation_missions/{mission_id}/bridge_state")
     assert bridge_state_response.status_code == 200, bridge_state_response.get_data(as_text=True)
@@ -221,6 +283,9 @@ def main():
     assert live_hud_payload["live_hud"]["active_slide_index"] >= 1, "Live HUD should expose the active slide index."
     assert live_hud_payload["live_hud"]["surface_status"]["rokid_hud"] in {"active", "idle"}, "Live HUD pull should mark the Rokid HUD surface as seen."
     assert live_hud_payload["live_hud"]["claimed_surface"] == "phone", "Live HUD should reflect the current bridge owner."
+    assert live_hud_payload["live_hud"]["pairing_status"] == "paired", "Live HUD should reflect the active paired session."
+    assert live_hud_payload["live_hud"]["paired_surface"] == "rokid_hud", "Live HUD should expose the paired Rokid surface."
+    assert live_hud_payload["live_hud"]["owner_surface"] == "phone", "Live HUD should expose the bridge owner surface."
 
     bridge_release_response = client.post(
         f"/api/presentation_missions/{mission_id}/bridge_release",
@@ -234,6 +299,17 @@ def main():
     assert bridge_release_payload["bridge_state"]["bridge_status"] == "waiting", "Expected bridge release to return to waiting mode."
     assert not bridge_release_payload["bridge_state"]["claimed_surface"], "Expected the bridge claim to clear after release."
 
+    pairing_end_response = client.post(
+        f"/api/presentation_missions/{mission_id}/pairing_end",
+        json={
+            "surface": "phone",
+        },
+    )
+    assert pairing_end_response.status_code == 200, pairing_end_response.get_data(as_text=True)
+    pairing_end_payload = pairing_end_response.get_json()
+    assert pairing_end_payload["pairing_state"]["pairing_status"] == "inactive", "Expected pairing end to clear the active pairing session."
+    assert not pairing_end_payload["pairing_state"]["paired_surface"], "Expected paired surface to clear after ending pairing."
+
     print(json.dumps({
         "mission_id": mission_id,
         "rehearsal_id": rehearsal_id,
@@ -241,6 +317,7 @@ def main():
         "control_source": hud_payload["hud_summary"]["control_source"],
         "presentation_mode": hud_payload["hud_summary"]["presentation_mode"],
         "sync_status": live_hud_payload["live_hud"]["sync_status"],
+        "pairing_status": pairing_join_payload["pairing_state"]["pairing_status"],
         "bridge_status": bridge_claim_payload["bridge_state"]["bridge_status"],
         "pace_status": analysis["feedback"]["pace_status"],
         "hud_status": hud_payload["hud_summary"]["current_or_final_status"],

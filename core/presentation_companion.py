@@ -1,7 +1,7 @@
 import json
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import requests
 
@@ -580,6 +580,232 @@ class PresentationCompanion:
             "mission_id": mission_id,
             "live_hud": self._build_live_hud_payload(mission, latest_rehearsal=latest_rehearsal),
             "companion_sync": self._companion_sync_payload(mission_id, mission.get("companion_sync", {}), presentation_state),
+        }
+
+    def get_pairing_bundle(self, mission_id):
+        mission = self.store.get_mission(mission_id)
+        if not mission:
+            return None
+        sections = self._sanitize_sections(mission.get("script_sections", []))
+        presentation_state = self._normalize_presentation_state(
+            sections=sections,
+            existing=mission.get("presentation_state"),
+        )
+        companion_sync = self._normalize_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            existing=mission.get("companion_sync"),
+        )
+        mission["presentation_state"] = presentation_state
+        mission["companion_sync"] = companion_sync
+        self.store.upsert_mission(mission)
+        latest_rehearsal = self._latest_rehearsal_for_mission(mission_id)
+        return {
+            "mission_id": mission_id,
+            "pairing_state": self._pairing_state_payload(companion_sync),
+            "companion_sync": self._companion_sync_payload(mission_id, companion_sync, presentation_state),
+            "live_hud": self._build_live_hud_payload(mission, latest_rehearsal=latest_rehearsal),
+        }
+
+    def start_pairing(self, mission_id, payload):
+        mission = self.store.get_mission(mission_id)
+        if not mission:
+            return None
+        payload = payload or {}
+        sections = self._sanitize_sections(mission.get("script_sections", []))
+        presentation_state = self._normalize_presentation_state(
+            sections=sections,
+            existing=mission.get("presentation_state"),
+        )
+        companion_sync = self._normalize_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            existing=mission.get("companion_sync"),
+        )
+        now = datetime.now()
+        pairing = self._pairing_state_payload(companion_sync)
+        window_seconds = min(900, max(1, self._safe_int(payload.get("window_seconds"), default=180)))
+        pairing_revision = self._safe_int(pairing.get("pairing_revision"), default=0) + 1
+        pairing_code = self._build_pairing_code(companion_sync.get("session_id", ""), pairing_revision)
+        pairing_state = self._normalize_pairing_state(
+            session_id=companion_sync.get("session_id", ""),
+            incoming={
+                **pairing,
+                "pairing_status": "waiting",
+                "pairing_code": pairing_code,
+                "pairing_expires_at": (now + timedelta(seconds=window_seconds)).isoformat(timespec="seconds"),
+                "paired_surface": "",
+                "paired_device_label": "",
+                "paired_at": "",
+                "pairing_revision": pairing_revision,
+                "pairing_window_seconds": window_seconds,
+                "last_pairing_start_at": now.isoformat(timespec="seconds"),
+            },
+            existing=pairing,
+        )
+        touched = self._touch_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            existing=companion_sync,
+            payload={
+                "surface": self._normalize_sync_surface(payload.get("surface", "phone")),
+                "event": "pairing_start",
+            },
+        )
+        mission["presentation_state"] = presentation_state
+        mission["companion_sync"] = self._normalize_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            incoming={
+                **touched,
+                "pairing_state": pairing_state,
+            },
+            existing=touched,
+        )
+        self.store.upsert_mission(mission)
+        latest_rehearsal = self._latest_rehearsal_for_mission(mission_id)
+        return {
+            "mission_id": mission_id,
+            "pairing_state": self._pairing_state_payload(mission["companion_sync"]),
+            "companion_sync": self._companion_sync_payload(mission_id, mission["companion_sync"], presentation_state),
+            "live_hud": self._build_live_hud_payload(mission, latest_rehearsal=latest_rehearsal),
+        }
+
+    def join_pairing(self, mission_id, payload):
+        mission = self.store.get_mission(mission_id)
+        if not mission:
+            return None
+        payload = payload or {}
+        sections = self._sanitize_sections(mission.get("script_sections", []))
+        presentation_state = self._normalize_presentation_state(
+            sections=sections,
+            existing=mission.get("presentation_state"),
+        )
+        companion_sync = self._normalize_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            existing=mission.get("companion_sync"),
+        )
+        pairing = self._pairing_state_payload(companion_sync)
+        requested_code = self._clean_text(payload.get("pairing_code", ""), max_length=16)
+        if pairing.get("pairing_status") == "expired":
+            return {
+                "status": "error",
+                "message": "The pairing code has expired. Start pairing again from the phone controller.",
+            }
+        if pairing.get("pairing_status") != "waiting" or not pairing.get("pairing_code"):
+            return {
+                "status": "error",
+                "message": "No active pairing window is open right now.",
+            }
+        if requested_code != pairing.get("pairing_code", ""):
+            return {
+                "status": "error",
+                "message": "The pairing code does not match the current presentation session.",
+            }
+        joined_surface = self._normalize_sync_surface(payload.get("surface", "rokid_hud"))
+        joined_label = self._clean_text(payload.get("device_label", joined_surface), max_length=80) or joined_surface
+        now = datetime.now().isoformat(timespec="seconds")
+        pairing_state = self._normalize_pairing_state(
+            session_id=companion_sync.get("session_id", ""),
+            incoming={
+                **pairing,
+                "pairing_status": "paired",
+                "paired_surface": joined_surface,
+                "paired_device_label": joined_label,
+                "paired_at": now,
+                "last_pairing_join_at": now,
+                "pairing_revision": self._safe_int(pairing.get("pairing_revision"), default=0) + 1,
+                "pairing_expires_at": "",
+            },
+            existing=pairing,
+        )
+        touched = self._touch_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            existing=companion_sync,
+            payload={
+                "surface": joined_surface,
+                "event": f"pairing_join:{joined_surface}",
+            },
+        )
+        mission["presentation_state"] = presentation_state
+        mission["companion_sync"] = self._normalize_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            incoming={
+                **touched,
+                "pairing_state": pairing_state,
+            },
+            existing=touched,
+        )
+        self.store.upsert_mission(mission)
+        latest_rehearsal = self._latest_rehearsal_for_mission(mission_id)
+        return {
+            "mission_id": mission_id,
+            "pairing_state": self._pairing_state_payload(mission["companion_sync"]),
+            "companion_sync": self._companion_sync_payload(mission_id, mission["companion_sync"], presentation_state),
+            "live_hud": self._build_live_hud_payload(mission, latest_rehearsal=latest_rehearsal),
+        }
+
+    def end_pairing(self, mission_id, payload):
+        mission = self.store.get_mission(mission_id)
+        if not mission:
+            return None
+        payload = payload or {}
+        sections = self._sanitize_sections(mission.get("script_sections", []))
+        presentation_state = self._normalize_presentation_state(
+            sections=sections,
+            existing=mission.get("presentation_state"),
+        )
+        companion_sync = self._normalize_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            existing=mission.get("companion_sync"),
+        )
+        pairing = self._pairing_state_payload(companion_sync)
+        now = datetime.now().isoformat(timespec="seconds")
+        pairing_state = self._normalize_pairing_state(
+            session_id=companion_sync.get("session_id", ""),
+            incoming={
+                **pairing,
+                "pairing_status": "inactive",
+                "pairing_code": "",
+                "pairing_expires_at": "",
+                "paired_surface": "",
+                "paired_device_label": "",
+                "paired_at": "",
+                "pairing_revision": self._safe_int(pairing.get("pairing_revision"), default=0) + 1,
+                "last_pairing_end_at": now,
+            },
+            existing=pairing,
+        )
+        touched = self._touch_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            existing=companion_sync,
+            payload={
+                "surface": self._normalize_sync_surface(payload.get("surface", "phone")),
+                "event": "pairing_end",
+            },
+        )
+        mission["presentation_state"] = presentation_state
+        mission["companion_sync"] = self._normalize_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            incoming={
+                **touched,
+                "pairing_state": pairing_state,
+            },
+            existing=touched,
+        )
+        self.store.upsert_mission(mission)
+        latest_rehearsal = self._latest_rehearsal_for_mission(mission_id)
+        return {
+            "mission_id": mission_id,
+            "pairing_state": self._pairing_state_payload(mission["companion_sync"]),
+            "companion_sync": self._companion_sync_payload(mission_id, mission["companion_sync"], presentation_state),
+            "live_hud": self._build_live_hud_payload(mission, latest_rehearsal=latest_rehearsal),
         }
 
     def get_bridge_bundle(self, mission_id):
@@ -1237,6 +1463,11 @@ class PresentationCompanion:
             presentation_mode=(presentation_state or {}).get("presentation_mode", "rehearse"),
         )
         active_surface = self._normalize_sync_surface(incoming.get("active_surface", existing.get("active_surface", "web")))
+        pairing_state = self._normalize_pairing_state(
+            session_id=session_id,
+            incoming=incoming.get("pairing_state"),
+            existing=existing.get("pairing_state"),
+        )
         return {
             "session_id": session_id,
             "sync_status": sync_status,
@@ -1265,6 +1496,7 @@ class PresentationCompanion:
             "claimed_at": self._clean_text(incoming.get("claimed_at", existing.get("claimed_at", "")), max_length=40),
             "claim_revision": max(0, self._safe_int(incoming.get("claim_revision", existing.get("claim_revision", 0)), default=0)),
             "last_release_at": self._clean_text(incoming.get("last_release_at", existing.get("last_release_at", "")), max_length=40),
+            "pairing_state": pairing_state,
         }
 
     def _touch_companion_sync(self, mission_id, presentation_state, existing=None, payload=None):
@@ -1455,6 +1687,97 @@ class PresentationCompanion:
         tail = (safe[-6:] if safe else "SYNC00").rjust(6, "0")
         return f"PC-{tail}"
 
+    def _build_pairing_code(self, session_id, pairing_revision):
+        alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        safe = re.sub(r"[^A-Za-z0-9]", "", self._clean_text(session_id, max_length=80)).upper() or "PAIRING"
+        revision = max(1, self._safe_int(pairing_revision, default=1))
+        seed = revision * 97
+        for index, char in enumerate(safe, start=1):
+            seed += index * ord(char)
+        chars = []
+        for offset in range(6):
+            seed = (seed * 131 + (offset + 1) * 17) % 104729
+            chars.append(alphabet[seed % len(alphabet)])
+        return "".join(chars)
+
+    def _normalize_pairing_status(self, value, pairing_code="", pairing_expires_at="", paired_surface=""):
+        normalized = str(value or "").strip().lower()
+        if normalized not in {"inactive", "waiting", "paired", "expired"}:
+            normalized = ""
+        if paired_surface:
+            return "paired"
+        if pairing_code:
+            seconds_left = self._seconds_until_iso(pairing_expires_at)
+            if pairing_expires_at and seconds_left == 0:
+                return "expired"
+            return "waiting" if seconds_left is None or seconds_left > 0 else "expired"
+        return normalized if normalized in {"inactive", "expired"} else "inactive"
+
+    def _normalize_pairing_state(self, session_id, incoming=None, existing=None):
+        incoming = incoming or {}
+        existing = existing or {}
+        pairing_code = self._clean_text(
+            incoming.get("pairing_code", existing.get("pairing_code", "")),
+            max_length=16,
+        ).upper()
+        pairing_expires_at = self._clean_text(
+            incoming.get("pairing_expires_at", existing.get("pairing_expires_at", "")),
+            max_length=40,
+        )
+        paired_surface = self._normalize_claimed_surface(
+            incoming.get("paired_surface", existing.get("paired_surface", "")),
+        )
+        pairing_status = self._normalize_pairing_status(
+            incoming.get("pairing_status", existing.get("pairing_status", "")),
+            pairing_code=pairing_code,
+            pairing_expires_at=pairing_expires_at,
+            paired_surface=paired_surface,
+        )
+        if pairing_status in {"inactive", "paired"}:
+            pairing_code = ""
+            pairing_expires_at = ""
+        return {
+            "session_id": self._clean_text(session_id, max_length=80),
+            "pairing_status": pairing_status,
+            "pairing_code": pairing_code,
+            "pairing_expires_at": pairing_expires_at,
+            "paired_surface": paired_surface,
+            "paired_device_label": self._clean_text(
+                incoming.get("paired_device_label", existing.get("paired_device_label", "")),
+                max_length=80,
+            ),
+            "paired_at": self._clean_text(incoming.get("paired_at", existing.get("paired_at", "")), max_length=40),
+            "pairing_revision": max(0, self._safe_int(incoming.get("pairing_revision", existing.get("pairing_revision", 0)), default=0)),
+            "pairing_window_seconds": min(
+                900,
+                max(1, self._safe_int(incoming.get("pairing_window_seconds", existing.get("pairing_window_seconds", 180)), default=180)),
+            ),
+            "last_pairing_start_at": self._clean_text(
+                incoming.get("last_pairing_start_at", existing.get("last_pairing_start_at", "")),
+                max_length=40,
+            ),
+            "last_pairing_join_at": self._clean_text(
+                incoming.get("last_pairing_join_at", existing.get("last_pairing_join_at", "")),
+                max_length=40,
+            ),
+            "last_pairing_end_at": self._clean_text(
+                incoming.get("last_pairing_end_at", existing.get("last_pairing_end_at", "")),
+                max_length=40,
+            ),
+        }
+
+    def _pairing_state_payload(self, sync_state):
+        sync_state = sync_state or {}
+        pairing_state = self._normalize_pairing_state(
+            session_id=sync_state.get("session_id", ""),
+            existing=sync_state.get("pairing_state"),
+        )
+        return {
+            **pairing_state,
+            "pairing_expires_in_seconds": self._seconds_until_iso(pairing_state.get("pairing_expires_at", "")),
+            "owner_surface": self._normalize_claimed_surface(sync_state.get("claimed_surface", "")),
+        }
+
     def _bridge_state_payload(self, sync_state):
         sync_state = sync_state or {}
         claimed_surface = self._normalize_claimed_surface(sync_state.get("claimed_surface", ""))
@@ -1482,6 +1805,10 @@ class PresentationCompanion:
             "sync_api_path": f"/api/presentation_missions/{mission_id}/companion_sync",
             "rokid_event_api_path": f"/api/presentation_missions/{mission_id}/rokid_event",
             "live_hud_api_path": f"/api/presentation_missions/{mission_id}/live_hud",
+            "pairing_state_api_path": f"/api/presentation_missions/{mission_id}/pairing_state",
+            "pairing_start_api_path": f"/api/presentation_missions/{mission_id}/pairing_start",
+            "pairing_join_api_path": f"/api/presentation_missions/{mission_id}/pairing_join",
+            "pairing_end_api_path": f"/api/presentation_missions/{mission_id}/pairing_end",
             "bridge_state_api_path": f"/api/presentation_missions/{mission_id}/bridge_state",
             "bridge_claim_api_path": f"/api/presentation_missions/{mission_id}/bridge_claim",
             "bridge_release_api_path": f"/api/presentation_missions/{mission_id}/bridge_release",
@@ -1493,6 +1820,7 @@ class PresentationCompanion:
             "presentation_mode": self._normalize_presentation_mode((presentation_state or {}).get("presentation_mode", "rehearse")),
             "active_slide_index": self._safe_int((presentation_state or {}).get("active_slide_index"), default=0),
             "cue_view": self._normalize_cue_view((presentation_state or {}).get("cue_view", "visible")),
+            "pairing_state": self._pairing_state_payload(sync_state),
             "bridge_state": self._bridge_state_payload(sync_state),
         }
 
@@ -1524,6 +1852,19 @@ class PresentationCompanion:
             return None
         try:
             return max(0, int((datetime.now() - parsed).total_seconds()))
+        except Exception:
+            return None
+
+    def _seconds_until_iso(self, iso_value):
+        cleaned = self._clean_text(iso_value, max_length=40)
+        if not cleaned:
+            return None
+        try:
+            parsed = datetime.fromisoformat(cleaned)
+        except Exception:
+            return None
+        try:
+            return max(0, int((parsed - datetime.now()).total_seconds()))
         except Exception:
             return None
 
@@ -1905,6 +2246,7 @@ class PresentationCompanion:
             presentation_state=presentation_state,
             existing=mission.get("companion_sync"),
         )
+        pairing_state = self._pairing_state_payload(companion_sync)
         active_card = self._find_active_card(sections, presentation_state)
         next_card = self._next_card_brief(sections, presentation_state)
         latest_rehearsal = latest_rehearsal or self._latest_rehearsal_for_mission(mission_id)
@@ -1939,8 +2281,15 @@ class PresentationCompanion:
             "bridge_status": self._normalize_bridge_status(companion_sync.get("bridge_status", ""), companion_sync.get("claimed_surface", "")),
             "bridge_pin": self._clean_text(companion_sync.get("bridge_pin", ""), max_length=16),
             "bridge_key": self._clean_text(companion_sync.get("bridge_key", ""), max_length=24),
+            "pairing_status": pairing_state.get("pairing_status", "inactive"),
+            "pairing_code": pairing_state.get("pairing_code", ""),
+            "pairing_expires_at": pairing_state.get("pairing_expires_at", ""),
+            "pairing_expires_in_seconds": pairing_state.get("pairing_expires_in_seconds"),
+            "paired_surface": pairing_state.get("paired_surface", ""),
+            "paired_device_label": pairing_state.get("paired_device_label", ""),
             "claimed_surface": self._normalize_claimed_surface(companion_sync.get("claimed_surface", "")),
             "claimed_device_label": self._clean_text(companion_sync.get("claimed_device_label", ""), max_length=80),
+            "owner_surface": pairing_state.get("owner_surface", ""),
             "control_source": presentation_state.get("control_source", "phone"),
             "presentation_mode": presentation_state.get("presentation_mode", "rehearse"),
             "cue_view": presentation_state.get("cue_view", "visible"),

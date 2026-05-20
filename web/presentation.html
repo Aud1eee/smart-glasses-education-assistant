@@ -1409,6 +1409,10 @@
             return `${sign}${formatMmss(Math.abs(value))}`;
         }
 
+        function formatIsoStamp(value) {
+            return value ? String(value).replace("T", " ") : "";
+        }
+
         function switchTab(tab) {
             for (const value of ["brief", "script", "rehearse"]) {
                 document.getElementById(`tab-btn-${value}`).classList.toggle("active", value === tab);
@@ -1526,9 +1530,28 @@
                 sync_api_path: "",
                 rokid_event_api_path: "",
                 live_hud_api_path: "",
+                pairing_state_api_path: "",
+                pairing_start_api_path: "",
+                pairing_join_api_path: "",
+                pairing_end_api_path: "",
                 bridge_state_api_path: "",
                 bridge_claim_api_path: "",
                 bridge_release_api_path: "",
+                pairing_state: {
+                    pairing_status: "inactive",
+                    pairing_code: "",
+                    pairing_expires_at: "",
+                    pairing_expires_in_seconds: null,
+                    paired_surface: "",
+                    paired_device_label: "",
+                    paired_at: "",
+                    pairing_revision: 0,
+                    pairing_window_seconds: 180,
+                    last_pairing_start_at: "",
+                    last_pairing_join_at: "",
+                    last_pairing_end_at: "",
+                    owner_surface: "",
+                },
                 bridge_state: {
                     bridge_status: "waiting",
                     bridge_pin: "",
@@ -1547,14 +1570,33 @@
             };
         }
 
+        function normalizePairingState(raw) {
+            const fallback = defaultCompanionSync().pairing_state;
+            const value = raw && typeof raw === "object" ? raw : {};
+            return {
+                ...fallback,
+                ...value,
+                pairing_status: ["inactive", "waiting", "paired", "expired"].includes(String(value.pairing_status || "").toLowerCase())
+                    ? String(value.pairing_status).toLowerCase()
+                    : fallback.pairing_status,
+                pairing_code: String(value.pairing_code || "").toUpperCase(),
+                pairing_window_seconds: Math.max(1, Number(value.pairing_window_seconds || fallback.pairing_window_seconds)),
+            };
+        }
+
         function normalizeCompanionSync(raw) {
             const fallback = defaultCompanionSync();
             const value = raw && typeof raw === "object" ? raw : {};
             const surfaceStatus = value.surface_status && typeof value.surface_status === "object" ? value.surface_status : {};
+            const pairingState = value.pairing_state && typeof value.pairing_state === "object" ? value.pairing_state : {};
             const bridgeState = value.bridge_state && typeof value.bridge_state === "object" ? value.bridge_state : {};
             return {
                 ...fallback,
                 ...value,
+                pairing_state: normalizePairingState({
+                    ...fallback.pairing_state,
+                    ...pairingState,
+                }),
                 bridge_state: {
                     ...fallback.bridge_state,
                     ...bridgeState,
@@ -1572,6 +1614,10 @@
             return state.companionSync;
         }
 
+        function currentPairingState() {
+            return normalizePairingState(currentCompanionSync().pairing_state);
+        }
+
         function defaultLiveHud() {
             return {
                 mode: "presentation_live",
@@ -1579,11 +1625,18 @@
                 session_id: "",
                 sync_status: "ready",
                 sync_revision: 1,
+                pairing_status: "inactive",
+                pairing_code: "",
+                pairing_expires_at: "",
+                pairing_expires_in_seconds: null,
+                paired_surface: "",
+                paired_device_label: "",
                 bridge_status: "waiting",
                 bridge_pin: "",
                 bridge_key: "",
                 claimed_surface: "",
                 claimed_device_label: "",
+                owner_surface: "",
                 claim_revision: 0,
                 control_source: "phone",
                 presentation_mode: currentPresentationState().presentation_mode,
@@ -1902,12 +1955,24 @@
                 return;
             }
             const sync = currentCompanionSync();
+            const pairing = currentPairingState();
             const liveHud = normalizeLiveHud(state.liveHud);
             const bridge = sync.bridge_state || {};
-            const formatSeen = (value) => value ? escapeHtml(String(value).replace("T", " ")) : "Not seen yet";
+            const formatSeen = (value) => value ? formatIsoStamp(value) : "Not seen yet";
             const claimLabel = bridge.claimed_surface
-                ? `${escapeHtml(bridge.claimed_surface)}${bridge.claimed_device_label ? ` | ${escapeHtml(bridge.claimed_device_label)}` : ""}`
+                ? `${bridge.claimed_surface}${bridge.claimed_device_label ? ` | ${bridge.claimed_device_label}` : ""}`
                 : "Unclaimed";
+            const pairedLabel = pairing.paired_surface
+                ? `${pairing.paired_surface}${pairing.paired_device_label ? ` | ${pairing.paired_device_label}` : ""}`
+                : "No paired surface";
+            const pairingCodeLabel = pairing.pairing_code || "------";
+            const pairingExpiryLabel = pairing.pairing_status === "waiting" && pairing.pairing_expires_in_seconds > 0
+                ? `${formatMmss(pairing.pairing_expires_in_seconds)} left | ${formatSeen(pairing.pairing_expires_at)}`
+                : pairing.pairing_status === "expired"
+                    ? `Expired | ${formatSeen(pairing.pairing_expires_at)}`
+                    : pairing.pairing_expires_at
+                        ? formatSeen(pairing.pairing_expires_at)
+                        : "No active pairing window";
             const thisSurface = phoneControllerMode ? "phone" : "web";
             host.innerHTML = `
                 <div class="sync-grid">
@@ -1917,11 +1982,25 @@
                     </div>
                     <div class="sync-chip">
                         <span>Phone Surface</span>
-                        <strong>${escapeHtml(sync.surface_status.phone.status)} | ${formatSeen(sync.surface_status.phone.last_seen_at)}</strong>
+                        <strong>${escapeHtml(sync.surface_status.phone.status)} | ${escapeHtml(formatSeen(sync.surface_status.phone.last_seen_at))}</strong>
                     </div>
                     <div class="sync-chip">
                         <span>Rokid HUD</span>
-                        <strong>${escapeHtml(sync.surface_status.rokid_hud.status)} | ${formatSeen(sync.surface_status.rokid_hud.last_seen_at)}</strong>
+                        <strong>${escapeHtml(sync.surface_status.rokid_hud.status)} | ${escapeHtml(formatSeen(sync.surface_status.rokid_hud.last_seen_at))}</strong>
+                    </div>
+                </div>
+                <div class="sync-grid" style="margin-top: 10px;">
+                    <div class="sync-chip">
+                        <span>Pairing Window</span>
+                        <strong>${escapeHtml(pairing.pairing_status)} | ${escapeHtml(pairingCodeLabel)}</strong>
+                    </div>
+                    <div class="sync-chip">
+                        <span>Joined Surface</span>
+                        <strong>${escapeHtml(pairedLabel)}</strong>
+                    </div>
+                    <div class="sync-chip">
+                        <span>Pairing Expiry</span>
+                        <strong>${escapeHtml(pairingExpiryLabel)}</strong>
                     </div>
                 </div>
                 <div class="sync-grid" style="margin-top: 10px;">
@@ -1931,31 +2010,61 @@
                     </div>
                     <div class="sync-chip">
                         <span>Bridge Claim</span>
-                        <strong>${escapeHtml(bridge.bridge_status || "waiting")} | ${claimLabel}</strong>
+                        <strong>${escapeHtml(bridge.bridge_status || "waiting")} | ${escapeHtml(claimLabel)}</strong>
                     </div>
                     <div class="sync-chip">
                         <span>Claim Revision</span>
-                        <strong>${escapeHtml(bridge.claim_revision || 0)} | ${formatSeen(bridge.claimed_at || bridge.last_release_at || "")}</strong>
+                        <strong>${escapeHtml(bridge.claim_revision || 0)} | ${escapeHtml(formatSeen(bridge.claimed_at || bridge.last_release_at || ""))}</strong>
                     </div>
                 </div>
                 <div class="section-metrics">
                     <div class="metric-chip"><strong>Live HUD</strong> ${escapeHtml(liveHud.status_line || "Current slide ready")}</div>
                     <div class="metric-chip"><strong>Active</strong> Slide ${escapeHtml(liveHud.active_slide_index || "--")} ${escapeHtml(liveHud.active_slide_title || "")}</div>
                     <div class="metric-chip"><strong>Next</strong> ${liveHud.next_slide_index ? `Slide ${escapeHtml(liveHud.next_slide_index)} ${escapeHtml(liveHud.next_slide_title || "")}` : "Final card"}</div>
+                    <div class="metric-chip"><strong>Owner</strong> ${escapeHtml(liveHud.owner_surface || pairing.owner_surface || "unclaimed")}</div>
                     <div class="metric-chip"><strong>Last event</strong> ${escapeHtml(sync.last_event || "initialized")}</div>
                 </div>
                 <div class="link-stack">
                     <div class="link-chip"><strong>Phone controller</strong><br>${escapeHtml(sync.controller_path || `/presentation/controller?mission_id=${state.currentMissionId}`)}</div>
                     <div class="link-chip"><strong>Workspace</strong><br>${escapeHtml(sync.workspace_path || `/presentation?mission_id=${state.currentMissionId}`)}</div>
                     <div class="link-chip"><strong>Live HUD API</strong><br>${escapeHtml(sync.live_hud_api_path || `/api/presentation_missions/${state.currentMissionId}/live_hud`)}</div>
+                    <div class="link-chip"><strong>Pairing State API</strong><br>${escapeHtml(sync.pairing_state_api_path || `/api/presentation_missions/${state.currentMissionId}/pairing_state`)}</div>
+                    <div class="link-chip"><strong>Pairing Start API</strong><br>${escapeHtml(sync.pairing_start_api_path || `/api/presentation_missions/${state.currentMissionId}/pairing_start`)}</div>
+                    <div class="link-chip"><strong>Pairing Join API</strong><br>${escapeHtml(sync.pairing_join_api_path || `/api/presentation_missions/${state.currentMissionId}/pairing_join`)}</div>
+                    <div class="link-chip"><strong>Pairing End API</strong><br>${escapeHtml(sync.pairing_end_api_path || `/api/presentation_missions/${state.currentMissionId}/pairing_end`)}</div>
                     <div class="link-chip"><strong>Bridge State API</strong><br>${escapeHtml(sync.bridge_state_api_path || `/api/presentation_missions/${state.currentMissionId}/bridge_state`)}</div>
                     <div class="link-chip"><strong>Rokid Event API</strong><br>${escapeHtml(sync.rokid_event_api_path || `/api/presentation_missions/${state.currentMissionId}/rokid_event`)}</div>
                     <div class="link-chip"><strong>Bridge Claim API</strong><br>${escapeHtml(sync.bridge_claim_api_path || `/api/presentation_missions/${state.currentMissionId}/bridge_claim`)}</div>
                     <div class="link-chip"><strong>Bridge Release API</strong><br>${escapeHtml(sync.bridge_release_api_path || `/api/presentation_missions/${state.currentMissionId}/bridge_release`)}</div>
                 </div>
+                <div class="field-grid" style="margin-top: 12px;">
+                    <div class="field">
+                        <label for="pairing-window-seconds">Pairing Window Seconds</label>
+                        <input id="pairing-window-seconds" type="number" min="1" max="900" step="5" value="${escapeAttr(pairing.pairing_window_seconds || 180)}">
+                    </div>
+                    <div class="field">
+                        <label for="pairing-join-surface">Join Surface</label>
+                        <select id="pairing-join-surface">
+                            <option value="rokid_hud">rokid_hud</option>
+                            <option value="phone">phone</option>
+                            <option value="web">web</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="pairing-device-label">Device Label</label>
+                        <input id="pairing-device-label" value="${escapeAttr(pairing.paired_device_label || "rokid_companion")}" placeholder="rokid_companion">
+                    </div>
+                    <div class="field">
+                        <label for="pairing-code-input">Join Code</label>
+                        <input id="pairing-code-input" value="${escapeAttr(pairing.pairing_code || "")}" placeholder="Enter the short code">
+                    </div>
+                </div>
                 <div class="status-row">
                     <button class="ghost-btn" onclick="openCompanionSurface('${phoneControllerMode ? "workspace" : "controller"}')">${phoneControllerMode ? "Open Workspace" : "Open Phone Controller"}</button>
                     <button class="ghost-btn" onclick="touchCompanionSync('manual_refresh')">Refresh Sync</button>
+                    <button class="ghost-btn" onclick="startPairingWindow()">Start Pairing</button>
+                    <button class="ghost-btn" onclick="joinPairingSession()">Join with Code</button>
+                    <button class="ghost-btn" onclick="endPairingSession()">End Pairing</button>
                     <button class="ghost-btn" onclick="claimBridge('${thisSurface}')">${phoneControllerMode ? "Claim Phone Control" : "Claim Workspace Control"}</button>
                     <button class="ghost-btn" onclick="releaseBridgeClaim('${thisSurface}')">Release Claim</button>
                     <button class="ghost-btn" onclick="simulateRokidButton('single_press')">Simulate single_press</button>
@@ -2529,6 +2638,69 @@
                 return;
             }
             applyCompanionBundle(result);
+        }
+
+        async function startPairingWindow() {
+            if (!state.currentMissionId) return;
+            const windowSeconds = Number(document.getElementById("pairing-window-seconds")?.value || 180);
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/pairing_start`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    surface: phoneControllerMode ? "phone" : "web",
+                    window_seconds: windowSeconds,
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not open a pairing window.", "status-high");
+                return;
+            }
+            applyCompanionBundle(result, "Pairing window started.");
+        }
+
+        async function joinPairingSession() {
+            if (!state.currentMissionId) return;
+            const pairing = currentPairingState();
+            const joinSurface = document.getElementById("pairing-join-surface")?.value || "rokid_hud";
+            const deviceLabel = (document.getElementById("pairing-device-label")?.value || joinSurface).trim();
+            const pairingCode = (document.getElementById("pairing-code-input")?.value || pairing.pairing_code || "").trim().toUpperCase();
+            if (!pairingCode) {
+                setControllerStatus("Start pairing first or paste a valid join code.", "status-high");
+                return;
+            }
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/pairing_join`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    pairing_code: pairingCode,
+                    surface: joinSurface,
+                    device_label: deviceLabel || joinSurface,
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not join the pairing session.", "status-high");
+                return;
+            }
+            applyCompanionBundle(result, `${joinSurface} joined the presentation session.`);
+        }
+
+        async function endPairingSession() {
+            if (!state.currentMissionId) return;
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/pairing_end`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    surface: phoneControllerMode ? "phone" : "web",
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not end the pairing session.", "status-high");
+                return;
+            }
+            applyCompanionBundle(result, "Pairing session ended.");
         }
 
         async function claimBridge(surface) {

@@ -165,6 +165,10 @@ The current demo-ready checkpoint includes:
   - companion sync scaffold:
     - `/presentation/controller`
     - `companion_sync`
+    - `pairing_state`
+    - `pairing_start`
+    - `pairing_join`
+    - `pairing_end`
     - `bridge_state`
     - `bridge_claim`
     - `bridge_release`

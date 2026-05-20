@@ -296,6 +296,10 @@ The core routes are:
 - `/api/presentation_missions/<mission_id>/presentation_state`
 - `/api/presentation_missions/<mission_id>/presentation_control`
 - `/api/presentation_missions/<mission_id>/companion_sync`
+- `/api/presentation_missions/<mission_id>/pairing_state`
+- `/api/presentation_missions/<mission_id>/pairing_start`
+- `/api/presentation_missions/<mission_id>/pairing_join`
+- `/api/presentation_missions/<mission_id>/pairing_end`
 - `/api/presentation_missions/<mission_id>/bridge_state`
 - `/api/presentation_missions/<mission_id>/bridge_claim`
 - `/api/presentation_missions/<mission_id>/bridge_release`
@@ -323,10 +327,13 @@ This checks:
 - intake extraction fallback
 - script save
 - presentation-state save
+- pairing start / expire / join / end
 - presentation next / previous / cue-toggle control
+- bridge claim / release
 - rehearsal save
 - rehearsal analysis
 - HUD summary output
+- live HUD sync payload
 
 ## Recommended defense demo flow
 

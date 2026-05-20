@@ -1717,6 +1717,68 @@ def presentation_companion_sync(mission_id):
     }), status_code
 
 
+@app.route("/api/presentation_missions/<mission_id>/pairing_state")
+def presentation_pairing_state(mission_id):
+    result = presentation_companion.get_pairing_bundle(mission_id)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    return jsonify({
+        "status": "ok",
+        **result,
+    })
+
+
+@app.route("/api/presentation_missions/<mission_id>/pairing_start", methods=["POST"])
+def presentation_pairing_start(mission_id):
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.start_pairing(mission_id, payload)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    status_code = 400 if result.get("status") == "error" else 200
+    return jsonify({
+        "status": "ok" if status_code == 200 else "error",
+        **result,
+    }), status_code
+
+
+@app.route("/api/presentation_missions/<mission_id>/pairing_join", methods=["POST"])
+def presentation_pairing_join(mission_id):
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.join_pairing(mission_id, payload)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    status_code = 400 if result.get("status") == "error" else 200
+    return jsonify({
+        "status": "ok" if status_code == 200 else "error",
+        **result,
+    }), status_code
+
+
+@app.route("/api/presentation_missions/<mission_id>/pairing_end", methods=["POST"])
+def presentation_pairing_end(mission_id):
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.end_pairing(mission_id, payload)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    status_code = 400 if result.get("status") == "error" else 200
+    return jsonify({
+        "status": "ok" if status_code == 200 else "error",
+        **result,
+    }), status_code
+
+
 @app.route("/api/presentation_missions/<mission_id>/bridge_state")
 def presentation_bridge_state(mission_id):
     result = presentation_companion.get_bridge_bundle(mission_id)
