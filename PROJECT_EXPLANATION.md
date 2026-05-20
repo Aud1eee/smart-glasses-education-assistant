@@ -260,6 +260,12 @@ The control actions are intentionally small:
 This matters because it keeps the interaction realistic for an actual presentation.
 The speaker should not need to manage a complicated interface during delivery.
 
+The current presentation page now also exposes:
+
+- a compact `present` mode that shows one current slide card at a time
+- the `next_card` so the phone-side controller can preview what is coming next
+- `control_hints` so the phone controller and future Rokid-side integration can share the same lightweight button mapping
+
 ### Rehearsal feedback boundary
 
 The rehearsal feedback can analyze:

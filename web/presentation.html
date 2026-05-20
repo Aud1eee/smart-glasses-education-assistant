@@ -555,6 +555,56 @@
             gap: 14px;
         }
 
+        .controller-summary-shell {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .controller-summary-card {
+            border-radius: 18px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.03);
+            padding: 14px;
+        }
+
+        .controller-summary-card strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .controller-summary-card p {
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.55;
+        }
+
+        .controller-guide {
+            display: grid;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .guide-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 9px 10px;
+            border-radius: 14px;
+            border: 1px solid rgba(109, 191, 213, 0.14);
+            background: rgba(255, 255, 255, 0.025);
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .guide-row strong {
+            margin: 0;
+            color: var(--ink);
+            font-size: 12px;
+        }
+
         .stage-card {
             border-radius: 22px;
             border: 1px solid var(--line);
@@ -585,6 +635,65 @@
         .stage-card h3 {
             font-size: 24px;
             margin-bottom: 8px;
+        }
+
+        .present-stage {
+            background:
+                radial-gradient(circle at 18% 18%, rgba(255, 210, 122, 0.16), transparent 24%),
+                radial-gradient(circle at 82% 16%, rgba(114, 212, 245, 0.14), transparent 24%),
+                rgba(255, 255, 255, 0.028);
+        }
+
+        .stage-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin: 14px 0 0;
+        }
+
+        .stage-kpi {
+            border-radius: 16px;
+            border: 1px solid rgba(109, 191, 213, 0.16);
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px;
+        }
+
+        .stage-kpi span {
+            display: block;
+            color: rgba(114, 212, 245, 0.84);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            margin-bottom: 6px;
+        }
+
+        .stage-kpi strong {
+            display: block;
+            font-size: 18px;
+            line-height: 1.15;
+        }
+
+        .stage-prompt {
+            margin-top: 14px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(109, 191, 213, 0.16);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .stage-prompt strong {
+            display: block;
+            margin-bottom: 8px;
+            color: rgba(255, 210, 122, 0.9);
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .stage-divider {
+            margin: 14px 0 0;
+            height: 1px;
+            background: var(--line);
         }
 
         .stage-copy {
@@ -746,7 +855,9 @@
 
             .two-col,
             .three-col,
-            .status-shell {
+            .status-shell,
+            .controller-summary-shell,
+            .stage-kpi-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -1009,6 +1120,7 @@
                                         <button class="action-btn" onclick="applyPresentationControl('next')">Next</button>
                                         <button class="ghost-btn" onclick="applyPresentationControl('toggle_cue')">Show / Hide Cue</button>
                                     </div>
+                                    <div class="controller-summary-shell" id="controller-summary-host"></div>
                                     <div class="status-row">
                                         <span class="status-note" id="controller-status">Phone control is ready. Switch to Rokid button mode when you want to simulate the glasses-side input path.</span>
                                     </div>
@@ -1261,6 +1373,64 @@
             });
         }
 
+        function defaultControlHints() {
+            return {
+                phone: {
+                    role: "Main controller",
+                    note: "Use the phone for full slide switching, jump, and mode changes.",
+                    actions: ["previous", "next", "jump", "toggle_cue", "set_mode"],
+                },
+                rokid_button: {
+                    role: "Quick remote",
+                    note: "Keep glasses-side control lightweight so the presenter can stay focused on delivery.",
+                    button_map: {
+                        single_press: "next",
+                        double_press: "previous",
+                        long_press: "toggle_cue",
+                    },
+                },
+            };
+        }
+
+        function normalizeControlHints(raw) {
+            const hints = raw && typeof raw === "object" ? raw : {};
+            const fallback = defaultControlHints();
+            return {
+                phone: {
+                    ...fallback.phone,
+                    ...(hints.phone || {}),
+                },
+                rokid_button: {
+                    ...fallback.rokid_button,
+                    ...(hints.rokid_button || {}),
+                    button_map: {
+                        ...fallback.rokid_button.button_map,
+                        ...((hints.rokid_button || {}).button_map || {}),
+                    },
+                },
+            };
+        }
+
+        function briefCardPayload(card) {
+            if (!card) return {};
+            return {
+                section_id: card.section_id || "",
+                name: card.name || "",
+                slide_index: Number(card.slide_index || 0),
+                slide_title: card.slide_title || card.name || "",
+                slide_anchor: card.slide_anchor || "",
+                interaction_goal: card.interaction_goal || "",
+                target_seconds: Number(card.target_seconds || 0),
+                target_label: formatMmss(Number(card.target_seconds || 0)),
+            };
+        }
+
+        function nextCardFromCards(cards, activeSectionId) {
+            const safeCards = normalizeSections(cards || []);
+            const currentIndex = Math.max(0, safeCards.findIndex((item) => item.section_id === activeSectionId));
+            return currentIndex >= 0 && currentIndex + 1 < safeCards.length ? safeCards[currentIndex + 1] : null;
+        }
+
         function defaultPresentationState(cards) {
             const first = cards[0] || {};
             return {
@@ -1272,6 +1442,10 @@
                 cue_view: "visible",
                 last_action: "sync",
                 last_control_at: "",
+                active_card: briefCardPayload(first),
+                next_card: briefCardPayload(cards[1] || null),
+                available_cards: normalizeSections(cards || []).map((item) => briefCardPayload(item)),
+                control_hints: defaultControlHints(),
             };
         }
 
@@ -1300,6 +1474,10 @@
             if (!["visible", "hidden"].includes(String(base.cue_view || "").toLowerCase())) {
                 base.cue_view = "visible";
             }
+            base.active_card = briefCardPayload(activeCard);
+            base.next_card = briefCardPayload(nextCardFromCards(safeCards, base.active_section_id));
+            base.available_cards = safeCards.map((item) => briefCardPayload(item));
+            base.control_hints = normalizeControlHints(base.control_hints);
             return base;
         }
 
@@ -1442,6 +1620,54 @@
                     : `<option value="">No cards</option>`;
                 jumpSelect.value = presentationState.active_section_id || cards[0]?.section_id || "";
             }
+        }
+
+        function renderControllerSummary() {
+            const host = document.getElementById("controller-summary-host");
+            if (!host) return;
+            const cards = normalizeSections(state.draftSections);
+            const presentationState = currentPresentationState();
+            const activeCard = currentActiveCard();
+            const nextCard = nextCardFromCards(cards, presentationState.active_section_id);
+            const hints = normalizeControlHints(presentationState.control_hints);
+            const selectedHint = hints[presentationState.control_source] || hints.phone;
+            const liveSeconds = currentRunDurationSeconds();
+            const targetSeconds = currentScriptSummary().targetTotalSeconds;
+            const lastControlAt = presentationState.last_control_at
+                ? escapeHtml(String(presentationState.last_control_at).replace("T", " "))
+                : "Not sent yet";
+            const rokidMap = Object.entries(hints.rokid_button.button_map || {})
+                .map(([key, value]) => `${key.replaceAll("_", " ")} -> ${value}`)
+                .join(" | ");
+
+            if (!activeCard) {
+                host.innerHTML = `<div class="controller-summary-card"><strong>Controller Snapshot</strong><p>Load or create a mission first to activate the phone-side controller.</p></div>`;
+                return;
+            }
+
+            host.innerHTML = `
+                <div class="controller-summary-card">
+                    <strong>Controller Snapshot</strong>
+                    <div class="controller-guide">
+                        <div class="guide-row"><span>Active slide</span><strong>Slide ${activeCard.slide_index}: ${escapeHtml(activeCard.slide_title || activeCard.name)}</strong></div>
+                        <div class="guide-row"><span>Next slide</span><strong>${nextCard ? `Slide ${nextCard.slide_index}: ${escapeHtml(nextCard.slide_title || nextCard.name)}` : "Final card"}</strong></div>
+                        <div class="guide-row"><span>Mode</span><strong>${escapeHtml(presentationState.presentation_mode)} | cue ${escapeHtml(presentationState.cue_view)}</strong></div>
+                        <div class="guide-row"><span>Controller</span><strong>${escapeHtml(presentationState.control_source)} | last ${escapeHtml(presentationState.last_action || "sync")}</strong></div>
+                        <div class="guide-row"><span>Run clock</span><strong>${liveSeconds ? formatMmss(liveSeconds) : "--"}${targetSeconds ? ` | ${formatSignedMmss(liveSeconds - targetSeconds)}` : ""}</strong></div>
+                    </div>
+                    <p>${escapeHtml(selectedHint.note || "Phone should stay the main controller for full interaction.")} Last control at ${lastControlAt}.</p>
+                </div>
+                <div class="controller-summary-card">
+                    <strong>Input Guide</strong>
+                    <div class="controller-guide">
+                        <div class="guide-row"><span>Phone</span><strong>${escapeHtml((hints.phone.actions || []).join(" | "))}</strong></div>
+                        <div class="guide-row"><span>Rokid button</span><strong>${escapeHtml(rokidMap || "single press -> next | double press -> previous | long press -> toggle_cue")}</strong></div>
+                        <div class="guide-row"><span>Keyboard</span><strong>Right / Space / K -> next | Left / J -> previous | C -> cue</strong></div>
+                        <div class="guide-row"><span>Active anchor</span><strong>${escapeHtml(activeCard.slide_anchor || "No slide anchor set")}</strong></div>
+                    </div>
+                    <p>Use the phone as the main controller. Keep the glasses-side button path to quick next, previous, and cue toggle only.</p>
+                </div>
+            `;
         }
 
         function renderHero() {
@@ -1636,8 +1862,61 @@
                 return;
             }
             const estimatedSeconds = estimateSectionSeconds(card);
+            const hint = durationHint(estimatedSeconds, Number(card.target_seconds || 0));
             const compactMode = presentationState.presentation_mode === "present";
             const cueVisible = presentationState.cue_view === "visible";
+            const nextCard = nextCardFromCards(state.draftSections, presentationState.active_section_id);
+            const totalTargetSeconds = currentScriptSummary().targetTotalSeconds;
+            const liveSeconds = currentRunDurationSeconds();
+            const liveClock = liveSeconds > 0 ? formatMmss(liveSeconds) : "--";
+            const liveDelta = liveSeconds > 0 && totalTargetSeconds ? formatSignedMmss(liveSeconds - totalTargetSeconds) : "--";
+            const promptText = cueVisible
+                ? (card.cue_cards || card.outline || card.slide_anchor || "Write short cue lines for this slide.")
+                : "Cue cards are hidden for the current presentation view.";
+            const interactionMove = card.interaction_goal || "No interaction move has been written for this slide yet.";
+
+            if (compactMode) {
+                host.innerHTML = `
+                    <div class="stage-card present-stage">
+                        <div class="stage-meta">
+                            <span class="stage-label">Present mode</span>
+                            <span class="stage-label">Source ${escapeHtml(presentationState.control_source)}</span>
+                            <span class="stage-label">Slide ${card.slide_index}</span>
+                            <span class="stage-label">Cue ${cueVisible ? "visible" : "hidden"}</span>
+                        </div>
+                        <h3>Slide ${card.slide_index}: ${escapeHtml(card.slide_title || card.name)}</h3>
+                        <p class="stage-copy">${escapeHtml(card.slide_anchor || "No slide anchor set yet.")}</p>
+                        <div class="stage-kpi-grid">
+                            <div class="stage-kpi">
+                                <span>Card Target</span>
+                                <strong>${formatMmss(card.target_seconds)}</strong>
+                            </div>
+                            <div class="stage-kpi">
+                                <span>Run Clock</span>
+                                <strong>${liveClock}</strong>
+                            </div>
+                            <div class="stage-kpi">
+                                <span>Vs Total Target</span>
+                                <strong>${liveDelta}</strong>
+                            </div>
+                        </div>
+                        <div class="stage-prompt">
+                            <strong>Current Cue</strong>
+                            <div class="stage-copy">${escapeHtml(promptText)}</div>
+                        </div>
+                        <div class="stage-block">
+                            <strong>Audience Move</strong>
+                            <div class="stage-copy">${escapeHtml(interactionMove)}</div>
+                        </div>
+                        <div class="stage-block">
+                            <strong>Next Slide</strong>
+                            <div class="stage-copy">${nextCard ? `Slide ${nextCard.slide_index}: ${escapeHtml(nextCard.slide_title || nextCard.name)} | ${escapeHtml(nextCard.slide_anchor || "No anchor set")}` : "This is the final slide card. Use the ending pause and land the takeaway."}</div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
             host.innerHTML = `
                 <div class="stage-card">
                     <div class="stage-meta">
@@ -1651,25 +1930,27 @@
                     <p class="stage-copy">${escapeHtml(card.slide_anchor || "No slide anchor set yet.")}</p>
                     <div class="stage-block">
                         <strong>Interaction Goal</strong>
-                        <div class="stage-copy">${escapeHtml(card.interaction_goal || "No interaction goal has been written yet.")}</div>
+                        <div class="stage-copy">${escapeHtml(interactionMove)}</div>
                     </div>
-                    ${compactMode ? "" : `
-                        <div class="stage-block">
-                            <strong>Outline</strong>
-                            <div class="stage-copy">${escapeHtml(card.outline || "No outline yet.")}</div>
-                        </div>
-                        <div class="stage-block">
-                            <strong>Speaker Notes</strong>
-                            <div class="stage-copy">${escapeHtml(card.speaker_notes || "No speaker notes yet.")}</div>
-                        </div>
-                    `}
+                    <div class="stage-block">
+                        <strong>Outline</strong>
+                        <div class="stage-copy">${escapeHtml(card.outline || "No outline yet.")}</div>
+                    </div>
+                    <div class="stage-block">
+                        <strong>Speaker Notes</strong>
+                        <div class="stage-copy">${escapeHtml(card.speaker_notes || "No speaker notes yet.")}</div>
+                    </div>
                     <div class="stage-block">
                         <strong>${cueVisible ? "Cue Cards" : "Cue Cards Hidden"}</strong>
                         <div class="stage-copy">${cueVisible ? escapeHtml(card.cue_cards || "No cue cards yet.") : "Cue cards are hidden for the current view."}</div>
                     </div>
                     <div class="stage-block">
                         <strong>Timing Check</strong>
-                        <div class="stage-copy">Estimated ${estimatedSeconds ? formatMmss(estimatedSeconds) : "--"} against a target of ${formatMmss(card.target_seconds)}.</div>
+                        <div class="stage-copy">Estimated ${estimatedSeconds ? formatMmss(estimatedSeconds) : "--"} against a target of ${formatMmss(card.target_seconds)}. ${escapeHtml(hint.note)}</div>
+                    </div>
+                    <div class="stage-block">
+                        <strong>Next Slide</strong>
+                        <div class="stage-copy">${nextCard ? `Slide ${nextCard.slide_index}: ${escapeHtml(nextCard.slide_title || nextCard.name)} | ${escapeHtml(nextCard.slide_anchor || "No anchor set")}` : "This is the final slide card."}</div>
                     </div>
                 </div>
             `;
@@ -1766,6 +2047,7 @@
             renderScriptCardSwitcher();
             renderFocusedCard();
             renderSectionTimings();
+            renderControllerSummary();
             renderPresentationStage();
             renderRecentRehearsals();
             renderFeedback();

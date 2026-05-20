@@ -160,10 +160,13 @@ The current demo-ready checkpoint includes:
     - `control_source`
     - `active_slide_index`
     - `cue_view`
+    - `next_card`
+    - `control_hints`
   - phone-first presentation control with Rokid-button scaffolding for:
     - next
     - previous
     - cue toggle
+    - present-mode current-slide view
   - rehearsal run storage:
     - audio source
     - total duration

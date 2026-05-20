@@ -892,7 +892,9 @@ class PresentationCompanion:
         return {
             **state,
             "active_card": active_card,
+            "next_card": self._next_card_brief(sections, state),
             "available_cards": [self._card_brief_payload(item) for item in sections],
+            "control_hints": self._control_hints_payload(),
         }
 
     def _find_active_card(self, sections, state):
@@ -903,6 +905,16 @@ class PresentationCompanion:
                 return self._card_payload(item, presentation_mode=(state or {}).get("presentation_mode", "rehearse"), cue_view=(state or {}).get("cue_view", "visible"))
         return self._card_payload(sections[0], presentation_mode=(state or {}).get("presentation_mode", "rehearse"), cue_view=(state or {}).get("cue_view", "visible")) if sections else {}
 
+    def _next_card_brief(self, sections, state):
+        sections = self._sanitize_sections(sections)
+        target_id = self._clean_text((state or {}).get("active_section_id", ""), max_length=80)
+        for index, item in enumerate(sections):
+            if item.get("section_id", "") == target_id:
+                if index + 1 < len(sections):
+                    return self._card_brief_payload(sections[index + 1])
+                return {}
+        return self._card_brief_payload(sections[1]) if len(sections) > 1 else {}
+
     def _card_brief_payload(self, section):
         return {
             "section_id": section.get("section_id", ""),
@@ -910,7 +922,9 @@ class PresentationCompanion:
             "slide_index": self._safe_int(section.get("slide_index"), default=0),
             "slide_title": section.get("slide_title", ""),
             "slide_anchor": section.get("slide_anchor", ""),
+            "interaction_goal": section.get("interaction_goal", ""),
             "target_seconds": self._safe_int(section.get("target_seconds"), default=0),
+            "target_label": self._format_mmss(section.get("target_seconds", 0)),
         }
 
     def _card_payload(self, section, presentation_mode="rehearse", cue_view="visible"):
@@ -956,6 +970,24 @@ class PresentationCompanion:
         if normalized not in {"visible", "hidden"}:
             return "visible"
         return normalized
+
+    def _control_hints_payload(self):
+        return {
+            "phone": {
+                "role": "Main controller",
+                "note": "Use the phone for full slide switching, jump, and mode changes.",
+                "actions": ["previous", "next", "jump", "toggle_cue", "set_mode"],
+            },
+            "rokid_button": {
+                "role": "Quick remote",
+                "note": "Keep glasses-side control lightweight so the presenter does not need complex input during delivery.",
+                "button_map": {
+                    "single_press": "next",
+                    "double_press": "previous",
+                    "long_press": "toggle_cue",
+                },
+            },
+        }
 
     def _build_transcript_object(self, rehearsal):
         rehearsal = rehearsal or {}
@@ -1262,6 +1294,7 @@ class PresentationCompanion:
             existing=(mission or {}).get("presentation_state"),
         )
         active_card = self._find_active_card(sections, presentation_state)
+        next_card = self._next_card_brief(sections, presentation_state)
         target_seconds = self._mission_target_seconds(mission or {}, sections)
         actual_seconds = self._safe_float(rehearsal.get("total_duration_seconds"), default=0)
         pace_status = feedback.get("pace_status", "unknown")
@@ -1288,7 +1321,11 @@ class PresentationCompanion:
             "active_slide_index": active_card.get("slide_index", 0),
             "active_slide_title": active_card.get("slide_title", ""),
             "active_slide_anchor": active_card.get("slide_anchor", ""),
+            "presentation_mode": presentation_state.get("presentation_mode", "rehearse"),
+            "cue_view": presentation_state.get("cue_view", "visible"),
             "control_source": presentation_state.get("control_source", "phone"),
+            "next_slide_index": next_card.get("slide_index", 0),
+            "next_slide_title": next_card.get("slide_title", ""),
             "transcript_status": transcript.get("status", "missing"),
             "generated_at": datetime.now().isoformat(timespec="seconds"),
         }

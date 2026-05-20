@@ -261,6 +261,8 @@ The project now also includes an independent page at `/presentation`:
 - the rehearsal page now also includes a lightweight `presentation controller` with:
   - `phone` as the default main control source
   - `rokid_button` as a lightweight next / previous / cue-toggle scaffold
+  - `present` mode for a compact current-slide view instead of a long script view
+  - a controller snapshot that shows the active slide, queued next slide, cue state, and input hints
 - AI can help with:
   - task-intake field extraction
   - section scaffold suggestions
@@ -284,6 +286,8 @@ The core routes are:
 - `/api/presentation_missions`
 - `/api/presentation_missions/intake_extract`
 - `/api/presentation_missions/<mission_id>/script`
+- `/api/presentation_missions/<mission_id>/presentation_state`
+- `/api/presentation_missions/<mission_id>/presentation_control`
 - `/api/presentation_rehearsals`
 - `/api/presentation_rehearsals/<rehearsal_id>/analyze`
 - `/api/presentation_rehearsals/<rehearsal_id>/hud_summary`

@@ -76,6 +76,8 @@ def main():
     assert state_response.status_code == 200, state_response.get_data(as_text=True)
     state_payload = state_response.get_json()["presentation_state"]
     assert state_payload["active_slide_index"] == 1, "Expected the first slide to be active."
+    assert state_payload["next_card"]["slide_index"] >= 2, "Expected a next slide card in the presentation state."
+    assert state_payload["control_hints"]["rokid_button"]["button_map"]["single_press"] == "next", "Missing Rokid single-press mapping."
 
     mode_response = client.post(
         f"/api/presentation_missions/{mission_id}/presentation_state",
@@ -100,6 +102,7 @@ def main():
     next_payload = next_response.get_json()["presentation_state"]
     assert next_payload["active_section_id"] == section_ids[1], "Next control did not advance to the second card."
     assert next_payload["last_control_source"] == "rokid_button", "Expected the last control source to be rokid_button."
+    assert next_payload["next_card"]["slide_index"] >= 3, "Expected the third slide card to be queued next."
 
     cue_response = client.post(
         f"/api/presentation_missions/{mission_id}/presentation_control",
@@ -152,18 +155,22 @@ def main():
     assert analysis["hud_summary"]["mode"] == "rehearse_summary"
     assert analysis["hud_summary"]["active_slide_index"] >= 1, "HUD summary should expose the active slide index."
     assert analysis["hud_summary"]["control_source"] in {"phone", "rokid_button"}, "HUD summary should expose the control source."
+    assert analysis["hud_summary"]["presentation_mode"] == "present", "HUD summary should reflect the presentation mode."
+    assert analysis["hud_summary"]["cue_view"] == "hidden", "HUD summary should reflect the cue visibility."
 
     hud_response = client.get(f"/api/presentation_rehearsals/{rehearsal_id}/hud_summary")
     assert hud_response.status_code == 200, hud_response.get_data(as_text=True)
     hud_payload = hud_response.get_json()
     assert hud_payload["hud_summary"]["pace_status"], "Missing HUD pace status."
     assert hud_payload["hud_summary"]["active_slide_title"], "Missing HUD active slide title."
+    assert "next_slide_index" in hud_payload["hud_summary"], "Missing next slide index in HUD summary."
 
     print(json.dumps({
         "mission_id": mission_id,
         "rehearsal_id": rehearsal_id,
         "active_slide_index": hud_payload["hud_summary"]["active_slide_index"],
         "control_source": hud_payload["hud_summary"]["control_source"],
+        "presentation_mode": hud_payload["hud_summary"]["presentation_mode"],
         "pace_status": analysis["feedback"]["pace_status"],
         "hud_status": hud_payload["hud_summary"]["current_or_final_status"],
     }, ensure_ascii=False, indent=2))
