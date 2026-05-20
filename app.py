@@ -1717,6 +1717,52 @@ def presentation_companion_sync(mission_id):
     }), status_code
 
 
+@app.route("/api/presentation_missions/<mission_id>/bridge_state")
+def presentation_bridge_state(mission_id):
+    result = presentation_companion.get_bridge_bundle(mission_id)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    return jsonify({
+        "status": "ok",
+        **result,
+    })
+
+
+@app.route("/api/presentation_missions/<mission_id>/bridge_claim", methods=["POST"])
+def presentation_bridge_claim(mission_id):
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.claim_bridge(mission_id, payload)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    status_code = 400 if result.get("status") == "error" else 200
+    return jsonify({
+        "status": "ok" if status_code == 200 else "error",
+        **result,
+    }), status_code
+
+
+@app.route("/api/presentation_missions/<mission_id>/bridge_release", methods=["POST"])
+def presentation_bridge_release(mission_id):
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.release_bridge(mission_id, payload)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    status_code = 400 if result.get("status") == "error" else 200
+    return jsonify({
+        "status": "ok" if status_code == 200 else "error",
+        **result,
+    }), status_code
+
+
 @app.route("/api/presentation_missions/<mission_id>/rokid_event", methods=["POST"])
 def presentation_rokid_event(mission_id):
     payload = request.get_json(silent=True) or {}

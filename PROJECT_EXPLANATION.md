@@ -270,6 +270,7 @@ The next scaffold layer now adds:
 
 - `/presentation/controller` as a phone-first control surface
 - `companion_sync` as the lightweight shared session state
+- `bridge_state`, `bridge_claim`, and `bridge_release` as the lightweight pairing / ownership bridge
 - `rokid_event` as the button-event-to-action mapping endpoint
 - `live_hud` as the future glasses-side pull endpoint for the current slide
 

@@ -1364,6 +1364,7 @@
             presentationState: null,
             companionSync: null,
             liveHud: null,
+            bridgeAutoClaimedMissionId: "",
             focusedCardId: "",
             rehearsalList: [],
             draftSections: [],
@@ -1525,6 +1526,19 @@
                 sync_api_path: "",
                 rokid_event_api_path: "",
                 live_hud_api_path: "",
+                bridge_state_api_path: "",
+                bridge_claim_api_path: "",
+                bridge_release_api_path: "",
+                bridge_state: {
+                    bridge_status: "waiting",
+                    bridge_pin: "",
+                    bridge_key: "",
+                    claimed_surface: "",
+                    claimed_device_label: "",
+                    claimed_at: "",
+                    claim_revision: 0,
+                    last_release_at: "",
+                },
                 surface_status: {
                     web: { status: "offline", last_seen_at: "" },
                     phone: { status: "offline", last_seen_at: "" },
@@ -1537,9 +1551,14 @@
             const fallback = defaultCompanionSync();
             const value = raw && typeof raw === "object" ? raw : {};
             const surfaceStatus = value.surface_status && typeof value.surface_status === "object" ? value.surface_status : {};
+            const bridgeState = value.bridge_state && typeof value.bridge_state === "object" ? value.bridge_state : {};
             return {
                 ...fallback,
                 ...value,
+                bridge_state: {
+                    ...fallback.bridge_state,
+                    ...bridgeState,
+                },
                 surface_status: {
                     web: { ...fallback.surface_status.web, ...(surfaceStatus.web || {}) },
                     phone: { ...fallback.surface_status.phone, ...(surfaceStatus.phone || {}) },
@@ -1560,6 +1579,12 @@
                 session_id: "",
                 sync_status: "ready",
                 sync_revision: 1,
+                bridge_status: "waiting",
+                bridge_pin: "",
+                bridge_key: "",
+                claimed_surface: "",
+                claimed_device_label: "",
+                claim_revision: 0,
                 control_source: "phone",
                 presentation_mode: currentPresentationState().presentation_mode,
                 cue_view: currentPresentationState().cue_view,
@@ -1878,7 +1903,12 @@
             }
             const sync = currentCompanionSync();
             const liveHud = normalizeLiveHud(state.liveHud);
+            const bridge = sync.bridge_state || {};
             const formatSeen = (value) => value ? escapeHtml(String(value).replace("T", " ")) : "Not seen yet";
+            const claimLabel = bridge.claimed_surface
+                ? `${escapeHtml(bridge.claimed_surface)}${bridge.claimed_device_label ? ` | ${escapeHtml(bridge.claimed_device_label)}` : ""}`
+                : "Unclaimed";
+            const thisSurface = phoneControllerMode ? "phone" : "web";
             host.innerHTML = `
                 <div class="sync-grid">
                     <div class="sync-chip">
@@ -1894,6 +1924,20 @@
                         <strong>${escapeHtml(sync.surface_status.rokid_hud.status)} | ${formatSeen(sync.surface_status.rokid_hud.last_seen_at)}</strong>
                     </div>
                 </div>
+                <div class="sync-grid" style="margin-top: 10px;">
+                    <div class="sync-chip">
+                        <span>Bridge PIN</span>
+                        <strong>${escapeHtml(bridge.bridge_pin || "------")} | ${escapeHtml(bridge.bridge_key || "PC-SYNC")}</strong>
+                    </div>
+                    <div class="sync-chip">
+                        <span>Bridge Claim</span>
+                        <strong>${escapeHtml(bridge.bridge_status || "waiting")} | ${claimLabel}</strong>
+                    </div>
+                    <div class="sync-chip">
+                        <span>Claim Revision</span>
+                        <strong>${escapeHtml(bridge.claim_revision || 0)} | ${formatSeen(bridge.claimed_at || bridge.last_release_at || "")}</strong>
+                    </div>
+                </div>
                 <div class="section-metrics">
                     <div class="metric-chip"><strong>Live HUD</strong> ${escapeHtml(liveHud.status_line || "Current slide ready")}</div>
                     <div class="metric-chip"><strong>Active</strong> Slide ${escapeHtml(liveHud.active_slide_index || "--")} ${escapeHtml(liveHud.active_slide_title || "")}</div>
@@ -1904,11 +1948,16 @@
                     <div class="link-chip"><strong>Phone controller</strong><br>${escapeHtml(sync.controller_path || `/presentation/controller?mission_id=${state.currentMissionId}`)}</div>
                     <div class="link-chip"><strong>Workspace</strong><br>${escapeHtml(sync.workspace_path || `/presentation?mission_id=${state.currentMissionId}`)}</div>
                     <div class="link-chip"><strong>Live HUD API</strong><br>${escapeHtml(sync.live_hud_api_path || `/api/presentation_missions/${state.currentMissionId}/live_hud`)}</div>
+                    <div class="link-chip"><strong>Bridge State API</strong><br>${escapeHtml(sync.bridge_state_api_path || `/api/presentation_missions/${state.currentMissionId}/bridge_state`)}</div>
                     <div class="link-chip"><strong>Rokid Event API</strong><br>${escapeHtml(sync.rokid_event_api_path || `/api/presentation_missions/${state.currentMissionId}/rokid_event`)}</div>
+                    <div class="link-chip"><strong>Bridge Claim API</strong><br>${escapeHtml(sync.bridge_claim_api_path || `/api/presentation_missions/${state.currentMissionId}/bridge_claim`)}</div>
+                    <div class="link-chip"><strong>Bridge Release API</strong><br>${escapeHtml(sync.bridge_release_api_path || `/api/presentation_missions/${state.currentMissionId}/bridge_release`)}</div>
                 </div>
                 <div class="status-row">
                     <button class="ghost-btn" onclick="openCompanionSurface('${phoneControllerMode ? "workspace" : "controller"}')">${phoneControllerMode ? "Open Workspace" : "Open Phone Controller"}</button>
                     <button class="ghost-btn" onclick="touchCompanionSync('manual_refresh')">Refresh Sync</button>
+                    <button class="ghost-btn" onclick="claimBridge('${thisSurface}')">${phoneControllerMode ? "Claim Phone Control" : "Claim Workspace Control"}</button>
+                    <button class="ghost-btn" onclick="releaseBridgeClaim('${thisSurface}')">Release Claim</button>
                     <button class="ghost-btn" onclick="simulateRokidButton('single_press')">Simulate single_press</button>
                     <button class="ghost-btn" onclick="simulateRokidButton('double_press')">Simulate double_press</button>
                     <button class="ghost-btn" onclick="simulateRokidButton('long_press')">Simulate long_press</button>
@@ -2482,6 +2531,57 @@
             applyCompanionBundle(result);
         }
 
+        async function claimBridge(surface) {
+            if (!state.currentMissionId) return;
+            const sync = currentCompanionSync();
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/bridge_claim`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    surface,
+                    bridge_pin: sync.bridge_state?.bridge_pin || "",
+                    device_label: phoneControllerMode ? "phone_controller_surface" : "workspace_surface",
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not claim the bridge session.", "status-high");
+                return;
+            }
+            applyCompanionBundle(result, `${surface} bridge claim is active.`);
+        }
+
+        async function releaseBridgeClaim(surface) {
+            if (!state.currentMissionId) return;
+            const sync = currentCompanionSync();
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/bridge_release`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    surface,
+                    bridge_pin: sync.bridge_state?.bridge_pin || "",
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not release the bridge session.", "status-high");
+                return;
+            }
+            applyCompanionBundle(result, `${surface} bridge claim released.`);
+        }
+
+        async function ensurePhoneBridgeClaim() {
+            if (!phoneControllerMode || !state.currentMissionId) return;
+            if (state.bridgeAutoClaimedMissionId === state.currentMissionId) return;
+            const bridge = currentCompanionSync().bridge_state || {};
+            if (bridge.claimed_surface === "phone" && bridge.bridge_status === "paired") {
+                state.bridgeAutoClaimedMissionId = state.currentMissionId;
+                return;
+            }
+            state.bridgeAutoClaimedMissionId = state.currentMissionId;
+            await claimBridge("phone");
+        }
+
         async function simulateRokidButton(buttonEvent) {
             if (!state.currentMissionId) {
                 setControllerStatus("Save or load a mission first before simulating Rokid button input.", "status-high");
@@ -2565,6 +2665,7 @@
             setControllerStatus(`Controller synced. Active slide is ${state.presentationState.active_slide_index || "--"} via ${state.presentationState.control_source || "phone"}.`, "status-cool");
             restartCompanionHeartbeat();
             await touchCompanionSync(phoneControllerMode ? "phone_open" : "workspace_open");
+            await ensurePhoneBridgeClaim();
             renderAll();
         }
 
@@ -3081,6 +3182,7 @@
             state.presentationState = normalizePresentationState(null, state.draftSections);
             state.companionSync = normalizeCompanionSync(null);
             state.liveHud = normalizeLiveHud(null);
+            state.bridgeAutoClaimedMissionId = "";
             state.focusedCardId = state.draftSections[0]?.section_id || "";
             if (phoneControllerMode) {
                 switchTab("rehearse");

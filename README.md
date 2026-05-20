@@ -265,6 +265,10 @@ The project now also includes an independent page at `/presentation`:
   - a controller snapshot that shows the active slide, queued next slide, cue state, and input hints
   - a `phone controller surface` at `/presentation/controller`
   - a `companion sync scaffold` that keeps the phone controller, future Rokid HUD pull, and button-event mapping on one mission state
+  - a `real-time companion bridge` with:
+    - mission-level pairing pin / bridge key
+    - simple claim / release ownership for the phone controller surface
+    - live HUD visibility into the current bridge owner
 - AI can help with:
   - task-intake field extraction
   - section scaffold suggestions
@@ -292,6 +296,9 @@ The core routes are:
 - `/api/presentation_missions/<mission_id>/presentation_state`
 - `/api/presentation_missions/<mission_id>/presentation_control`
 - `/api/presentation_missions/<mission_id>/companion_sync`
+- `/api/presentation_missions/<mission_id>/bridge_state`
+- `/api/presentation_missions/<mission_id>/bridge_claim`
+- `/api/presentation_missions/<mission_id>/bridge_release`
 - `/api/presentation_missions/<mission_id>/rokid_event`
 - `/api/presentation_missions/<mission_id>/live_hud`
 - `/api/presentation_rehearsals`

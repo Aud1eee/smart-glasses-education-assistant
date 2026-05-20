@@ -165,6 +165,9 @@ The current demo-ready checkpoint includes:
   - companion sync scaffold:
     - `/presentation/controller`
     - `companion_sync`
+    - `bridge_state`
+    - `bridge_claim`
+    - `bridge_release`
     - `rokid_event`
     - `live_hud`
   - phone-first presentation control with Rokid-button scaffolding for:

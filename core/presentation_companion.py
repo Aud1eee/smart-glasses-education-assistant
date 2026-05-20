@@ -582,6 +582,144 @@ class PresentationCompanion:
             "companion_sync": self._companion_sync_payload(mission_id, mission.get("companion_sync", {}), presentation_state),
         }
 
+    def get_bridge_bundle(self, mission_id):
+        mission = self.store.get_mission(mission_id)
+        if not mission:
+            return None
+        sections = self._sanitize_sections(mission.get("script_sections", []))
+        presentation_state = self._normalize_presentation_state(
+            sections=sections,
+            existing=mission.get("presentation_state"),
+        )
+        companion_sync = self._normalize_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            existing=mission.get("companion_sync"),
+        )
+        mission["presentation_state"] = presentation_state
+        mission["companion_sync"] = companion_sync
+        self.store.upsert_mission(mission)
+        latest_rehearsal = self._latest_rehearsal_for_mission(mission_id)
+        return {
+            "mission_id": mission_id,
+            "bridge_state": self._bridge_state_payload(companion_sync),
+            "companion_sync": self._companion_sync_payload(mission_id, companion_sync, presentation_state),
+            "live_hud": self._build_live_hud_payload(mission, latest_rehearsal=latest_rehearsal),
+        }
+
+    def claim_bridge(self, mission_id, payload):
+        mission = self.store.get_mission(mission_id)
+        if not mission:
+            return None
+        payload = payload or {}
+        sections = self._sanitize_sections(mission.get("script_sections", []))
+        presentation_state = self._normalize_presentation_state(
+            sections=sections,
+            existing=mission.get("presentation_state"),
+        )
+        companion_sync = self._normalize_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            existing=mission.get("companion_sync"),
+        )
+        requested_pin = self._clean_text(payload.get("bridge_pin", ""), max_length=16)
+        if requested_pin and requested_pin != companion_sync.get("bridge_pin", ""):
+            return {
+                "status": "error",
+                "message": "Bridge pin does not match the current mission session.",
+            }
+        claimed_surface = self._normalize_sync_surface(payload.get("surface", "phone"))
+        claimed_label = self._clean_text(payload.get("device_label", claimed_surface), max_length=80) or claimed_surface
+        now = datetime.now().isoformat(timespec="seconds")
+        touched = self._touch_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            existing=companion_sync,
+            payload={
+                "surface": claimed_surface,
+                "event": f"bridge_claim:{claimed_surface}",
+                "sync_status": "live" if self._normalize_presentation_mode(presentation_state.get("presentation_mode", "rehearse")) == "present" else "ready",
+            },
+        )
+        mission["presentation_state"] = presentation_state
+        mission["companion_sync"] = self._normalize_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            incoming={
+                **touched,
+                "bridge_status": "paired",
+                "claimed_surface": claimed_surface,
+                "claimed_device_label": claimed_label,
+                "claimed_at": now,
+                "claim_revision": self._safe_int(companion_sync.get("claim_revision"), default=0) + 1,
+            },
+            existing=touched,
+        )
+        self.store.upsert_mission(mission)
+        latest_rehearsal = self._latest_rehearsal_for_mission(mission_id)
+        return {
+            "mission_id": mission_id,
+            "bridge_state": self._bridge_state_payload(mission["companion_sync"]),
+            "companion_sync": self._companion_sync_payload(mission_id, mission["companion_sync"], presentation_state),
+            "live_hud": self._build_live_hud_payload(mission, latest_rehearsal=latest_rehearsal),
+        }
+
+    def release_bridge(self, mission_id, payload):
+        mission = self.store.get_mission(mission_id)
+        if not mission:
+            return None
+        payload = payload or {}
+        sections = self._sanitize_sections(mission.get("script_sections", []))
+        presentation_state = self._normalize_presentation_state(
+            sections=sections,
+            existing=mission.get("presentation_state"),
+        )
+        companion_sync = self._normalize_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            existing=mission.get("companion_sync"),
+        )
+        requested_pin = self._clean_text(payload.get("bridge_pin", ""), max_length=16)
+        if requested_pin and requested_pin != companion_sync.get("bridge_pin", ""):
+            return {
+                "status": "error",
+                "message": "Bridge pin does not match the current mission session.",
+            }
+        release_surface = self._normalize_sync_surface(payload.get("surface", companion_sync.get("claimed_surface", "phone") or "phone"))
+        now = datetime.now().isoformat(timespec="seconds")
+        touched = self._touch_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            existing=companion_sync,
+            payload={
+                "surface": release_surface,
+                "event": f"bridge_release:{release_surface}",
+            },
+        )
+        mission["presentation_state"] = presentation_state
+        mission["companion_sync"] = self._normalize_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            incoming={
+                **touched,
+                "bridge_status": "waiting",
+                "claimed_surface": "",
+                "claimed_device_label": "",
+                "claimed_at": "",
+                "last_release_at": now,
+                "claim_revision": self._safe_int(companion_sync.get("claim_revision"), default=0) + 1,
+            },
+            existing=touched,
+        )
+        self.store.upsert_mission(mission)
+        latest_rehearsal = self._latest_rehearsal_for_mission(mission_id)
+        return {
+            "mission_id": mission_id,
+            "bridge_state": self._bridge_state_payload(mission["companion_sync"]),
+            "companion_sync": self._companion_sync_payload(mission_id, mission["companion_sync"], presentation_state),
+            "live_hud": self._build_live_hud_payload(mission, latest_rehearsal=latest_rehearsal),
+        }
+
     def _mission_payload(self, mission, summary_only=False):
         mission = mission or {}
         sections = self._sanitize_sections(mission.get("script_sections", []))
@@ -1089,16 +1227,18 @@ class PresentationCompanion:
         incoming = incoming or {}
         existing = existing or {}
         mission_id = self._clean_text(mission_id, max_length=80)
+        session_id = self._clean_text(
+            incoming.get("session_id", existing.get("session_id", "")),
+            max_length=80,
+        ) or self._build_id(f"{mission_id or 'presentation'}-sync")
+        claimed_surface = self._normalize_claimed_surface(incoming.get("claimed_surface", existing.get("claimed_surface", "")))
         sync_status = self._normalize_sync_status(
             incoming.get("sync_status", existing.get("sync_status", "")),
             presentation_mode=(presentation_state or {}).get("presentation_mode", "rehearse"),
         )
         active_surface = self._normalize_sync_surface(incoming.get("active_surface", existing.get("active_surface", "web")))
         return {
-            "session_id": self._clean_text(
-                incoming.get("session_id", existing.get("session_id", "")),
-                max_length=80,
-            ) or self._build_id(f"{mission_id or 'presentation'}-sync"),
+            "session_id": session_id,
             "sync_status": sync_status,
             "active_surface": active_surface,
             "controller_surface": self._normalize_sync_surface(incoming.get("controller_surface", existing.get("controller_surface", "phone"))),
@@ -1111,6 +1251,20 @@ class PresentationCompanion:
             "last_web_seen_at": self._clean_text(incoming.get("last_web_seen_at", existing.get("last_web_seen_at", "")), max_length=40),
             "last_hud_seen_at": self._clean_text(incoming.get("last_hud_seen_at", existing.get("last_hud_seen_at", "")), max_length=40),
             "last_rokid_event_at": self._clean_text(incoming.get("last_rokid_event_at", existing.get("last_rokid_event_at", "")), max_length=40),
+            "bridge_pin": self._clean_text(incoming.get("bridge_pin", existing.get("bridge_pin", "")), max_length=16) or self._build_bridge_pin(session_id),
+            "bridge_key": self._clean_text(incoming.get("bridge_key", existing.get("bridge_key", "")), max_length=24) or self._build_bridge_key(session_id),
+            "bridge_status": self._normalize_bridge_status(
+                incoming.get("bridge_status", existing.get("bridge_status", "")),
+                claimed_surface=claimed_surface,
+            ),
+            "claimed_surface": claimed_surface,
+            "claimed_device_label": self._clean_text(
+                incoming.get("claimed_device_label", existing.get("claimed_device_label", "")),
+                max_length=80,
+            ),
+            "claimed_at": self._clean_text(incoming.get("claimed_at", existing.get("claimed_at", "")), max_length=40),
+            "claim_revision": max(0, self._safe_int(incoming.get("claim_revision", existing.get("claim_revision", 0)), default=0)),
+            "last_release_at": self._clean_text(incoming.get("last_release_at", existing.get("last_release_at", "")), max_length=40),
         }
 
     def _touch_companion_sync(self, mission_id, presentation_state, existing=None, payload=None):
@@ -1263,6 +1417,20 @@ class PresentationCompanion:
             return normalized
         return "live" if self._normalize_presentation_mode(presentation_mode) == "present" else "ready"
 
+    def _normalize_bridge_status(self, value, claimed_surface=""):
+        normalized = str(value or "").strip().lower()
+        if normalized not in {"waiting", "paired"}:
+            normalized = ""
+        if claimed_surface:
+            return "paired"
+        return normalized or "waiting"
+
+    def _normalize_claimed_surface(self, value):
+        normalized = str(value or "").strip().lower()
+        if normalized not in {"web", "phone", "rokid_hud"}:
+            return ""
+        return normalized
+
     def _normalize_rokid_button_event(self, value):
         normalized = str(value or "").strip().lower()
         if normalized not in {"single_press", "double_press", "long_press"}:
@@ -1274,6 +1442,32 @@ class PresentationCompanion:
         if normalized not in {"visible", "hidden"}:
             return "visible"
         return normalized
+
+    def _build_bridge_pin(self, session_id):
+        safe = self._clean_text(session_id, max_length=80) or "presentation-sync"
+        total = 0
+        for index, char in enumerate(safe, start=1):
+            total += index * ord(char)
+        return str(100000 + (total % 900000)).zfill(6)
+
+    def _build_bridge_key(self, session_id):
+        safe = re.sub(r"[^A-Za-z0-9]", "", self._clean_text(session_id, max_length=80)).upper()
+        tail = (safe[-6:] if safe else "SYNC00").rjust(6, "0")
+        return f"PC-{tail}"
+
+    def _bridge_state_payload(self, sync_state):
+        sync_state = sync_state or {}
+        claimed_surface = self._normalize_claimed_surface(sync_state.get("claimed_surface", ""))
+        return {
+            "bridge_status": self._normalize_bridge_status(sync_state.get("bridge_status", ""), claimed_surface),
+            "bridge_pin": self._clean_text(sync_state.get("bridge_pin", ""), max_length=16),
+            "bridge_key": self._clean_text(sync_state.get("bridge_key", ""), max_length=24),
+            "claimed_surface": claimed_surface,
+            "claimed_device_label": self._clean_text(sync_state.get("claimed_device_label", ""), max_length=80),
+            "claimed_at": self._clean_text(sync_state.get("claimed_at", ""), max_length=40),
+            "claim_revision": max(0, self._safe_int(sync_state.get("claim_revision"), default=0)),
+            "last_release_at": self._clean_text(sync_state.get("last_release_at", ""), max_length=40),
+        }
 
     def _companion_sync_payload(self, mission_id, sync_state, presentation_state):
         sync_state = self._normalize_companion_sync(
@@ -1288,6 +1482,9 @@ class PresentationCompanion:
             "sync_api_path": f"/api/presentation_missions/{mission_id}/companion_sync",
             "rokid_event_api_path": f"/api/presentation_missions/{mission_id}/rokid_event",
             "live_hud_api_path": f"/api/presentation_missions/{mission_id}/live_hud",
+            "bridge_state_api_path": f"/api/presentation_missions/{mission_id}/bridge_state",
+            "bridge_claim_api_path": f"/api/presentation_missions/{mission_id}/bridge_claim",
+            "bridge_release_api_path": f"/api/presentation_missions/{mission_id}/bridge_release",
             "surface_status": {
                 "web": self._surface_status_payload(sync_state.get("last_web_seen_at", "")),
                 "phone": self._surface_status_payload(sync_state.get("last_phone_seen_at", "")),
@@ -1296,6 +1493,7 @@ class PresentationCompanion:
             "presentation_mode": self._normalize_presentation_mode((presentation_state or {}).get("presentation_mode", "rehearse")),
             "active_slide_index": self._safe_int((presentation_state or {}).get("active_slide_index"), default=0),
             "cue_view": self._normalize_cue_view((presentation_state or {}).get("cue_view", "visible")),
+            "bridge_state": self._bridge_state_payload(sync_state),
         }
 
     def _surface_status_payload(self, iso_value):
@@ -1738,6 +1936,11 @@ class PresentationCompanion:
             "session_id": companion_sync.get("session_id", ""),
             "sync_status": companion_sync.get("sync_status", "ready"),
             "sync_revision": self._safe_int(companion_sync.get("sync_revision"), default=1),
+            "bridge_status": self._normalize_bridge_status(companion_sync.get("bridge_status", ""), companion_sync.get("claimed_surface", "")),
+            "bridge_pin": self._clean_text(companion_sync.get("bridge_pin", ""), max_length=16),
+            "bridge_key": self._clean_text(companion_sync.get("bridge_key", ""), max_length=24),
+            "claimed_surface": self._normalize_claimed_surface(companion_sync.get("claimed_surface", "")),
+            "claimed_device_label": self._clean_text(companion_sync.get("claimed_device_label", ""), max_length=80),
             "control_source": presentation_state.get("control_source", "phone"),
             "presentation_mode": presentation_state.get("presentation_mode", "rehearse"),
             "cue_view": presentation_state.get("cue_view", "visible"),

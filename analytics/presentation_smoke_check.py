@@ -84,6 +84,13 @@ def main():
     sync_payload = sync_response.get_json()
     assert sync_payload["companion_sync"]["controller_path"].endswith(f"mission_id={mission_id}"), "Missing phone controller path."
     assert sync_payload["live_hud"]["mode"] == "presentation_live", "Expected live presentation HUD payload."
+    assert sync_payload["companion_sync"]["bridge_state"]["bridge_pin"], "Missing bridge pairing pin."
+
+    bridge_state_response = client.get(f"/api/presentation_missions/{mission_id}/bridge_state")
+    assert bridge_state_response.status_code == 200, bridge_state_response.get_data(as_text=True)
+    bridge_state_payload = bridge_state_response.get_json()
+    bridge_pin = bridge_state_payload["bridge_state"]["bridge_pin"]
+    assert bridge_state_payload["bridge_state"]["bridge_status"] == "waiting", "Expected the bridge to start in waiting mode."
 
     phone_sync_response = client.post(
         f"/api/presentation_missions/{mission_id}/companion_sync",
@@ -95,6 +102,19 @@ def main():
     assert phone_sync_response.status_code == 200, phone_sync_response.get_data(as_text=True)
     phone_sync_payload = phone_sync_response.get_json()
     assert phone_sync_payload["companion_sync"]["surface_status"]["phone"]["status"] in {"active", "idle"}, "Phone surface should be marked as connected."
+
+    bridge_claim_response = client.post(
+        f"/api/presentation_missions/{mission_id}/bridge_claim",
+        json={
+            "surface": "phone",
+            "bridge_pin": bridge_pin,
+            "device_label": "smoke_phone",
+        },
+    )
+    assert bridge_claim_response.status_code == 200, bridge_claim_response.get_data(as_text=True)
+    bridge_claim_payload = bridge_claim_response.get_json()
+    assert bridge_claim_payload["bridge_state"]["bridge_status"] == "paired", "Expected the bridge to be paired after phone claim."
+    assert bridge_claim_payload["bridge_state"]["claimed_surface"] == "phone", "Expected the phone controller to hold the bridge claim."
 
     mode_response = client.post(
         f"/api/presentation_missions/{mission_id}/presentation_state",
@@ -200,6 +220,19 @@ def main():
     live_hud_payload = live_hud_response.get_json()
     assert live_hud_payload["live_hud"]["active_slide_index"] >= 1, "Live HUD should expose the active slide index."
     assert live_hud_payload["live_hud"]["surface_status"]["rokid_hud"] in {"active", "idle"}, "Live HUD pull should mark the Rokid HUD surface as seen."
+    assert live_hud_payload["live_hud"]["claimed_surface"] == "phone", "Live HUD should reflect the current bridge owner."
+
+    bridge_release_response = client.post(
+        f"/api/presentation_missions/{mission_id}/bridge_release",
+        json={
+            "surface": "phone",
+            "bridge_pin": bridge_pin,
+        },
+    )
+    assert bridge_release_response.status_code == 200, bridge_release_response.get_data(as_text=True)
+    bridge_release_payload = bridge_release_response.get_json()
+    assert bridge_release_payload["bridge_state"]["bridge_status"] == "waiting", "Expected bridge release to return to waiting mode."
+    assert not bridge_release_payload["bridge_state"]["claimed_surface"], "Expected the bridge claim to clear after release."
 
     print(json.dumps({
         "mission_id": mission_id,
@@ -208,6 +241,7 @@ def main():
         "control_source": hud_payload["hud_summary"]["control_source"],
         "presentation_mode": hud_payload["hud_summary"]["presentation_mode"],
         "sync_status": live_hud_payload["live_hud"]["sync_status"],
+        "bridge_status": bridge_claim_payload["bridge_state"]["bridge_status"],
         "pace_status": analysis["feedback"]["pace_status"],
         "hud_status": hud_payload["hud_summary"]["current_or_final_status"],
     }, ensure_ascii=False, indent=2))
