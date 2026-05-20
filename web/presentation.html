@@ -587,6 +587,51 @@
             margin-top: 10px;
         }
 
+        .sync-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .sync-chip {
+            border-radius: 16px;
+            border: 1px solid rgba(109, 191, 213, 0.16);
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px;
+        }
+
+        .sync-chip span {
+            display: block;
+            color: rgba(114, 212, 245, 0.84);
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .sync-chip strong {
+            display: block;
+            font-size: 15px;
+            line-height: 1.35;
+        }
+
+        .link-stack {
+            display: grid;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .link-chip {
+            border-radius: 14px;
+            border: 1px solid rgba(109, 191, 213, 0.14);
+            background: rgba(255, 255, 255, 0.025);
+            padding: 10px 12px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
         .guide-row {
             display: flex;
             justify-content: space-between;
@@ -857,9 +902,35 @@
             .three-col,
             .status-shell,
             .controller-summary-shell,
-            .stage-kpi-grid {
+            .stage-kpi-grid,
+            .sync-grid {
                 grid-template-columns: 1fr;
             }
+        }
+
+        body.phone-controller-mode main {
+            width: min(840px, calc(100vw - 20px));
+            padding-top: 12px;
+        }
+
+        body.phone-controller-mode .hero,
+        body.phone-controller-mode .sidebar,
+        body.phone-controller-mode .tabbar,
+        body.phone-controller-mode #tab-brief,
+        body.phone-controller-mode #tab-script,
+        body.phone-controller-mode .phone-surface-hidden {
+            display: none !important;
+        }
+
+        body.phone-controller-mode .layout,
+        body.phone-controller-mode .rehearse-grid {
+            grid-template-columns: 1fr;
+        }
+
+        body.phone-controller-mode .workspace,
+        body.phone-controller-mode .tab-panel {
+            margin-top: 0;
+            padding-top: 0;
         }
     </style>
 </head>
@@ -1065,7 +1136,7 @@
 
                     <div class="rehearse-grid">
                         <div class="stack">
-                            <div class="status-card">
+                            <div class="status-card phone-surface-hidden">
                                 <header>
                                     <div>
                                         <strong>Live Rehearsal</strong>
@@ -1095,6 +1166,10 @@
                                 </header>
                                 <div class="controller-grid">
                                     <div class="field-grid">
+                                        <div class="field">
+                                            <label for="controller-mission-select">Mission Quick Switch</label>
+                                            <select id="controller-mission-select" onchange="loadMission(this.value)"></select>
+                                        </div>
                                         <div class="field">
                                             <label for="controller-source">Control Source</label>
                                             <select id="controller-source" onchange="syncPresentationStateFromUi()">
@@ -1127,7 +1202,7 @@
                                 </div>
                             </div>
 
-                            <div class="section-card">
+                            <div class="section-card phone-surface-hidden">
                                 <header>
                                     <div>
                                         <strong>Audio and Run Meta</strong>
@@ -1164,7 +1239,7 @@
                                 </div>
                             </div>
 
-                            <div class="section-card">
+                            <div class="section-card phone-surface-hidden">
                                 <header>
                                     <div>
                                         <strong>Transcript and Notes</strong>
@@ -1183,7 +1258,7 @@
                                 </div>
                             </div>
 
-                            <div class="section-card">
+                            <div class="section-card phone-surface-hidden">
                                 <header>
                                     <div>
                                         <strong>Section Timing Support</strong>
@@ -1193,7 +1268,7 @@
                                 <div class="timing-grid" id="section-timing-host"></div>
                             </div>
 
-                            <div class="action-row">
+                            <div class="action-row phone-surface-hidden">
                                 <label class="checkbox">
                                     <input type="checkbox" id="use-analysis-ai" checked>
                                     <span>Use AI-backed feedback wording when available</span>
@@ -1220,6 +1295,18 @@
                             <div class="result-card">
                                 <header>
                                     <div>
+                                        <strong>Companion Sync Scaffold</strong>
+                                        <div class="meta-line">This keeps the phone controller, future Rokid HUD pull, and lightweight button events on one shared mission state.</div>
+                                    </div>
+                                </header>
+                                <div id="companion-sync-host">
+                                    <div class="empty-state">Load a mission to activate the companion sync scaffold.</div>
+                                </div>
+                            </div>
+
+                            <div class="result-card phone-surface-hidden">
+                                <header>
+                                    <div>
                                         <strong>Feedback Snapshot</strong>
                                         <div class="meta-line">Overall pacing, strongest section, weakest section, next action, and section suggestions.</div>
                                     </div>
@@ -1229,7 +1316,7 @@
                                 </div>
                             </div>
 
-                            <div class="result-card">
+                            <div class="result-card phone-surface-hidden">
                                 <header>
                                     <div>
                                         <strong>Transcript View</strong>
@@ -1239,7 +1326,7 @@
                                 <div class="transcript-box" id="transcript-view">No transcript available yet.</div>
                             </div>
 
-                            <div class="result-card">
+                            <div class="result-card phone-surface-hidden">
                                 <header>
                                     <div>
                                         <strong>HUD Summary Payload</strong>
@@ -1249,7 +1336,7 @@
                                 <div class="transcript-box mono" id="hud-summary-view">No HUD summary yet.</div>
                             </div>
 
-                            <div class="result-card">
+                            <div class="result-card phone-surface-hidden">
                                 <header>
                                     <div>
                                         <strong>Recent Rehearsals</strong>
@@ -1266,11 +1353,17 @@
     </main>
 
     <script>
+        const routeQuery = new URLSearchParams(window.location.search);
+        const phoneControllerMode = window.location.pathname.includes("/presentation/controller");
+        const requestedMissionId = routeQuery.get("mission_id") || "";
+
         const state = {
             missions: [],
             currentMissionId: "",
             currentMission: null,
             presentationState: null,
+            companionSync: null,
+            liveHud: null,
             focusedCardId: "",
             rehearsalList: [],
             draftSections: [],
@@ -1286,6 +1379,7 @@
             mediaStream: null,
             recordedChunks: [],
             speechRecognition: null,
+            companionHeartbeatHandle: null,
         };
 
         function escapeHtml(value) {
@@ -1411,6 +1505,98 @@
             };
         }
 
+        function defaultCompanionSync() {
+            return {
+                session_id: "",
+                sync_status: "ready",
+                active_surface: phoneControllerMode ? "phone" : "web",
+                controller_surface: "phone",
+                hud_surface: "rokid_hud",
+                sync_revision: 1,
+                last_event: "initialized",
+                last_button_event: "",
+                last_sync_at: "",
+                last_phone_seen_at: "",
+                last_web_seen_at: "",
+                last_hud_seen_at: "",
+                last_rokid_event_at: "",
+                controller_path: state.currentMissionId ? `/presentation/controller?mission_id=${encodeURIComponent(state.currentMissionId)}` : "/presentation/controller",
+                workspace_path: state.currentMissionId ? `/presentation?mission_id=${encodeURIComponent(state.currentMissionId)}` : "/presentation",
+                sync_api_path: "",
+                rokid_event_api_path: "",
+                live_hud_api_path: "",
+                surface_status: {
+                    web: { status: "offline", last_seen_at: "" },
+                    phone: { status: "offline", last_seen_at: "" },
+                    rokid_hud: { status: "offline", last_seen_at: "" },
+                },
+            };
+        }
+
+        function normalizeCompanionSync(raw) {
+            const fallback = defaultCompanionSync();
+            const value = raw && typeof raw === "object" ? raw : {};
+            const surfaceStatus = value.surface_status && typeof value.surface_status === "object" ? value.surface_status : {};
+            return {
+                ...fallback,
+                ...value,
+                surface_status: {
+                    web: { ...fallback.surface_status.web, ...(surfaceStatus.web || {}) },
+                    phone: { ...fallback.surface_status.phone, ...(surfaceStatus.phone || {}) },
+                    rokid_hud: { ...fallback.surface_status.rokid_hud, ...(surfaceStatus.rokid_hud || {}) },
+                },
+            };
+        }
+
+        function currentCompanionSync() {
+            state.companionSync = normalizeCompanionSync(state.companionSync);
+            return state.companionSync;
+        }
+
+        function defaultLiveHud() {
+            return {
+                mode: "presentation_live",
+                mission_id: state.currentMissionId || "",
+                session_id: "",
+                sync_status: "ready",
+                sync_revision: 1,
+                control_source: "phone",
+                presentation_mode: currentPresentationState().presentation_mode,
+                cue_view: currentPresentationState().cue_view,
+                active_slide_index: currentPresentationState().active_slide_index,
+                active_slide_title: "",
+                active_slide_anchor: "",
+                status_line: "Current slide ready",
+                cue_line: "",
+                interaction_hint: "",
+                next_slide_index: 0,
+                next_slide_title: "",
+                issue_line: "",
+                next_action_line: "",
+                target_seconds: 0,
+                target_label: "--",
+                surface_status: {
+                    web: "offline",
+                    phone: "offline",
+                    rokid_hud: "offline",
+                },
+                updated_at: "",
+            };
+        }
+
+        function normalizeLiveHud(raw) {
+            const fallback = defaultLiveHud();
+            const value = raw && typeof raw === "object" ? raw : {};
+            return {
+                ...fallback,
+                ...value,
+                surface_status: {
+                    ...fallback.surface_status,
+                    ...((value && value.surface_status) || {}),
+                },
+            };
+        }
+
         function briefCardPayload(card) {
             if (!card) return {};
             return {
@@ -1530,11 +1716,17 @@
             state.suggestedSections = [];
             state.draftSections = buildDefaultDraftSections(Number(document.getElementById("mission-duration").value || 5));
             state.presentationState = normalizePresentationState(null, state.draftSections);
+            state.companionSync = normalizeCompanionSync(null);
+            state.liveHud = normalizeLiveHud(null);
             state.focusedCardId = state.draftSections[0]?.section_id || "";
             state.recordedAudioBlob = null;
             state.uploadedAudioFile = null;
             state.uploadedDurationSeconds = 0;
             state.liveDurationSeconds = 0;
+            if (state.companionHeartbeatHandle) {
+                clearInterval(state.companionHeartbeatHandle);
+                state.companionHeartbeatHandle = null;
+            }
             setMissionForm(null);
             setBriefStatus("New draft started. Save the mission when the brief is ready.", "status-cool");
             setRehearsalStatus("No rehearsal run has been saved yet.", "status-cool");
@@ -1609,8 +1801,15 @@
             const presentationState = currentPresentationState();
             const sourceSelect = document.getElementById("controller-source");
             const modeSelect = document.getElementById("presentation-mode");
+            const missionSelect = document.getElementById("controller-mission-select");
             if (sourceSelect) sourceSelect.value = presentationState.control_source || "phone";
             if (modeSelect) modeSelect.value = presentationState.presentation_mode || "rehearse";
+            if (missionSelect) {
+                missionSelect.innerHTML = state.missions.length
+                    ? state.missions.map((mission) => `<option value="${escapeAttr(mission.mission_id)}">${escapeHtml(mission.title || "Untitled mission")}</option>`).join("")
+                    : `<option value="">No missions</option>`;
+                missionSelect.value = state.currentMissionId || state.missions[0]?.mission_id || "";
+            }
 
             const jumpSelect = document.getElementById("jump-slide-select");
             const cards = normalizeSections(state.draftSections);
@@ -1666,6 +1865,53 @@
                         <div class="guide-row"><span>Active anchor</span><strong>${escapeHtml(activeCard.slide_anchor || "No slide anchor set")}</strong></div>
                     </div>
                     <p>Use the phone as the main controller. Keep the glasses-side button path to quick next, previous, and cue toggle only.</p>
+                </div>
+            `;
+        }
+
+        function renderCompanionSync() {
+            const host = document.getElementById("companion-sync-host");
+            if (!host) return;
+            if (!state.currentMissionId) {
+                host.innerHTML = `<div class="empty-state">Load a mission to activate the companion sync scaffold.</div>`;
+                return;
+            }
+            const sync = currentCompanionSync();
+            const liveHud = normalizeLiveHud(state.liveHud);
+            const formatSeen = (value) => value ? escapeHtml(String(value).replace("T", " ")) : "Not seen yet";
+            host.innerHTML = `
+                <div class="sync-grid">
+                    <div class="sync-chip">
+                        <span>Session</span>
+                        <strong>${escapeHtml(sync.sync_status)} | rev ${escapeHtml(sync.sync_revision)}</strong>
+                    </div>
+                    <div class="sync-chip">
+                        <span>Phone Surface</span>
+                        <strong>${escapeHtml(sync.surface_status.phone.status)} | ${formatSeen(sync.surface_status.phone.last_seen_at)}</strong>
+                    </div>
+                    <div class="sync-chip">
+                        <span>Rokid HUD</span>
+                        <strong>${escapeHtml(sync.surface_status.rokid_hud.status)} | ${formatSeen(sync.surface_status.rokid_hud.last_seen_at)}</strong>
+                    </div>
+                </div>
+                <div class="section-metrics">
+                    <div class="metric-chip"><strong>Live HUD</strong> ${escapeHtml(liveHud.status_line || "Current slide ready")}</div>
+                    <div class="metric-chip"><strong>Active</strong> Slide ${escapeHtml(liveHud.active_slide_index || "--")} ${escapeHtml(liveHud.active_slide_title || "")}</div>
+                    <div class="metric-chip"><strong>Next</strong> ${liveHud.next_slide_index ? `Slide ${escapeHtml(liveHud.next_slide_index)} ${escapeHtml(liveHud.next_slide_title || "")}` : "Final card"}</div>
+                    <div class="metric-chip"><strong>Last event</strong> ${escapeHtml(sync.last_event || "initialized")}</div>
+                </div>
+                <div class="link-stack">
+                    <div class="link-chip"><strong>Phone controller</strong><br>${escapeHtml(sync.controller_path || `/presentation/controller?mission_id=${state.currentMissionId}`)}</div>
+                    <div class="link-chip"><strong>Workspace</strong><br>${escapeHtml(sync.workspace_path || `/presentation?mission_id=${state.currentMissionId}`)}</div>
+                    <div class="link-chip"><strong>Live HUD API</strong><br>${escapeHtml(sync.live_hud_api_path || `/api/presentation_missions/${state.currentMissionId}/live_hud`)}</div>
+                    <div class="link-chip"><strong>Rokid Event API</strong><br>${escapeHtml(sync.rokid_event_api_path || `/api/presentation_missions/${state.currentMissionId}/rokid_event`)}</div>
+                </div>
+                <div class="status-row">
+                    <button class="ghost-btn" onclick="openCompanionSurface('${phoneControllerMode ? "workspace" : "controller"}')">${phoneControllerMode ? "Open Workspace" : "Open Phone Controller"}</button>
+                    <button class="ghost-btn" onclick="touchCompanionSync('manual_refresh')">Refresh Sync</button>
+                    <button class="ghost-btn" onclick="simulateRokidButton('single_press')">Simulate single_press</button>
+                    <button class="ghost-btn" onclick="simulateRokidButton('double_press')">Simulate double_press</button>
+                    <button class="ghost-btn" onclick="simulateRokidButton('long_press')">Simulate long_press</button>
                 </div>
             `;
         }
@@ -2048,6 +2294,7 @@
             renderFocusedCard();
             renderSectionTimings();
             renderControllerSummary();
+            renderCompanionSync();
             renderPresentationStage();
             renderRecentRehearsals();
             renderFeedback();
@@ -2180,10 +2427,114 @@
             renderAll();
         }
 
+        function applyCompanionBundle(result, statusMessage = "") {
+            if (!result) return;
+            if (result.presentation_state) {
+                state.presentationState = normalizePresentationState(result.presentation_state, state.draftSections);
+                state.focusedCardId = state.presentationState.active_section_id || state.focusedCardId;
+                if (state.currentMission) {
+                    state.currentMission.presentation_state = state.presentationState;
+                }
+            }
+            if (result.companion_sync) {
+                state.companionSync = normalizeCompanionSync(result.companion_sync);
+                if (state.currentMission) {
+                    state.currentMission.companion_sync = state.companionSync;
+                }
+            }
+            if (result.live_hud) {
+                state.liveHud = normalizeLiveHud(result.live_hud);
+            }
+            if (statusMessage) {
+                setControllerStatus(statusMessage, "status-good");
+            }
+            renderAll();
+        }
+
+        async function touchCompanionSync(eventName = "heartbeat", extra = {}) {
+            if (!state.currentMissionId) return;
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/companion_sync`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    surface: phoneControllerMode ? "phone" : "web",
+                    sync_status: currentPresentationState().presentation_mode === "present" ? "live" : "ready",
+                    event: eventName,
+                    ...extra,
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not refresh the companion sync state.", "status-high");
+                return;
+            }
+            applyCompanionBundle(result, eventName === "manual_refresh" ? "Companion sync refreshed." : "");
+        }
+
+        async function refreshCompanionBundle() {
+            if (!state.currentMissionId) return;
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/companion_sync`);
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not load the companion sync state.", "status-high");
+                return;
+            }
+            applyCompanionBundle(result);
+        }
+
+        async function simulateRokidButton(buttonEvent) {
+            if (!state.currentMissionId) {
+                setControllerStatus("Save or load a mission first before simulating Rokid button input.", "status-high");
+                return;
+            }
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/rokid_event`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    button_event: buttonEvent,
+                    presentation_mode: currentPresentationState().presentation_mode,
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not apply the simulated Rokid button event.", "status-high");
+                return;
+            }
+            applyCompanionBundle(result, `Rokid event ${buttonEvent} applied as ${result.rokid_event?.mapped_action || "control"}.`);
+        }
+
+        function restartCompanionHeartbeat() {
+            if (state.companionHeartbeatHandle) {
+                clearInterval(state.companionHeartbeatHandle);
+                state.companionHeartbeatHandle = null;
+            }
+            if (!state.currentMissionId) return;
+            state.companionHeartbeatHandle = setInterval(() => {
+                touchCompanionSync("heartbeat");
+            }, phoneControllerMode ? 12000 : 30000);
+        }
+
+        function openCompanionSurface(target) {
+            const missionId = state.currentMissionId || requestedMissionId || "";
+            if (target === "controller") {
+                window.location.href = missionId
+                    ? `/presentation/controller?mission_id=${encodeURIComponent(missionId)}`
+                    : "/presentation/controller";
+                return;
+            }
+            window.location.href = missionId
+                ? `/presentation?mission_id=${encodeURIComponent(missionId)}`
+                : "/presentation";
+        }
+
         async function loadMissions(selectFirst = true) {
             const response = await fetch("/api/presentation_missions");
             const result = await response.json();
             state.missions = result.missions || [];
+            if (requestedMissionId && state.missions.some((mission) => mission.mission_id === requestedMissionId) && state.currentMissionId !== requestedMissionId) {
+                await loadMission(requestedMissionId);
+                return;
+            }
             if (selectFirst && !state.currentMissionId && state.missions.length) {
                 await loadMission(state.missions[0].mission_id);
                 return;
@@ -2202,6 +2553,8 @@
             state.currentMission = result.mission;
             state.draftSections = normalizeSections(result.mission.script_sections || []);
             state.presentationState = normalizePresentationState(result.mission.presentation_state, state.draftSections);
+            state.companionSync = normalizeCompanionSync(result.mission.companion_sync);
+            state.liveHud = normalizeLiveHud(result.mission.live_hud || null);
             state.focusedCardId = state.presentationState.active_section_id || state.draftSections[0]?.section_id || "";
             state.rehearsalList = result.rehearsals || [];
             state.currentRehearsal = null;
@@ -2210,6 +2563,8 @@
             setBriefStatus("Mission loaded. You can keep editing and save again at any time.", "status-cool");
             setRehearsalStatus("Select or save a rehearsal run for analysis.", "status-cool");
             setControllerStatus(`Controller synced. Active slide is ${state.presentationState.active_slide_index || "--"} via ${state.presentationState.control_source || "phone"}.`, "status-cool");
+            restartCompanionHeartbeat();
+            await touchCompanionSync(phoneControllerMode ? "phone_open" : "workspace_open");
             renderAll();
         }
 
@@ -2290,11 +2645,14 @@
             state.currentMission = result.mission;
             state.draftSections = normalizeSections(result.mission.script_sections || []);
             state.presentationState = normalizePresentationState(result.mission.presentation_state, state.draftSections);
+            state.companionSync = normalizeCompanionSync(result.mission.companion_sync);
             state.focusedCardId = state.presentationState.active_section_id || state.draftSections[0]?.section_id || "";
             state.rehearsalList = result.rehearsals || state.rehearsalList;
             setMissionForm(result.mission);
             setBriefStatus("Mission saved. You can now refine the slide cards or start a rehearsal.", "status-good");
             await loadMissions(false);
+            restartCompanionHeartbeat();
+            await touchCompanionSync("mission_saved");
             renderAll();
         }
 
@@ -2319,9 +2677,11 @@
             state.currentMission = result.mission;
             state.draftSections = normalizeSections(result.mission.script_sections || []);
             state.presentationState = normalizePresentationState(result.mission.presentation_state, state.draftSections);
+            state.companionSync = normalizeCompanionSync(result.mission.companion_sync);
             state.focusedCardId = state.presentationState.active_section_id || state.draftSections[0]?.section_id || "";
             setBriefStatus("Slide cards saved.", "status-good");
             await loadMissions(false);
+            await touchCompanionSync("script_saved");
             renderAll();
         }
 
@@ -2330,6 +2690,10 @@
                 ...state.presentationState,
                 control_source: document.getElementById("controller-source").value,
             }, state.draftSections);
+            state.liveHud = normalizeLiveHud({
+                ...state.liveHud,
+                control_source: state.presentationState.control_source,
+            });
             renderAll();
         }
 
@@ -2357,7 +2721,7 @@
                 setControllerStatus(result.message || "Could not update the presentation mode.", "status-high");
                 return;
             }
-            applyPresentationStateResult(result.presentation_state, "Presentation mode updated.");
+            applyCompanionBundle(result, "Presentation mode updated.");
         }
 
         async function jumpToSelectedSlide() {
@@ -2386,7 +2750,7 @@
                 setControllerStatus(result.message || "Could not jump to the selected slide.", "status-high");
                 return;
             }
-            applyPresentationStateResult(result.presentation_state, "Jumped to the selected slide card.");
+            applyCompanionBundle(result, "Jumped to the selected slide card.");
         }
 
         function applyPresentationStateResult(presentationState, message) {
@@ -2436,7 +2800,7 @@
                 setControllerStatus(result.message || "Could not apply the presentation control.", "status-high");
                 return;
             }
-            applyPresentationStateResult(result.presentation_state, `${payload.control_source} applied ${action}.`);
+            applyCompanionBundle(result, `${payload.control_source} applied ${action}.`);
         }
 
         function currentRunDurationSeconds() {
@@ -2625,6 +2989,7 @@
             state.currentRehearsal = result.rehearsal;
             upsertRecentRehearsal(result.rehearsal);
             setRehearsalStatus("Rehearsal run saved. You can analyze it now.", "status-good");
+            await refreshCompanionBundle();
             renderAll();
         }
 
@@ -2665,6 +3030,7 @@
             state.currentRehearsal = result.rehearsal;
             upsertRecentRehearsal(result.rehearsal);
             setRehearsalStatus(result.rehearsal.analysis?.generation?.note || "Rehearsal analysis completed.", "status-good");
+            await refreshCompanionBundle();
             renderAll();
         }
 
@@ -2682,6 +3048,7 @@
             document.getElementById("self-rating").value = result.rehearsal.self_rating || 0;
             state.liveDurationSeconds = Number(result.rehearsal.total_duration_seconds || 0);
             document.getElementById("live-timer").innerText = formatMmss(state.liveDurationSeconds);
+            await refreshCompanionBundle();
             renderAll();
             setRehearsalStatus("Rehearsal run loaded.", "status-cool");
         }
@@ -2709,13 +3076,25 @@
         });
 
         async function bootPresentationPage() {
+            document.body.classList.toggle("phone-controller-mode", phoneControllerMode);
             state.draftSections = buildDefaultDraftSections(5);
             state.presentationState = normalizePresentationState(null, state.draftSections);
+            state.companionSync = normalizeCompanionSync(null);
+            state.liveHud = normalizeLiveHud(null);
             state.focusedCardId = state.draftSections[0]?.section_id || "";
+            if (phoneControllerMode) {
+                switchTab("rehearse");
+            }
             renderAll();
             await loadMissions(true);
             renderAll();
         }
+
+        window.addEventListener("beforeunload", () => {
+            if (state.companionHeartbeatHandle) {
+                clearInterval(state.companionHeartbeatHandle);
+            }
+        });
 
         bootPresentationPage();
     </script>

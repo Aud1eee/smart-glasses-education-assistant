@@ -1297,6 +1297,7 @@ def reflection_page():
 
 @app.route("/presentation")
 @app.route("/presentations")
+@app.route("/presentation/controller")
 def presentation_page():
     return render_template("presentation.html")
 
@@ -1686,6 +1687,55 @@ def presentation_state(mission_id):
 def presentation_control(mission_id):
     payload = request.get_json(silent=True) or {}
     result = presentation_companion.apply_presentation_control(mission_id, payload)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    return jsonify({
+        "status": "ok",
+        **result,
+    })
+
+
+@app.route("/api/presentation_missions/<mission_id>/companion_sync", methods=["GET", "POST"])
+def presentation_companion_sync(mission_id):
+    if request.method == "GET":
+        result = presentation_companion.get_companion_sync_bundle(mission_id)
+    else:
+        payload = request.get_json(silent=True) or {}
+        result = presentation_companion.update_companion_sync(mission_id, payload)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    status_code = 400 if result.get("status") == "error" else 200
+    return jsonify({
+        "status": "ok" if status_code == 200 else "error",
+        **result,
+    }), status_code
+
+
+@app.route("/api/presentation_missions/<mission_id>/rokid_event", methods=["POST"])
+def presentation_rokid_event(mission_id):
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.apply_rokid_event(mission_id, payload)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    status_code = 400 if result.get("status") == "error" else 200
+    return jsonify({
+        "status": "ok" if status_code == 200 else "error",
+        **result,
+    }), status_code
+
+
+@app.route("/api/presentation_missions/<mission_id>/live_hud")
+def presentation_live_hud(mission_id):
+    result = presentation_companion.get_live_hud(mission_id, surface=request.args.get("surface", "rokid_hud"))
     if not result:
         return jsonify({
             "status": "error",

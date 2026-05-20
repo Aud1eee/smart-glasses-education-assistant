@@ -263,6 +263,8 @@ The project now also includes an independent page at `/presentation`:
   - `rokid_button` as a lightweight next / previous / cue-toggle scaffold
   - `present` mode for a compact current-slide view instead of a long script view
   - a controller snapshot that shows the active slide, queued next slide, cue state, and input hints
+  - a `phone controller surface` at `/presentation/controller`
+  - a `companion sync scaffold` that keeps the phone controller, future Rokid HUD pull, and button-event mapping on one mission state
 - AI can help with:
   - task-intake field extraction
   - section scaffold suggestions
@@ -283,11 +285,15 @@ The project now also includes an independent page at `/presentation`:
 The core routes are:
 
 - `/presentation`
+- `/presentation/controller`
 - `/api/presentation_missions`
 - `/api/presentation_missions/intake_extract`
 - `/api/presentation_missions/<mission_id>/script`
 - `/api/presentation_missions/<mission_id>/presentation_state`
 - `/api/presentation_missions/<mission_id>/presentation_control`
+- `/api/presentation_missions/<mission_id>/companion_sync`
+- `/api/presentation_missions/<mission_id>/rokid_event`
+- `/api/presentation_missions/<mission_id>/live_hud`
 - `/api/presentation_rehearsals`
 - `/api/presentation_rehearsals/<rehearsal_id>/analyze`
 - `/api/presentation_rehearsals/<rehearsal_id>/hud_summary`

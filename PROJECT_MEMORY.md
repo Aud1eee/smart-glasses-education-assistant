@@ -162,6 +162,11 @@ The current demo-ready checkpoint includes:
     - `cue_view`
     - `next_card`
     - `control_hints`
+  - companion sync scaffold:
+    - `/presentation/controller`
+    - `companion_sync`
+    - `rokid_event`
+    - `live_hud`
   - phone-first presentation control with Rokid-button scaffolding for:
     - next
     - previous

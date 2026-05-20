@@ -58,6 +58,12 @@ class PresentationCompanion:
             incoming=payload.get("presentation_state"),
             existing=(existing or {}).get("presentation_state"),
         )
+        companion_sync = self._normalize_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            incoming=payload.get("companion_sync"),
+            existing=(existing or {}).get("companion_sync"),
+        )
 
         now = datetime.now().isoformat(timespec="seconds")
         mission = {
@@ -73,6 +79,7 @@ class PresentationCompanion:
             "intake_task_text": self._clean_text(payload.get("intake_task_text", ""), max_length=6000, preserve_lines=True) or self._clean_text((existing or {}).get("intake_task_text", ""), max_length=6000, preserve_lines=True),
             "script_sections": script_sections,
             "presentation_state": presentation_state,
+            "companion_sync": companion_sync,
             "created_at": (existing or {}).get("created_at", now),
             "updated_at": now,
         }
@@ -88,6 +95,11 @@ class PresentationCompanion:
             sections=mission.get("script_sections", []),
             existing=mission.get("presentation_state"),
         )
+        mission["companion_sync"] = self._normalize_companion_sync(
+            mission_id=mission_id,
+            presentation_state=mission.get("presentation_state", {}),
+            existing=mission.get("companion_sync"),
+        )
         mission["updated_at"] = datetime.now().isoformat(timespec="seconds")
         self.store.upsert_mission(mission)
         return self.get_mission_bundle(mission_id)
@@ -102,10 +114,21 @@ class PresentationCompanion:
             existing=mission.get("presentation_state"),
         )
         mission["presentation_state"] = state
+        mission["companion_sync"] = self._normalize_companion_sync(
+            mission_id=mission_id,
+            presentation_state=state,
+            existing=mission.get("companion_sync"),
+        )
         self.store.upsert_mission(mission)
         return {
             "mission_id": mission_id,
             "presentation_state": self._presentation_state_payload(state, sections),
+            "companion_sync": self._companion_sync_payload(
+                mission_id=mission_id,
+                sync_state=mission.get("companion_sync", {}),
+                presentation_state=state,
+            ),
+            "live_hud": self._build_live_hud_payload(mission, latest_rehearsal=self._latest_rehearsal_for_mission(mission_id)),
         }
 
     def update_presentation_state(self, mission_id, payload):
@@ -118,11 +141,28 @@ class PresentationCompanion:
             incoming=payload,
             existing=mission.get("presentation_state"),
         )
+        mission["companion_sync"] = self._touch_companion_sync(
+            mission_id=mission_id,
+            presentation_state=mission.get("presentation_state", {}),
+            existing=mission.get("companion_sync"),
+            payload={
+                "surface": self._normalize_sync_surface(
+                    payload.get("surface") or self._control_source_surface(payload.get("control_source", "phone"))
+                ),
+                "event": "presentation_state_update",
+            },
+        )
         mission["updated_at"] = datetime.now().isoformat(timespec="seconds")
         self.store.upsert_mission(mission)
         return {
             "mission_id": mission_id,
             "presentation_state": self._presentation_state_payload(mission["presentation_state"], sections),
+            "companion_sync": self._companion_sync_payload(
+                mission_id=mission_id,
+                sync_state=mission.get("companion_sync", {}),
+                presentation_state=mission.get("presentation_state", {}),
+            ),
+            "live_hud": self._build_live_hud_payload(mission, latest_rehearsal=self._latest_rehearsal_for_mission(mission_id)),
         }
 
     def apply_presentation_control(self, mission_id, payload):
@@ -169,11 +209,26 @@ class PresentationCompanion:
             sections=sections,
             existing=state,
         )
+        mission["companion_sync"] = self._touch_companion_sync(
+            mission_id=mission_id,
+            presentation_state=mission.get("presentation_state", {}),
+            existing=mission.get("companion_sync"),
+            payload={
+                "surface": self._control_source_surface(control_source),
+                "event": f"control:{action or 'sync'}",
+            },
+        )
         mission["updated_at"] = datetime.now().isoformat(timespec="seconds")
         self.store.upsert_mission(mission)
         return {
             "mission_id": mission_id,
             "presentation_state": self._presentation_state_payload(mission["presentation_state"], sections),
+            "companion_sync": self._companion_sync_payload(
+                mission_id=mission_id,
+                sync_state=mission.get("companion_sync", {}),
+                presentation_state=mission.get("presentation_state", {}),
+            ),
+            "live_hud": self._build_live_hud_payload(mission, latest_rehearsal=self._latest_rehearsal_for_mission(mission_id)),
         }
 
     def extract_intake(self, payload):
@@ -392,12 +447,152 @@ class PresentationCompanion:
             feedback=feedback,
         )
 
+    def get_companion_sync_bundle(self, mission_id):
+        mission = self.store.get_mission(mission_id)
+        if not mission:
+            return None
+        sections = self._sanitize_sections(mission.get("script_sections", []))
+        presentation_state = self._normalize_presentation_state(
+            sections=sections,
+            existing=mission.get("presentation_state"),
+        )
+        companion_sync = self._normalize_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            existing=mission.get("companion_sync"),
+        )
+        mission["presentation_state"] = presentation_state
+        mission["companion_sync"] = companion_sync
+        self.store.upsert_mission(mission)
+        latest_rehearsal = self._latest_rehearsal_for_mission(mission_id)
+        return {
+            "mission_id": mission_id,
+            "presentation_state": self._presentation_state_payload(presentation_state, sections),
+            "companion_sync": self._companion_sync_payload(mission_id, companion_sync, presentation_state),
+            "live_hud": self._build_live_hud_payload(mission, latest_rehearsal=latest_rehearsal),
+        }
+
+    def update_companion_sync(self, mission_id, payload):
+        mission = self.store.get_mission(mission_id)
+        if not mission:
+            return None
+        payload = payload or {}
+        sections = self._sanitize_sections(mission.get("script_sections", []))
+        presentation_state = self._normalize_presentation_state(
+            sections=sections,
+            existing=mission.get("presentation_state"),
+        )
+        mission["presentation_state"] = presentation_state
+        mission["companion_sync"] = self._touch_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            existing=mission.get("companion_sync"),
+            payload=payload,
+        )
+        self.store.upsert_mission(mission)
+        latest_rehearsal = self._latest_rehearsal_for_mission(mission_id)
+        return {
+            "mission_id": mission_id,
+            "presentation_state": self._presentation_state_payload(presentation_state, sections),
+            "companion_sync": self._companion_sync_payload(mission_id, mission.get("companion_sync", {}), presentation_state),
+            "live_hud": self._build_live_hud_payload(mission, latest_rehearsal=latest_rehearsal),
+        }
+
+    def apply_rokid_event(self, mission_id, payload):
+        payload = payload or {}
+        button_event = self._normalize_rokid_button_event(payload.get("button_event", ""))
+        if not button_event:
+            return {
+                "status": "error",
+                "message": "Provide a Rokid button event such as single_press, double_press, or long_press.",
+            }
+        mapping = self._control_hints_payload().get("rokid_button", {}).get("button_map", {})
+        mapped_action = self._clean_text(mapping.get(button_event, ""), max_length=40).lower()
+        if not mapped_action:
+            return {
+                "status": "error",
+                "message": f"No presentation action is mapped to {button_event}.",
+            }
+        control_result = self.apply_presentation_control(
+            mission_id,
+            {
+                "action": mapped_action,
+                "control_source": "rokid_button",
+                "presentation_mode": payload.get("presentation_mode", ""),
+            },
+        )
+        if not control_result:
+            return None
+        mission = self.store.get_mission(mission_id)
+        if not mission:
+            return None
+        sections = self._sanitize_sections(mission.get("script_sections", []))
+        presentation_state = self._normalize_presentation_state(
+            sections=sections,
+            existing=mission.get("presentation_state"),
+        )
+        mission["presentation_state"] = presentation_state
+        mission["companion_sync"] = self._touch_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            existing=mission.get("companion_sync"),
+            payload={
+                "surface": "rokid_hud",
+                "event": f"rokid:{button_event}",
+                "button_event": button_event,
+            },
+        )
+        self.store.upsert_mission(mission)
+        latest_rehearsal = self._latest_rehearsal_for_mission(mission_id)
+        return {
+            "mission_id": mission_id,
+            "rokid_event": {
+                "button_event": button_event,
+                "mapped_action": mapped_action,
+            },
+            "presentation_state": self._presentation_state_payload(presentation_state, sections),
+            "companion_sync": self._companion_sync_payload(mission_id, mission.get("companion_sync", {}), presentation_state),
+            "live_hud": self._build_live_hud_payload(mission, latest_rehearsal=latest_rehearsal),
+        }
+
+    def get_live_hud(self, mission_id, surface="rokid_hud"):
+        mission = self.store.get_mission(mission_id)
+        if not mission:
+            return None
+        sections = self._sanitize_sections(mission.get("script_sections", []))
+        presentation_state = self._normalize_presentation_state(
+            sections=sections,
+            existing=mission.get("presentation_state"),
+        )
+        mission["presentation_state"] = presentation_state
+        mission["companion_sync"] = self._touch_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            existing=mission.get("companion_sync"),
+            payload={
+                "surface": self._normalize_sync_surface(surface or "rokid_hud"),
+                "event": "live_hud_pull",
+            },
+        )
+        self.store.upsert_mission(mission)
+        latest_rehearsal = self._latest_rehearsal_for_mission(mission_id)
+        return {
+            "mission_id": mission_id,
+            "live_hud": self._build_live_hud_payload(mission, latest_rehearsal=latest_rehearsal),
+            "companion_sync": self._companion_sync_payload(mission_id, mission.get("companion_sync", {}), presentation_state),
+        }
+
     def _mission_payload(self, mission, summary_only=False):
         mission = mission or {}
         sections = self._sanitize_sections(mission.get("script_sections", []))
         presentation_state = self._normalize_presentation_state(
             sections=sections,
             existing=mission.get("presentation_state"),
+        )
+        companion_sync = self._normalize_companion_sync(
+            mission_id=mission.get("mission_id", ""),
+            presentation_state=presentation_state,
+            existing=mission.get("companion_sync"),
         )
         summary = self._build_script_summary(
             sections=sections,
@@ -419,6 +614,11 @@ class PresentationCompanion:
             "updated_at": mission.get("updated_at", ""),
             "script_summary": summary,
             "presentation_state": self._presentation_state_payload(presentation_state, sections),
+            "companion_sync": self._companion_sync_payload(
+                mission_id=mission.get("mission_id", ""),
+                sync_state=companion_sync,
+                presentation_state=presentation_state,
+            ),
         }
         if summary_only:
             return payload
@@ -885,6 +1085,86 @@ class PresentationCompanion:
             "last_control_at": self._clean_text(incoming.get("last_control_at", existing.get("last_control_at", "")), max_length=40),
         }
 
+    def _normalize_companion_sync(self, mission_id, presentation_state, incoming=None, existing=None):
+        incoming = incoming or {}
+        existing = existing or {}
+        mission_id = self._clean_text(mission_id, max_length=80)
+        sync_status = self._normalize_sync_status(
+            incoming.get("sync_status", existing.get("sync_status", "")),
+            presentation_mode=(presentation_state or {}).get("presentation_mode", "rehearse"),
+        )
+        active_surface = self._normalize_sync_surface(incoming.get("active_surface", existing.get("active_surface", "web")))
+        return {
+            "session_id": self._clean_text(
+                incoming.get("session_id", existing.get("session_id", "")),
+                max_length=80,
+            ) or self._build_id(f"{mission_id or 'presentation'}-sync"),
+            "sync_status": sync_status,
+            "active_surface": active_surface,
+            "controller_surface": self._normalize_sync_surface(incoming.get("controller_surface", existing.get("controller_surface", "phone"))),
+            "hud_surface": self._normalize_sync_surface(incoming.get("hud_surface", existing.get("hud_surface", "rokid_hud"))),
+            "sync_revision": max(1, self._safe_int(incoming.get("sync_revision", existing.get("sync_revision", 1)), default=1)),
+            "last_event": self._clean_text(incoming.get("last_event", existing.get("last_event", "initialized")), max_length=80) or "initialized",
+            "last_button_event": self._normalize_rokid_button_event(incoming.get("last_button_event", existing.get("last_button_event", ""))),
+            "last_sync_at": self._clean_text(incoming.get("last_sync_at", existing.get("last_sync_at", "")), max_length=40),
+            "last_phone_seen_at": self._clean_text(incoming.get("last_phone_seen_at", existing.get("last_phone_seen_at", "")), max_length=40),
+            "last_web_seen_at": self._clean_text(incoming.get("last_web_seen_at", existing.get("last_web_seen_at", "")), max_length=40),
+            "last_hud_seen_at": self._clean_text(incoming.get("last_hud_seen_at", existing.get("last_hud_seen_at", "")), max_length=40),
+            "last_rokid_event_at": self._clean_text(incoming.get("last_rokid_event_at", existing.get("last_rokid_event_at", "")), max_length=40),
+        }
+
+    def _touch_companion_sync(self, mission_id, presentation_state, existing=None, payload=None):
+        payload = payload or {}
+        current = self._normalize_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            existing=existing,
+        )
+        surface = self._normalize_sync_surface(payload.get("surface", current.get("active_surface", "web")))
+        event = self._clean_text(payload.get("event", "heartbeat"), max_length=80) or "heartbeat"
+        button_event = self._normalize_rokid_button_event(payload.get("button_event", current.get("last_button_event", "")))
+        now = datetime.now().isoformat(timespec="seconds")
+        presentation_mode = (presentation_state or {}).get("presentation_mode", "rehearse")
+        requested_sync_status = self._clean_text(payload.get("sync_status", ""), max_length=20).lower()
+        if requested_sync_status:
+            sync_status = self._normalize_sync_status(
+                requested_sync_status,
+                presentation_mode=presentation_mode,
+            )
+        elif self._normalize_presentation_mode(presentation_mode) == "present":
+            sync_status = "live"
+        else:
+            sync_status = self._normalize_sync_status(
+                current.get("sync_status", ""),
+                presentation_mode=presentation_mode,
+            )
+        touched = {
+            **current,
+            "active_surface": surface,
+            "sync_status": sync_status,
+            "sync_revision": max(1, self._safe_int(current.get("sync_revision"), default=1)) + 1,
+            "last_event": event,
+            "last_button_event": button_event,
+            "last_sync_at": now,
+        }
+        if surface == "phone":
+            touched["controller_surface"] = "phone"
+            touched["last_phone_seen_at"] = now
+        elif surface == "web":
+            touched["last_web_seen_at"] = now
+        elif surface == "rokid_hud":
+            touched["hud_surface"] = "rokid_hud"
+            touched["last_hud_seen_at"] = now
+        if button_event:
+            touched["last_rokid_event_at"] = now
+            touched["hud_surface"] = "rokid_hud"
+        return self._normalize_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            incoming=touched,
+            existing=current,
+        )
+
     def _presentation_state_payload(self, state, sections):
         sections = self._sanitize_sections(sections)
         state = self._normalize_presentation_state(sections, existing=state)
@@ -965,11 +1245,95 @@ class PresentationCompanion:
             return "phone"
         return normalized
 
+    def _control_source_surface(self, value):
+        normalized = self._normalize_control_source(value)
+        if normalized == "rokid_button":
+            return "rokid_hud"
+        return "phone"
+
+    def _normalize_sync_surface(self, value):
+        normalized = str(value or "").strip().lower()
+        if normalized not in {"web", "phone", "rokid_hud"}:
+            return "web"
+        return normalized
+
+    def _normalize_sync_status(self, value, presentation_mode="rehearse"):
+        normalized = str(value or "").strip().lower()
+        if normalized in {"idle", "ready", "live"}:
+            return normalized
+        return "live" if self._normalize_presentation_mode(presentation_mode) == "present" else "ready"
+
+    def _normalize_rokid_button_event(self, value):
+        normalized = str(value or "").strip().lower()
+        if normalized not in {"single_press", "double_press", "long_press"}:
+            return ""
+        return normalized
+
     def _normalize_cue_view(self, value):
         normalized = str(value or "").strip().lower()
         if normalized not in {"visible", "hidden"}:
             return "visible"
         return normalized
+
+    def _companion_sync_payload(self, mission_id, sync_state, presentation_state):
+        sync_state = self._normalize_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            existing=sync_state,
+        )
+        return {
+            **sync_state,
+            "controller_path": f"/presentation/controller?mission_id={mission_id}",
+            "workspace_path": f"/presentation?mission_id={mission_id}",
+            "sync_api_path": f"/api/presentation_missions/{mission_id}/companion_sync",
+            "rokid_event_api_path": f"/api/presentation_missions/{mission_id}/rokid_event",
+            "live_hud_api_path": f"/api/presentation_missions/{mission_id}/live_hud",
+            "surface_status": {
+                "web": self._surface_status_payload(sync_state.get("last_web_seen_at", "")),
+                "phone": self._surface_status_payload(sync_state.get("last_phone_seen_at", "")),
+                "rokid_hud": self._surface_status_payload(sync_state.get("last_hud_seen_at", "")),
+            },
+            "presentation_mode": self._normalize_presentation_mode((presentation_state or {}).get("presentation_mode", "rehearse")),
+            "active_slide_index": self._safe_int((presentation_state or {}).get("active_slide_index"), default=0),
+            "cue_view": self._normalize_cue_view((presentation_state or {}).get("cue_view", "visible")),
+        }
+
+    def _surface_status_payload(self, iso_value):
+        last_seen_at = self._clean_text(iso_value, max_length=40)
+        status = self._connection_status(last_seen_at)
+        return {
+            "last_seen_at": last_seen_at,
+            "status": status,
+        }
+
+    def _connection_status(self, iso_value):
+        age_seconds = self._seconds_since_iso(iso_value)
+        if age_seconds is None:
+            return "offline"
+        if age_seconds <= 20:
+            return "active"
+        if age_seconds <= 180:
+            return "idle"
+        return "offline"
+
+    def _seconds_since_iso(self, iso_value):
+        cleaned = self._clean_text(iso_value, max_length=40)
+        if not cleaned:
+            return None
+        try:
+            parsed = datetime.fromisoformat(cleaned)
+        except Exception:
+            return None
+        try:
+            return max(0, int((datetime.now() - parsed).total_seconds()))
+        except Exception:
+            return None
+
+    def _latest_rehearsal_for_mission(self, mission_id):
+        if not mission_id:
+            return None
+        rehearsals = self.store.list_rehearsals(mission_id=mission_id)
+        return rehearsals[0] if rehearsals else None
 
     def _control_hints_payload(self):
         return {
@@ -1328,6 +1692,73 @@ class PresentationCompanion:
             "next_slide_title": next_card.get("slide_title", ""),
             "transcript_status": transcript.get("status", "missing"),
             "generated_at": datetime.now().isoformat(timespec="seconds"),
+        }
+
+    def _build_live_hud_payload(self, mission, latest_rehearsal=None):
+        mission = mission or {}
+        mission_id = self._clean_text(mission.get("mission_id", ""), max_length=80)
+        sections = self._sanitize_sections(mission.get("script_sections", []))
+        presentation_state = self._normalize_presentation_state(
+            sections=sections,
+            existing=mission.get("presentation_state"),
+        )
+        companion_sync = self._normalize_companion_sync(
+            mission_id=mission_id,
+            presentation_state=presentation_state,
+            existing=mission.get("companion_sync"),
+        )
+        active_card = self._find_active_card(sections, presentation_state)
+        next_card = self._next_card_brief(sections, presentation_state)
+        latest_rehearsal = latest_rehearsal or self._latest_rehearsal_for_mission(mission_id)
+        latest_feedback = {}
+        latest_hud = {}
+        if latest_rehearsal:
+            latest_hud = self.get_hud_summary(latest_rehearsal.get("rehearsal_id", "")) or {}
+            latest_feedback = (latest_rehearsal.get("analysis", {}) or {}).get("feedback", {}) or {}
+        section_hint = self._section_duration_hint(
+            self._estimate_section_seconds(active_card or {}),
+            (active_card or {}).get("target_seconds", 0),
+        )
+        if latest_hud.get("current_or_final_status"):
+            status_line = latest_hud.get("current_or_final_status", "")
+        elif section_hint.get("status") == "long":
+            status_line = "Current slide looks dense"
+        elif section_hint.get("status") == "short":
+            status_line = "Current slide may need one more beat"
+        else:
+            status_line = "Current slide ready"
+        cue_source = ""
+        if presentation_state.get("cue_view") == "visible":
+            cue_source = (active_card or {}).get("cue_cards") or (active_card or {}).get("outline") or (active_card or {}).get("slide_anchor")
+        issue_line = latest_hud.get("issue") or latest_feedback.get("one_main_issue", "")
+        next_action_line = latest_hud.get("next_action") or latest_feedback.get("one_next_action", "")
+        return {
+            "mode": "presentation_live",
+            "mission_id": mission_id,
+            "session_id": companion_sync.get("session_id", ""),
+            "sync_status": companion_sync.get("sync_status", "ready"),
+            "sync_revision": self._safe_int(companion_sync.get("sync_revision"), default=1),
+            "control_source": presentation_state.get("control_source", "phone"),
+            "presentation_mode": presentation_state.get("presentation_mode", "rehearse"),
+            "cue_view": presentation_state.get("cue_view", "visible"),
+            "active_slide_index": active_card.get("slide_index", 0),
+            "active_slide_title": active_card.get("slide_title", ""),
+            "active_slide_anchor": active_card.get("slide_anchor", ""),
+            "status_line": self._shorten_line(status_line, 84),
+            "cue_line": self._shorten_line(cue_source, 96),
+            "interaction_hint": self._shorten_line((active_card or {}).get("interaction_goal", ""), 84),
+            "next_slide_index": next_card.get("slide_index", 0),
+            "next_slide_title": next_card.get("slide_title", ""),
+            "issue_line": self._shorten_line(issue_line, 84),
+            "next_action_line": self._shorten_line(next_action_line, 84),
+            "target_seconds": self._safe_int((active_card or {}).get("target_seconds"), default=0),
+            "target_label": self._format_mmss((active_card or {}).get("target_seconds", 0)),
+            "surface_status": {
+                "web": self._connection_status(companion_sync.get("last_web_seen_at", "")),
+                "phone": self._connection_status(companion_sync.get("last_phone_seen_at", "")),
+                "rokid_hud": self._connection_status(companion_sync.get("last_hud_seen_at", "")),
+            },
+            "updated_at": datetime.now().isoformat(timespec="seconds"),
         }
 
     def _build_intake_request_bundle(self, task_text, draft_candidates, draft_sections):

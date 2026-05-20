@@ -79,6 +79,23 @@ def main():
     assert state_payload["next_card"]["slide_index"] >= 2, "Expected a next slide card in the presentation state."
     assert state_payload["control_hints"]["rokid_button"]["button_map"]["single_press"] == "next", "Missing Rokid single-press mapping."
 
+    sync_response = client.get(f"/api/presentation_missions/{mission_id}/companion_sync")
+    assert sync_response.status_code == 200, sync_response.get_data(as_text=True)
+    sync_payload = sync_response.get_json()
+    assert sync_payload["companion_sync"]["controller_path"].endswith(f"mission_id={mission_id}"), "Missing phone controller path."
+    assert sync_payload["live_hud"]["mode"] == "presentation_live", "Expected live presentation HUD payload."
+
+    phone_sync_response = client.post(
+        f"/api/presentation_missions/{mission_id}/companion_sync",
+        json={
+            "surface": "phone",
+            "event": "phone_open",
+        },
+    )
+    assert phone_sync_response.status_code == 200, phone_sync_response.get_data(as_text=True)
+    phone_sync_payload = phone_sync_response.get_json()
+    assert phone_sync_payload["companion_sync"]["surface_status"]["phone"]["status"] in {"active", "idle"}, "Phone surface should be marked as connected."
+
     mode_response = client.post(
         f"/api/presentation_missions/{mission_id}/presentation_state",
         json={
@@ -114,6 +131,19 @@ def main():
     assert cue_response.status_code == 200, cue_response.get_data(as_text=True)
     cue_payload = cue_response.get_json()["presentation_state"]
     assert cue_payload["cue_view"] == "hidden", "Cue toggle did not hide the cue view."
+
+    rokid_event_response = client.post(
+        f"/api/presentation_missions/{mission_id}/rokid_event",
+        json={
+            "button_event": "long_press",
+            "presentation_mode": "present",
+        },
+    )
+    assert rokid_event_response.status_code == 200, rokid_event_response.get_data(as_text=True)
+    rokid_event_payload = rokid_event_response.get_json()
+    assert rokid_event_payload["rokid_event"]["mapped_action"] == "toggle_cue", "Expected long_press to map to cue toggle."
+    assert rokid_event_payload["presentation_state"]["cue_view"] == "visible", "Expected long_press to restore cue visibility."
+    assert rokid_event_payload["companion_sync"]["last_button_event"] == "long_press", "Missing tracked Rokid button event."
 
     total_duration_seconds = sum(section["target_seconds"] for section in script_sections) + 18
     rehearsal_response = client.post(
@@ -156,7 +186,7 @@ def main():
     assert analysis["hud_summary"]["active_slide_index"] >= 1, "HUD summary should expose the active slide index."
     assert analysis["hud_summary"]["control_source"] in {"phone", "rokid_button"}, "HUD summary should expose the control source."
     assert analysis["hud_summary"]["presentation_mode"] == "present", "HUD summary should reflect the presentation mode."
-    assert analysis["hud_summary"]["cue_view"] == "hidden", "HUD summary should reflect the cue visibility."
+    assert analysis["hud_summary"]["cue_view"] == "visible", "HUD summary should reflect the latest cue visibility."
 
     hud_response = client.get(f"/api/presentation_rehearsals/{rehearsal_id}/hud_summary")
     assert hud_response.status_code == 200, hud_response.get_data(as_text=True)
@@ -165,12 +195,19 @@ def main():
     assert hud_payload["hud_summary"]["active_slide_title"], "Missing HUD active slide title."
     assert "next_slide_index" in hud_payload["hud_summary"], "Missing next slide index in HUD summary."
 
+    live_hud_response = client.get(f"/api/presentation_missions/{mission_id}/live_hud")
+    assert live_hud_response.status_code == 200, live_hud_response.get_data(as_text=True)
+    live_hud_payload = live_hud_response.get_json()
+    assert live_hud_payload["live_hud"]["active_slide_index"] >= 1, "Live HUD should expose the active slide index."
+    assert live_hud_payload["live_hud"]["surface_status"]["rokid_hud"] in {"active", "idle"}, "Live HUD pull should mark the Rokid HUD surface as seen."
+
     print(json.dumps({
         "mission_id": mission_id,
         "rehearsal_id": rehearsal_id,
         "active_slide_index": hud_payload["hud_summary"]["active_slide_index"],
         "control_source": hud_payload["hud_summary"]["control_source"],
         "presentation_mode": hud_payload["hud_summary"]["presentation_mode"],
+        "sync_status": live_hud_payload["live_hud"]["sync_status"],
         "pace_status": analysis["feedback"]["pace_status"],
         "hud_status": hud_payload["hud_summary"]["current_or_final_status"],
     }, ensure_ascii=False, indent=2))

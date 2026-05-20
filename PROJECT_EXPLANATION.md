@@ -266,6 +266,13 @@ The current presentation page now also exposes:
 - the `next_card` so the phone-side controller can preview what is coming next
 - `control_hints` so the phone controller and future Rokid-side integration can share the same lightweight button mapping
 
+The next scaffold layer now adds:
+
+- `/presentation/controller` as a phone-first control surface
+- `companion_sync` as the lightweight shared session state
+- `rokid_event` as the button-event-to-action mapping endpoint
+- `live_hud` as the future glasses-side pull endpoint for the current slide
+
 ### Rehearsal feedback boundary
 
 The rehearsal feedback can analyze:
