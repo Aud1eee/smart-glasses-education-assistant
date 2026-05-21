@@ -881,6 +881,93 @@
             text-transform: uppercase;
         }
 
+        .chunk-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .chunk-preview-card {
+            min-height: 100%;
+            border-radius: 16px;
+            border: 1px solid rgba(109, 191, 213, 0.16);
+            background: rgba(255, 255, 255, 0.028);
+            padding: 12px;
+        }
+
+        .chunk-preview-card strong {
+            display: block;
+            margin-bottom: 6px;
+            color: rgba(255, 210, 122, 0.9);
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .chunk-preview-card p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .chunk-rail {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .chunk-pill {
+            min-width: 110px;
+            max-width: 220px;
+            padding: 9px 12px;
+            border-radius: 16px;
+            border: 1px solid rgba(109, 191, 213, 0.16);
+            background: rgba(255, 255, 255, 0.03);
+            text-align: left;
+        }
+
+        .chunk-pill.active {
+            border-color: rgba(114, 212, 245, 0.4);
+            background: linear-gradient(135deg, rgba(114, 212, 245, 0.18), rgba(255, 210, 122, 0.08));
+            color: var(--ink);
+        }
+
+        .chunk-pill.compact {
+            min-width: 96px;
+            max-width: 176px;
+            padding: 8px 10px;
+        }
+
+        .chunk-pill strong,
+        .chunk-pill span {
+            display: block;
+        }
+
+        .chunk-pill strong {
+            margin-bottom: 4px;
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(114, 212, 245, 0.9);
+        }
+
+        .chunk-pill.active strong {
+            color: var(--ink);
+        }
+
+        .chunk-pill span {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .chunk-pill.active span {
+            color: rgba(238, 246, 249, 0.92);
+        }
+
         .mini-label {
             color: rgba(114, 212, 245, 0.84);
             font-size: 11px;
@@ -1023,6 +1110,7 @@
             .status-shell,
             .controller-summary-shell,
             .stage-kpi-grid,
+            .chunk-preview-grid,
             .pairing-sheet-grid,
             .sync-grid {
                 grid-template-columns: 1fr;
@@ -1541,6 +1629,13 @@
             return value ? String(value).replace("T", " ") : "";
         }
 
+        function shortenInline(value, maxLength = 84) {
+            const text = String(value || "").replace(/\s+/g, " ").trim();
+            if (!text) return "";
+            if (text.length <= maxLength) return text;
+            return `${text.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
+        }
+
         function switchTab(tab) {
             for (const value of ["brief", "script", "rehearse"]) {
                 document.getElementById(`tab-btn-${value}`).classList.toggle("active", value === tab);
@@ -1606,7 +1701,7 @@
                 phone: {
                     role: "Main controller",
                     note: "Use the phone for chunk-by-chunk teleprompter reading, explicit slide jumps, and mode changes.",
-                    actions: ["previous", "next", "previous_chunk", "next_chunk", "previous_slide", "next_slide", "jump", "toggle_cue", "set_mode"],
+                    actions: ["previous", "next", "previous_chunk", "next_chunk", "previous_slide", "next_slide", "jump", "jump_chunk", "toggle_cue", "set_mode"],
                 },
                 rokid_button: {
                     role: "Quick remote",
@@ -1787,6 +1882,9 @@
                 active_chunk_index: currentPresentationState().active_chunk_index || 0,
                 active_chunk_count: currentPresentationState().active_chunk_count || 0,
                 chunk_progress_label: currentPresentationState().chunk_progress_label || "0/0",
+                previous_chunk_preview: "",
+                next_chunk_preview: "",
+                chunk_jump_supported: false,
                 teleprompter_source: "empty",
                 teleprompter_text: "",
                 status_line: "Current slide ready",
@@ -1910,9 +2008,68 @@
                 activeChunkIndex: safeIndex,
                 activeChunkText: chunkCount ? chunks[safeIndex] : "",
                 chunkProgressLabel: chunkCount ? `${safeIndex + 1}/${chunkCount}` : "0/0",
+                previousChunkText: safeIndex > 0 ? chunks[safeIndex - 1] : "",
+                nextChunkText: safeIndex + 1 < chunkCount ? chunks[safeIndex + 1] : "",
                 hasPreviousChunk: safeIndex > 0,
                 hasNextChunk: safeIndex + 1 < chunkCount,
+                chunkJumpSupported: chunkCount > 1,
             };
+        }
+
+        function teleprompterChunkItems(bundle, maxPreview = 72) {
+            const chunks = Array.isArray(bundle?.chunks) ? bundle.chunks : [];
+            return chunks.map((chunk, index) => ({
+                index,
+                label: `Chunk ${index + 1}`,
+                preview: shortenInline(chunk, maxPreview),
+                active: index === Number(bundle?.activeChunkIndex || 0),
+            }));
+        }
+
+        function teleprompterChunkRailHtml(bundle, options = {}) {
+            const items = teleprompterChunkItems(bundle, options.maxPreview || 72);
+            if (!items.length) {
+                return `<div class="stage-copy">No teleprompter chunks are available for this slide yet.</div>`;
+            }
+            const compactClass = options.compact ? " compact" : "";
+            return `
+                <div class="chunk-rail">
+                    ${items.map((item) => `
+                        <button class="chunk-pill${compactClass}${item.active ? " active" : ""}" onclick="jumpToTeleprompterChunk(${item.index})">
+                            <strong>${escapeHtml(item.label)}</strong>
+                            <span>${escapeHtml(item.preview || "Empty chunk")}</span>
+                        </button>
+                    `).join("")}
+                </div>
+            `;
+        }
+
+        function teleprompterPreviewCardsHtml(bundle, maxPreview = 92) {
+            const previousText = bundle?.previousChunkText
+                ? shortenInline(bundle.previousChunkText, maxPreview)
+                : "No earlier chunk on this slide.";
+            const currentText = bundle?.activeChunkText
+                ? shortenInline(bundle.activeChunkText, maxPreview)
+                : "No current chunk yet.";
+            const nextText = bundle?.nextChunkText
+                ? shortenInline(bundle.nextChunkText, maxPreview)
+                : "No later chunk on this slide.";
+            return `
+                <div class="chunk-preview-grid">
+                    <div class="chunk-preview-card">
+                        <strong>Previous Chunk</strong>
+                        <p>${escapeHtml(previousText)}</p>
+                    </div>
+                    <div class="chunk-preview-card">
+                        <strong>Current Chunk</strong>
+                        <p>${escapeHtml(currentText)}</p>
+                    </div>
+                    <div class="chunk-preview-card">
+                        <strong>Next Chunk</strong>
+                        <p>${escapeHtml(nextText)}</p>
+                    </div>
+                </div>
+            `;
         }
 
         function nextCardFromCards(cards, activeSectionId) {
@@ -1934,6 +2091,9 @@
                 active_chunk_count: teleprompter.chunkCount,
                 active_chunk_text: teleprompter.activeChunkText,
                 chunk_progress_label: teleprompter.chunkProgressLabel,
+                previous_chunk_preview: shortenInline(teleprompter.previousChunkText, 96),
+                next_chunk_preview: shortenInline(teleprompter.nextChunkText, 96),
+                chunk_jump_supported: teleprompter.chunkJumpSupported,
                 cue_view: "visible",
                 last_action: "sync",
                 last_control_at: "",
@@ -1978,11 +2138,17 @@
                 base.active_chunk_count = resetTeleprompter.chunkCount;
                 base.active_chunk_text = resetTeleprompter.activeChunkText;
                 base.chunk_progress_label = resetTeleprompter.chunkProgressLabel;
+                base.previous_chunk_preview = shortenInline(resetTeleprompter.previousChunkText, 96);
+                base.next_chunk_preview = shortenInline(resetTeleprompter.nextChunkText, 96);
+                base.chunk_jump_supported = resetTeleprompter.chunkJumpSupported;
             } else {
                 base.active_chunk_index = teleprompter.activeChunkIndex;
                 base.active_chunk_count = teleprompter.chunkCount;
                 base.active_chunk_text = teleprompter.activeChunkText;
                 base.chunk_progress_label = teleprompter.chunkProgressLabel;
+                base.previous_chunk_preview = shortenInline(teleprompter.previousChunkText, 96);
+                base.next_chunk_preview = shortenInline(teleprompter.nextChunkText, 96);
+                base.chunk_jump_supported = teleprompter.chunkJumpSupported;
             }
             base.active_card = briefCardPayload(activeCard);
             base.next_card = briefCardPayload(nextCardFromCards(safeCards, base.active_section_id));
@@ -2173,6 +2339,9 @@
             const rokidMap = Object.entries(hints.rokid_button.button_map || {})
                 .map(([key, value]) => `${key.replaceAll("_", " ")} -> ${value}`)
                 .join(" | ");
+            const chunkRail = teleprompter.chunkJumpSupported
+                ? teleprompterChunkRailHtml(teleprompter, { compact: true, maxPreview: 46 })
+                : `<div class="stage-copy">Only one chunk is available on this slide right now.</div>`;
 
             if (!activeCard) {
                 host.innerHTML = `<div class="controller-summary-card"><strong>Controller Snapshot</strong><p>Load or create a mission first to activate the phone-side controller.</p></div>`;
@@ -2197,10 +2366,16 @@
                     <div class="controller-guide">
                         <div class="guide-row"><span>Phone</span><strong>${escapeHtml((hints.phone.actions || []).join(" | "))}</strong></div>
                         <div class="guide-row"><span>Rokid button</span><strong>${escapeHtml(rokidMap || "single press -> next chunk | double press -> previous chunk | long press -> next slide")}</strong></div>
-                        <div class="guide-row"><span>Keyboard</span><strong>Right / Space / K -> next step | Left / J -> previous step | Down / Up -> next or previous chunk | C -> cue</strong></div>
+                        <div class="guide-row"><span>Keyboard</span><strong>Right / Space / K -> next step | Left / J -> previous step | Down / Up -> next or previous chunk | 1-9 -> jump chunk | C -> cue</strong></div>
                         <div class="guide-row"><span>Active anchor</span><strong>${escapeHtml(activeCard.slide_anchor || "No slide anchor set")}</strong></div>
                     </div>
                     <p>Use the phone as the main controller. Keep the glasses-side button path focused on chunk navigation first, then slide changes when needed.</p>
+                </div>
+                <div class="controller-summary-card">
+                    <strong>Chunk Navigator</strong>
+                    ${teleprompterPreviewCardsHtml(teleprompter, 74)}
+                    ${chunkRail}
+                    <p>Tap any chunk to resume this slide without stepping through every paragraph again.</p>
                 </div>
             `;
         }
@@ -2314,7 +2489,9 @@
                 <div class="section-metrics">
                     <div class="metric-chip"><strong>Live HUD</strong> ${escapeHtml(liveHud.status_line || "Current slide ready")}</div>
                     <div class="metric-chip"><strong>Active</strong> Slide ${escapeHtml(liveHud.active_slide_index || "--")} ${escapeHtml(liveHud.active_slide_title || "")}</div>
+                    <div class="metric-chip"><strong>Chunk</strong> ${escapeHtml(liveHud.chunk_progress_label || "0/0")}</div>
                     <div class="metric-chip"><strong>Next</strong> ${liveHud.next_slide_index ? `Slide ${escapeHtml(liveHud.next_slide_index)} ${escapeHtml(liveHud.next_slide_title || "")}` : "Final card"}</div>
+                    <div class="metric-chip"><strong>Next Chunk</strong> ${escapeHtml(liveHud.next_chunk_preview || "No later chunk")}</div>
                     <div class="metric-chip"><strong>Owner</strong> ${escapeHtml(ownerLabel)}</div>
                     <div class="metric-chip"><strong>Last event</strong> ${escapeHtml(sync.last_event || "initialized")}</div>
                 </div>
@@ -2579,6 +2756,10 @@
             const interactionMove = card.interaction_goal || "No interaction move has been written for this slide yet.";
             const teleprompterText = teleprompter.activeChunkText || teleprompter.text || card.speaker_notes || card.outline || "Write a teleprompter script or longer speaker notes for this slide.";
             const teleprompterSourceLabel = teleprompter.source.replaceAll("_", " ");
+            const chunkRail = teleprompter.chunkJumpSupported
+                ? teleprompterChunkRailHtml(teleprompter, { compact: compactMode, maxPreview: compactMode ? 54 : 72 })
+                : `<div class="stage-copy">Only one chunk is available for this slide right now.</div>`;
+            const previewCards = teleprompterPreviewCardsHtml(teleprompter, compactMode ? 92 : 104);
 
             if (compactMode) {
                 host.innerHTML = `
@@ -2610,6 +2791,7 @@
                             <strong>Teleprompter Chunk</strong>
                             <div class="stage-copy">${escapeHtml(teleprompterText)}</div>
                         </div>
+                        ${previewCards}
                         <div class="stage-block">
                             <strong>Chunk Navigation</strong>
                             <div class="stage-copy">${escapeHtml(`Chunk ${teleprompter.chunkProgressLabel} from ${teleprompterSourceLabel}. Swipe up or down for chunk navigation, or use the controller buttons.`)}</div>
@@ -2619,6 +2801,10 @@
                             <button class="ghost-btn" onclick="applyPresentationControl('next_chunk')">Next Chunk</button>
                             <button class="ghost-btn" onclick="applyPresentationControl('previous_slide')">Previous Slide</button>
                             <button class="ghost-btn" onclick="applyPresentationControl('next_slide')">Next Slide</button>
+                        </div>
+                        <div class="stage-block">
+                            <strong>Jump to Chunk</strong>
+                            ${chunkRail}
                         </div>
                         <div class="stage-block">
                             <strong>Next Slide</strong>
@@ -2657,6 +2843,7 @@
                         <strong>Current Chunk</strong>
                         <div class="stage-copy">${escapeHtml(teleprompterText)}</div>
                     </div>
+                    ${previewCards}
                     <div class="action-row" style="margin-top: 12px;">
                         <button class="ghost-btn" onclick="applyPresentationControl('previous')">Previous Step</button>
                         <button class="ghost-btn" onclick="applyPresentationControl('next')">Next Step</button>
@@ -2664,6 +2851,10 @@
                         <button class="ghost-btn" onclick="applyPresentationControl('next_chunk')">Next Chunk</button>
                         <button class="ghost-btn" onclick="applyPresentationControl('previous_slide')">Previous Slide</button>
                         <button class="ghost-btn" onclick="applyPresentationControl('next_slide')">Next Slide</button>
+                    </div>
+                    <div class="stage-block">
+                        <strong>Jump to Chunk</strong>
+                        ${chunkRail}
                     </div>
                     <div class="stage-block">
                         <strong>Interaction Goal</strong>
@@ -3407,6 +3598,14 @@
             applyCompanionBundle(result, "Jumped to the selected slide card.");
         }
 
+        async function jumpToTeleprompterChunk(chunkIndex) {
+            const safeChunkIndex = Math.max(0, Number(chunkIndex || 0));
+            await applyPresentationControl("jump_chunk", {
+                chunk_index: safeChunkIndex,
+                section_id: currentPresentationState().active_section_id || "",
+            });
+        }
+
         function applyPresentationStateResult(presentationState, message) {
             state.presentationState = normalizePresentationState(presentationState, state.draftSections);
             state.focusedCardId = state.presentationState.active_section_id || state.focusedCardId;
@@ -3417,11 +3616,12 @@
             renderAll();
         }
 
-        async function applyPresentationControl(action) {
+        async function applyPresentationControl(action, extraPayload = {}) {
             const payload = {
                 action,
                 control_source: document.getElementById("controller-source").value || "phone",
                 presentation_mode: document.getElementById("presentation-mode").value || currentPresentationState().presentation_mode,
+                ...extraPayload,
             };
             if (!state.currentMissionId) {
                 const cards = normalizeSections(state.draftSections);
@@ -3472,6 +3672,21 @@
                 if (action === "previous_slide") {
                     nextIndex = Math.max(0, nextIndex - 1);
                     nextChunkIndex = 0;
+                }
+                if (action === "jump_chunk") {
+                    const requestedSectionId = String(extraPayload.section_id || "");
+                    const requestedSlideIndex = Number(extraPayload.slide_index || 0);
+                    if (requestedSectionId && ids.includes(requestedSectionId)) {
+                        nextIndex = ids.indexOf(requestedSectionId);
+                    } else if (requestedSlideIndex > 0) {
+                        const matchedIndex = cards.findIndex((item) => Number(item.slide_index || 0) === requestedSlideIndex);
+                        if (matchedIndex >= 0) {
+                            nextIndex = matchedIndex;
+                        }
+                    }
+                    const targetCard = cards[nextIndex] || cards[0] || null;
+                    const targetTeleprompter = teleprompterBundleForCard(targetCard, Number(extraPayload.chunk_index || 0));
+                    nextChunkIndex = targetTeleprompter.activeChunkIndex;
                 }
                 const nextCard = cards[nextIndex] || cards[0] || null;
                 state.presentationState = normalizePresentationState({
@@ -3803,7 +4018,15 @@
             if (shouldIgnoreShortcutTarget(event.target) || document.getElementById("tab-rehearse").classList.contains("hidden")) {
                 return;
             }
-            if (event.code === "ArrowRight" || event.code === "Space" || event.code === "KeyK") {
+            const digitMatch = String(event.code || "").match(/^(Digit|Numpad)([1-9])$/);
+            if (digitMatch) {
+                const targetChunkIndex = Number(digitMatch[2]) - 1;
+                const teleprompter = currentTeleprompterBundle();
+                if (targetChunkIndex < teleprompter.chunkCount) {
+                    event.preventDefault();
+                    await jumpToTeleprompterChunk(targetChunkIndex);
+                }
+            } else if (event.code === "ArrowRight" || event.code === "Space" || event.code === "KeyK") {
                 event.preventDefault();
                 await applyPresentationControl("next");
             } else if (event.code === "ArrowLeft" || event.code === "KeyJ") {

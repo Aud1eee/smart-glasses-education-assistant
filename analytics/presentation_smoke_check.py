@@ -35,6 +35,16 @@ def main():
 
     page_response = client.get("/presentation")
     assert page_response.status_code == 200, page_response.get_data(as_text=True)
+    page_html = page_response.get_data(as_text=True)
+    assert "Teleprompter Script" in page_html, "Expected the presentation page to expose teleprompter editing."
+    assert "Jump to Chunk" in page_html, "Expected the presentation page to expose chunk jumping."
+    assert "Chunk Navigator" in page_html, "Expected the presentation page to expose the chunk navigator surface."
+
+    controller_page_response = client.get("/presentation/controller")
+    assert controller_page_response.status_code == 200, controller_page_response.get_data(as_text=True)
+    controller_html = controller_page_response.get_data(as_text=True)
+    assert "Jump to Chunk" in controller_html, "Expected the phone controller page to expose chunk jumping."
+    assert "Chunk Navigator" in controller_html, "Expected the phone controller page to expose the chunk navigator surface."
 
     extract_response = client.post(
         "/api/presentation_missions/intake_extract",
@@ -240,6 +250,33 @@ def main():
     assert next_slide_payload["active_chunk_index"] == 0, "Next-slide control should reset chunk navigation on the new slide."
     assert next_slide_payload["active_chunk_count"] >= 2, "Expected teleprompter chunking to continue on the second slide."
 
+    jump_chunk_response = client.post(
+        f"/api/presentation_missions/{mission_id}/presentation_control",
+        json={
+            "action": "jump_chunk",
+            "chunk_index": next_slide_payload["active_chunk_count"] - 1,
+            "control_source": "phone",
+        },
+    )
+    assert jump_chunk_response.status_code == 200, jump_chunk_response.get_data(as_text=True)
+    jump_chunk_payload = jump_chunk_response.get_json()["presentation_state"]
+    assert jump_chunk_payload["active_section_id"] == section_ids[1], "Chunk jump should stay on the requested slide."
+    assert jump_chunk_payload["active_chunk_index"] == jump_chunk_payload["active_chunk_count"] - 1, "Chunk jump should land on the requested chunk."
+    assert jump_chunk_payload["previous_chunk_preview"], "Chunk jump should expose a previous-chunk preview when not on chunk 1."
+
+    jump_chunk_reset_response = client.post(
+        f"/api/presentation_missions/{mission_id}/presentation_control",
+        json={
+            "action": "jump_chunk",
+            "chunk_index": 0,
+            "control_source": "phone",
+        },
+    )
+    assert jump_chunk_reset_response.status_code == 200, jump_chunk_reset_response.get_data(as_text=True)
+    jump_chunk_reset_payload = jump_chunk_reset_response.get_json()["presentation_state"]
+    assert jump_chunk_reset_payload["active_chunk_index"] == 0, "Chunk jump reset should return to the first chunk."
+    assert jump_chunk_reset_payload["next_chunk_preview"], "Chunk jump reset should expose the next chunk preview."
+
     cue_response = client.post(
         f"/api/presentation_missions/{mission_id}/presentation_control",
         json={
@@ -337,6 +374,7 @@ def main():
     assert analysis["hud_summary"]["cue_view"] == "hidden", "HUD summary should reflect the latest cue visibility."
     assert analysis["hud_summary"]["active_chunk_count"] >= 1, "HUD summary should expose teleprompter chunk counts."
     assert analysis["hud_summary"]["chunk_progress_label"], "HUD summary should expose teleprompter chunk progress."
+    assert "next_chunk_preview" in analysis["hud_summary"], "HUD summary should expose the next chunk preview field."
 
     hud_response = client.get(f"/api/presentation_rehearsals/{rehearsal_id}/hud_summary")
     assert hud_response.status_code == 200, hud_response.get_data(as_text=True)
@@ -357,6 +395,7 @@ def main():
     assert live_hud_payload["live_hud"]["owner_surface"] == "phone", "Live HUD should expose the bridge owner surface."
     assert live_hud_payload["live_hud"]["chunk_progress_label"], "Live HUD should expose teleprompter chunk progress."
     assert live_hud_payload["live_hud"]["teleprompter_text"], "Live HUD should expose the current teleprompter chunk."
+    assert "next_chunk_preview" in live_hud_payload["live_hud"], "Live HUD should expose the next chunk preview field."
 
     bridge_release_response = client.post(
         f"/api/presentation_missions/{mission_id}/bridge_release",
@@ -391,6 +430,7 @@ def main():
         "pairing_status": pairing_join_payload["pairing_state"]["pairing_status"],
         "bridge_status": bridge_claim_payload["bridge_state"]["bridge_status"],
         "chunk_progress_label": live_hud_payload["live_hud"]["chunk_progress_label"],
+        "next_chunk_preview": live_hud_payload["live_hud"]["next_chunk_preview"],
         "pace_status": analysis["feedback"]["pace_status"],
         "hud_status": hud_payload["hud_summary"]["current_or_final_status"],
     }, ensure_ascii=False, indent=2))

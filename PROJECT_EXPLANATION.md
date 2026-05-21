@@ -272,9 +272,12 @@ The latest runtime pass refines those controls into a teleprompter-friendly mode
   - `next_slide`
 - each slide card can now store a longer `teleprompter_script`
 - that long script is split into smaller chunks so the user does not need to read a whole slide page at once
+- the phone controller now includes a `chunk navigator` rail so the presenter can jump directly to a specific chunk on the current slide
+- the runtime also surfaces previous / current / next chunk previews to help the speaker recover position after pausing or audience interaction
 - the presentation stage supports:
   - vertical swipe for chunk navigation
   - horizontal swipe for slide navigation
+- local keyboard testing now also supports `1-9` for direct chunk jumps
 - the default Rokid button scaffold is now:
   - `single_press -> next_chunk`
   - `double_press -> previous_chunk`
@@ -285,7 +288,7 @@ The current presentation page now also exposes:
 - a compact `present` mode that shows one current slide card at a time
 - the `next_card` so the phone-side controller can preview what is coming next
 - `control_hints` so the phone controller and future Rokid-side integration can share the same lightweight button mapping
-- chunk progress and current teleprompter text in the live HUD payload so future glasses-side delivery can mirror the same runtime state
+- chunk progress, next-chunk preview, and current teleprompter text in the live HUD payload so future glasses-side delivery can mirror the same runtime state
 
 The next scaffold layer now adds:
 

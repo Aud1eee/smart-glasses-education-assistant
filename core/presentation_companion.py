@@ -236,6 +236,24 @@ class PresentationCompanion:
                 if matched:
                     state["active_section_id"] = matched
                     state["active_chunk_index"] = 0
+        elif action == "jump_chunk":
+            requested_section_id = self._clean_text(payload.get("section_id", ""), max_length=80)
+            requested_slide_index = self._safe_int(payload.get("slide_index"), default=0)
+            requested_chunk_index = self._safe_int(payload.get("chunk_index"), default=current_chunk_index)
+            if requested_section_id and requested_section_id in section_ids:
+                move_to_slide(section_ids.index(requested_section_id), chunk_index=requested_chunk_index)
+            elif requested_slide_index > 0:
+                matched_index = next(
+                    (
+                        index
+                        for index, item in enumerate(sections)
+                        if self._safe_int(item.get("slide_index"), default=0) == requested_slide_index
+                    ),
+                    current_index,
+                )
+                move_to_slide(matched_index, chunk_index=requested_chunk_index)
+            else:
+                move_to_slide(current_index, chunk_index=requested_chunk_index)
         elif action == "toggle_cue":
             state["cue_view"] = "hidden" if state.get("cue_view") == "visible" else "visible"
         elif action == "set_mode":
@@ -1289,8 +1307,11 @@ class PresentationCompanion:
             "active_chunk_count": chunk_count,
             "active_chunk_text": chunks[safe_index] if chunk_count else "",
             "active_chunk_label": f"{safe_index + 1}/{chunk_count}" if chunk_count else "0/0",
+            "previous_chunk_text": chunks[safe_index - 1] if safe_index > 0 else "",
+            "next_chunk_text": chunks[safe_index + 1] if safe_index + 1 < chunk_count else "",
             "has_previous_chunk": safe_index > 0,
             "has_next_chunk": safe_index + 1 < chunk_count,
+            "chunk_jump_supported": chunk_count > 1,
         }
 
     def _section_duration_hint(self, estimated_seconds, target_seconds):
@@ -1691,6 +1712,9 @@ class PresentationCompanion:
             "active_chunk_count": active_card.get("active_chunk_count", 0),
             "active_chunk_text": active_card.get("active_chunk_text", ""),
             "chunk_progress_label": active_card.get("active_chunk_label", "0/0"),
+            "previous_chunk_preview": self._shorten_line(active_card.get("previous_chunk_text", ""), 96),
+            "next_chunk_preview": self._shorten_line(active_card.get("next_chunk_text", ""), 96),
+            "chunk_jump_supported": bool(active_card.get("chunk_jump_supported")),
             "available_cards": [self._card_brief_payload(item) for item in sections],
             "control_hints": self._control_hints_payload(),
         }
@@ -2046,7 +2070,7 @@ class PresentationCompanion:
             "phone": {
                 "role": "Main controller",
                 "note": "Use the phone for chunk-by-chunk teleprompter reading, explicit slide jumps, and mode changes.",
-                "actions": ["previous", "next", "previous_chunk", "next_chunk", "previous_slide", "next_slide", "jump", "toggle_cue", "set_mode"],
+                "actions": ["previous", "next", "previous_chunk", "next_chunk", "previous_slide", "next_slide", "jump", "jump_chunk", "toggle_cue", "set_mode"],
             },
             "rokid_button": {
                 "role": "Quick remote",
@@ -2394,6 +2418,9 @@ class PresentationCompanion:
             "active_chunk_index": active_card.get("active_chunk_index", 0),
             "active_chunk_count": active_card.get("active_chunk_count", 0),
             "chunk_progress_label": active_card.get("active_chunk_label", "0/0"),
+            "previous_chunk_preview": self._shorten_line(active_card.get("previous_chunk_text", ""), 88),
+            "next_chunk_preview": self._shorten_line(active_card.get("next_chunk_text", ""), 88),
+            "chunk_jump_supported": bool(active_card.get("chunk_jump_supported")),
             "presentation_mode": presentation_state.get("presentation_mode", "rehearse"),
             "cue_view": presentation_state.get("cue_view", "visible"),
             "control_source": presentation_state.get("control_source", "phone"),
@@ -2473,6 +2500,9 @@ class PresentationCompanion:
             "active_chunk_index": active_card.get("active_chunk_index", 0),
             "active_chunk_count": active_card.get("active_chunk_count", 0),
             "chunk_progress_label": active_card.get("active_chunk_label", "0/0"),
+            "previous_chunk_preview": self._shorten_line(active_card.get("previous_chunk_text", ""), 96),
+            "next_chunk_preview": self._shorten_line(active_card.get("next_chunk_text", ""), 96),
+            "chunk_jump_supported": bool(active_card.get("chunk_jump_supported")),
             "teleprompter_source": active_card.get("teleprompter_source", "empty"),
             "teleprompter_text": self._shorten_line(teleprompter_text, 320),
             "status_line": self._shorten_line(status_line, 84),

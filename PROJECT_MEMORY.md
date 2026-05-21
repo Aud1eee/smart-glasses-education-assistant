@@ -189,13 +189,16 @@ The current demo-ready checkpoint includes:
   - slide teleprompter runtime:
     - long slide scripts are split into chunk-sized prompts
     - `next` and `previous` are chunk-first before moving across slides
+    - the phone-side controller now includes a chunk navigator rail for direct chunk jumps
+    - previous / current / next chunk previews help the presenter recover position quickly
     - phone-side stage supports vertical swipe for chunk navigation
     - phone-side stage supports horizontal swipe for slide navigation
+    - keyboard `1-9` jumps to specific chunks during local browser or desktop testing
     - default Rokid mapping:
       - `single_press -> next_chunk`
       - `double_press -> previous_chunk`
       - `long_press -> next_slide`
-    - live HUD payload now includes `teleprompter_text` and `chunk_progress_label`
+    - live HUD payload now includes `teleprompter_text`, `chunk_progress_label`, and `next_chunk_preview`
   - rehearsal run storage:
     - audio source
     - total duration

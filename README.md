@@ -321,12 +321,15 @@ The live presentation runtime now also supports chunk-level teleprompter navigat
 
 - `next` and `previous` act as step navigation, moving chunk-first before switching slides
 - explicit `previous_chunk`, `next_chunk`, `previous_slide`, and `next_slide` controls are available on the phone controller
+- a `chunk navigator` rail now lets the phone-side controller jump straight to any chunk on the current slide
+- the controller and stage now expose previous / current / next chunk previews so the presenter can quickly regain place after an interruption
 - the stage supports vertical swipe for chunk navigation and horizontal swipe for slide navigation
+- keyboard shortcuts now also support `1-9` for direct chunk jumps during local testing
 - the default Rokid button mapping is now:
   - `single_press -> next_chunk`
   - `double_press -> previous_chunk`
   - `long_press -> next_slide`
-- the live HUD payload now exposes the current teleprompter chunk and chunk-progress label for future glasses-side display
+- the live HUD payload now exposes the current teleprompter chunk, chunk-progress label, and next-chunk preview for future glasses-side display
 
 Local artifact note:
 
