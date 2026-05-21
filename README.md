@@ -258,9 +258,10 @@ The project now also includes an independent page at `/presentation`:
 - it turns one academic presentation task into a `brief -> script -> rehearse` workflow
 - the student still writes the actual outline, speaker notes, and cue cards
 - the script workspace now supports `slide-linked cards`, so each card can map to one PPT page or one tightly linked speaking unit
+- each slide card can now also hold a longer `teleprompter_script`, which is split into glance-sized chunks for runtime delivery
 - the rehearsal page now also includes a lightweight `presentation controller` with:
   - `phone` as the default main control source
-  - `rokid_button` as a lightweight next / previous / cue-toggle scaffold
+  - `rokid_button` as a lightweight chunk / slide control scaffold
   - `present` mode for a compact current-slide view instead of a long script view
   - a controller snapshot that shows the active slide, queued next slide, cue state, and input hints
   - a `phone controller surface` at `/presentation/controller`
@@ -315,6 +316,17 @@ The phone-side controller now also includes a lightweight pairing sheet:
 - readable pairing lifecycle labels and next-step guidance
 - auto-refresh while a pairing window is waiting or already paired
 - explicit separation between `owner_surface` and the joined companion surface
+
+The live presentation runtime now also supports chunk-level teleprompter navigation:
+
+- `next` and `previous` act as step navigation, moving chunk-first before switching slides
+- explicit `previous_chunk`, `next_chunk`, `previous_slide`, and `next_slide` controls are available on the phone controller
+- the stage supports vertical swipe for chunk navigation and horizontal swipe for slide navigation
+- the default Rokid button mapping is now:
+  - `single_press -> next_chunk`
+  - `double_press -> previous_chunk`
+  - `long_press -> next_slide`
+- the live HUD payload now exposes the current teleprompter chunk and chunk-progress label for future glasses-side display
 
 Local artifact note:
 

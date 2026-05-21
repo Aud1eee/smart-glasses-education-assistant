@@ -260,11 +260,32 @@ The control actions are intentionally small:
 This matters because it keeps the interaction realistic for an actual presentation.
 The speaker should not need to manage a complicated interface during delivery.
 
+The latest runtime pass refines those controls into a teleprompter-friendly model:
+
+- `next` and `previous` are now step controls:
+  - they move through teleprompter chunks inside the current slide first
+  - only then do they cross to the next or previous slide
+- the phone controller also exposes explicit:
+  - `previous_chunk`
+  - `next_chunk`
+  - `previous_slide`
+  - `next_slide`
+- each slide card can now store a longer `teleprompter_script`
+- that long script is split into smaller chunks so the user does not need to read a whole slide page at once
+- the presentation stage supports:
+  - vertical swipe for chunk navigation
+  - horizontal swipe for slide navigation
+- the default Rokid button scaffold is now:
+  - `single_press -> next_chunk`
+  - `double_press -> previous_chunk`
+  - `long_press -> next_slide`
+
 The current presentation page now also exposes:
 
 - a compact `present` mode that shows one current slide card at a time
 - the `next_card` so the phone-side controller can preview what is coming next
 - `control_hints` so the phone controller and future Rokid-side integration can share the same lightweight button mapping
+- chunk progress and current teleprompter text in the live HUD payload so future glasses-side delivery can mirror the same runtime state
 
 The next scaffold layer now adds:
 

@@ -180,22 +180,62 @@ class PresentationCompanion:
         current_index = section_ids.index(active_section_id) if active_section_id in section_ids else 0
         action = self._clean_text(payload.get("action", ""), max_length=40).lower()
         control_source = self._normalize_control_source(payload.get("control_source", state.get("control_source", "")))
+        current_section = sections[current_index] if sections and 0 <= current_index < len(sections) else {}
+        current_chunks = self._teleprompter_state(current_section, active_chunk_index=state.get("active_chunk_index", 0))
+        current_chunk_index = current_chunks.get("active_chunk_index", 0)
+
+        def move_to_slide(index, chunk_index=0):
+            if not section_ids:
+                state["active_section_id"] = ""
+                state["active_chunk_index"] = 0
+                return
+            safe_index = min(len(section_ids) - 1, max(0, index))
+            target_section = sections[safe_index]
+            teleprompter = self._teleprompter_state(target_section, active_chunk_index=chunk_index)
+            state["active_section_id"] = target_section.get("section_id", "")
+            state["active_chunk_index"] = teleprompter.get("active_chunk_index", 0)
 
         if action == "next":
-            current_index = min(len(section_ids) - 1, current_index + 1) if section_ids else 0
-            state["active_section_id"] = section_ids[current_index] if section_ids else ""
+            if current_chunks.get("has_next_chunk"):
+                state["active_chunk_index"] = current_chunk_index + 1
+            else:
+                move_to_slide(current_index + 1, chunk_index=0)
         elif action == "previous":
-            current_index = max(0, current_index - 1)
-            state["active_section_id"] = section_ids[current_index] if section_ids else ""
+            if current_chunks.get("has_previous_chunk"):
+                state["active_chunk_index"] = max(0, current_chunk_index - 1)
+            else:
+                previous_index = max(0, current_index - 1)
+                previous_section = sections[previous_index] if sections and previous_index < len(sections) else {}
+                previous_chunks = self._teleprompter_state(previous_section, active_chunk_index=10_000)
+                move_to_slide(previous_index, chunk_index=previous_chunks.get("active_chunk_index", 0))
+        elif action == "next_chunk":
+            if current_chunks.get("has_next_chunk"):
+                state["active_chunk_index"] = current_chunk_index + 1
+            else:
+                move_to_slide(current_index + 1, chunk_index=0)
+        elif action == "previous_chunk":
+            if current_chunks.get("has_previous_chunk"):
+                state["active_chunk_index"] = max(0, current_chunk_index - 1)
+            else:
+                previous_index = max(0, current_index - 1)
+                previous_section = sections[previous_index] if sections and previous_index < len(sections) else {}
+                previous_chunks = self._teleprompter_state(previous_section, active_chunk_index=10_000)
+                move_to_slide(previous_index, chunk_index=previous_chunks.get("active_chunk_index", 0))
+        elif action == "next_slide":
+            move_to_slide(current_index + 1, chunk_index=0)
+        elif action == "previous_slide":
+            move_to_slide(current_index - 1, chunk_index=0)
         elif action == "jump":
             requested_section_id = self._clean_text(payload.get("section_id", ""), max_length=80)
             requested_slide_index = self._safe_int(payload.get("slide_index"), default=0)
             if requested_section_id and requested_section_id in section_ids:
                 state["active_section_id"] = requested_section_id
+                state["active_chunk_index"] = 0
             elif requested_slide_index > 0:
                 matched = next((item.get("section_id", "") for item in sections if self._safe_int(item.get("slide_index"), default=0) == requested_slide_index), "")
                 if matched:
                     state["active_section_id"] = matched
+                    state["active_chunk_index"] = 0
         elif action == "toggle_cue":
             state["cue_view"] = "hidden" if state.get("cue_view") == "visible" else "visible"
         elif action == "set_mode":
@@ -1079,6 +1119,7 @@ class PresentationCompanion:
                 "target_seconds": target,
                 "outline": "",
                 "speaker_notes": "",
+                "teleprompter_script": "",
                 "cue_cards": "",
             })
         return sections
@@ -1105,6 +1146,7 @@ class PresentationCompanion:
                 "target_seconds": max(10, self._safe_int(section.get("target_seconds"), default=45)),
                 "outline": self._clean_text(section.get("outline", ""), max_length=2400, preserve_lines=True),
                 "speaker_notes": self._clean_text(section.get("speaker_notes", ""), max_length=3600, preserve_lines=True),
+                "teleprompter_script": self._clean_text(section.get("teleprompter_script", ""), max_length=9000, preserve_lines=True),
                 "cue_cards": self._clean_text(section.get("cue_cards", ""), max_length=1800, preserve_lines=True),
             })
         if not normalized:
@@ -1124,7 +1166,7 @@ class PresentationCompanion:
         for section in sections:
             estimated_seconds = self._estimate_section_seconds(section)
             estimated_total_seconds += estimated_seconds
-            has_core_content = any(section.get(field, "").strip() for field in ("outline", "speaker_notes", "cue_cards"))
+            has_core_content = any(section.get(field, "").strip() for field in ("outline", "speaker_notes", "teleprompter_script", "cue_cards"))
             if has_core_content:
                 completed_sections += 1
             if section.get("interaction_goal", "").strip():
@@ -1160,8 +1202,11 @@ class PresentationCompanion:
 
     def _estimated_script_words(self, section):
         outline_words = self._word_count(section.get("outline", ""))
+        teleprompter_words = self._word_count(section.get("teleprompter_script", ""))
         notes_words = self._word_count(section.get("speaker_notes", ""))
         cue_words = self._word_count(section.get("cue_cards", ""))
+        if teleprompter_words > 0:
+            return int(round(outline_words * 0.2 + teleprompter_words + cue_words * 0.2))
         return int(round(outline_words * 0.45 + notes_words + cue_words * 0.7))
 
     def _estimate_section_seconds(self, section):
@@ -1169,6 +1214,84 @@ class PresentationCompanion:
         if weighted_words <= 0:
             return 0
         return max(10, int(round(weighted_words / self.WORDS_PER_SECOND)))
+
+    def _teleprompter_source(self, section):
+        section = section or {}
+        for field in ("teleprompter_script", "speaker_notes", "cue_cards", "outline", "slide_anchor"):
+            value = self._clean_text(section.get(field, ""), max_length=12000, preserve_lines=True)
+            if value:
+                return field, value
+        return "empty", ""
+
+    def _split_long_unit(self, text, max_words=38):
+        words = [word for word in str(text or "").split() if word]
+        if not words:
+            return []
+        chunks = []
+        for start in range(0, len(words), max_words):
+            piece = " ".join(words[start:start + max_words]).strip()
+            if piece:
+                chunks.append(piece)
+        return chunks
+
+    def _teleprompter_chunks(self, section, max_words=38, max_chars=280):
+        source, raw_text = self._teleprompter_source(section)
+        text = self._clean_text(raw_text, max_length=12000, preserve_lines=True)
+        if not text:
+            return {
+                "source": source,
+                "text": "",
+                "chunks": [],
+            }
+        paragraphs = [part.strip() for part in re.split(r"\n{2,}", text) if part.strip()]
+        if not paragraphs:
+            paragraphs = [text]
+        chunks = []
+        for paragraph in paragraphs:
+            units = [unit.strip() for unit in re.split(r"(?<=[\.\?!])\s+|\n+", paragraph) if unit.strip()]
+            if not units:
+                units = [paragraph.strip()]
+            current = ""
+            current_words = 0
+            for unit in units:
+                split_units = [unit]
+                if self._word_count(unit) > max_words or len(unit) > max_chars:
+                    split_units = self._split_long_unit(unit, max_words=max_words)
+                for split_unit in split_units:
+                    split_words = self._word_count(split_unit)
+                    candidate = f"{current} {split_unit}".strip() if current else split_unit
+                    if current and (current_words + split_words > max_words or len(candidate) > max_chars):
+                        chunks.append(current.strip())
+                        current = split_unit
+                        current_words = split_words
+                    else:
+                        current = candidate
+                        current_words = self._word_count(candidate)
+            if current:
+                chunks.append(current.strip())
+        cleaned_chunks = [self._clean_text(item, max_length=600, preserve_lines=True) for item in chunks if item.strip()]
+        return {
+            "source": source,
+            "text": text,
+            "chunks": cleaned_chunks,
+        }
+
+    def _teleprompter_state(self, section, active_chunk_index=0):
+        payload = self._teleprompter_chunks(section)
+        chunks = payload.get("chunks", [])
+        chunk_count = len(chunks)
+        safe_index = min(max(0, self._safe_int(active_chunk_index, default=0)), max(0, chunk_count - 1)) if chunk_count else 0
+        return {
+            "teleprompter_source": payload.get("source", "empty"),
+            "teleprompter_text": payload.get("text", ""),
+            "teleprompter_chunks": chunks,
+            "active_chunk_index": safe_index,
+            "active_chunk_count": chunk_count,
+            "active_chunk_text": chunks[safe_index] if chunk_count else "",
+            "active_chunk_label": f"{safe_index + 1}/{chunk_count}" if chunk_count else "0/0",
+            "has_previous_chunk": safe_index > 0,
+            "has_next_chunk": safe_index + 1 < chunk_count,
+        }
 
     def _section_duration_hint(self, estimated_seconds, target_seconds):
         target_seconds = max(0, self._safe_int(target_seconds, default=0))
@@ -1369,6 +1492,7 @@ class PresentationCompanion:
                 "target_seconds": max(10, self._safe_int(item.get("target_seconds"), default=max(15, int(round(target_seconds / max(len(items), 1)))))),
                 "outline": "",
                 "speaker_notes": "",
+                "teleprompter_script": "",
                 "cue_cards": "",
             })
         return self._sanitize_sections(normalized) if normalized else []
@@ -1429,6 +1553,7 @@ class PresentationCompanion:
         existing = existing or {}
         section_ids = [item.get("section_id", "") for item in sections if item.get("section_id", "")]
         default_section_id = section_ids[0] if section_ids else ""
+        existing_section_id = self._clean_text(existing.get("active_section_id", default_section_id), max_length=80)
         active_section_id = self._clean_text(
             incoming.get("active_section_id", existing.get("active_section_id", default_section_id)),
             max_length=80,
@@ -1438,12 +1563,16 @@ class PresentationCompanion:
             matched = next((item.get("section_id", "") for item in sections if self._safe_int(item.get("slide_index"), default=0) == requested_slide_index), "")
             active_section_id = matched or default_section_id
         active_section = next((item for item in sections if item.get("section_id", "") == active_section_id), sections[0] if sections else {})
+        teleprompter_state = self._teleprompter_state(active_section, active_chunk_index=incoming.get("active_chunk_index", existing.get("active_chunk_index", 0)))
+        if "active_section_id" in incoming and active_section_id != existing_section_id and "active_chunk_index" not in incoming:
+            teleprompter_state = self._teleprompter_state(active_section, active_chunk_index=0)
         return {
             "presentation_mode": self._normalize_presentation_mode(incoming.get("presentation_mode", existing.get("presentation_mode", "rehearse"))),
             "control_source": self._normalize_control_source(incoming.get("control_source", existing.get("control_source", "phone"))),
             "last_control_source": self._normalize_control_source(incoming.get("last_control_source", existing.get("last_control_source", "phone"))),
             "active_section_id": active_section_id,
             "active_slide_index": self._safe_int(active_section.get("slide_index"), default=0),
+            "active_chunk_index": teleprompter_state.get("active_chunk_index", 0),
             "cue_view": self._normalize_cue_view(incoming.get("cue_view", existing.get("cue_view", "visible"))),
             "last_action": self._clean_text(incoming.get("last_action", existing.get("last_action", "sync")), max_length=40).lower() or "sync",
             "last_control_at": self._clean_text(incoming.get("last_control_at", existing.get("last_control_at", "")), max_length=40),
@@ -1559,6 +1688,9 @@ class PresentationCompanion:
             **state,
             "active_card": active_card,
             "next_card": self._next_card_brief(sections, state),
+            "active_chunk_count": active_card.get("active_chunk_count", 0),
+            "active_chunk_text": active_card.get("active_chunk_text", ""),
+            "chunk_progress_label": active_card.get("active_chunk_label", "0/0"),
             "available_cards": [self._card_brief_payload(item) for item in sections],
             "control_hints": self._control_hints_payload(),
         }
@@ -1568,8 +1700,18 @@ class PresentationCompanion:
         target_id = self._clean_text((state or {}).get("active_section_id", ""), max_length=80)
         for item in sections:
             if item.get("section_id", "") == target_id:
-                return self._card_payload(item, presentation_mode=(state or {}).get("presentation_mode", "rehearse"), cue_view=(state or {}).get("cue_view", "visible"))
-        return self._card_payload(sections[0], presentation_mode=(state or {}).get("presentation_mode", "rehearse"), cue_view=(state or {}).get("cue_view", "visible")) if sections else {}
+                return self._card_payload(
+                    item,
+                    presentation_mode=(state or {}).get("presentation_mode", "rehearse"),
+                    cue_view=(state or {}).get("cue_view", "visible"),
+                    active_chunk_index=(state or {}).get("active_chunk_index", 0),
+                )
+        return self._card_payload(
+            sections[0],
+            presentation_mode=(state or {}).get("presentation_mode", "rehearse"),
+            cue_view=(state or {}).get("cue_view", "visible"),
+            active_chunk_index=(state or {}).get("active_chunk_index", 0),
+        ) if sections else {}
 
     def _next_card_brief(self, sections, state):
         sections = self._sanitize_sections(sections)
@@ -1582,6 +1724,7 @@ class PresentationCompanion:
         return self._card_brief_payload(sections[1]) if len(sections) > 1 else {}
 
     def _card_brief_payload(self, section):
+        teleprompter = self._teleprompter_state(section, active_chunk_index=0)
         return {
             "section_id": section.get("section_id", ""),
             "name": section.get("name", ""),
@@ -1591,11 +1734,14 @@ class PresentationCompanion:
             "interaction_goal": section.get("interaction_goal", ""),
             "target_seconds": self._safe_int(section.get("target_seconds"), default=0),
             "target_label": self._format_mmss(section.get("target_seconds", 0)),
+            "teleprompter_source": teleprompter.get("teleprompter_source", "empty"),
+            "chunk_count": teleprompter.get("active_chunk_count", 0),
         }
 
-    def _card_payload(self, section, presentation_mode="rehearse", cue_view="visible"):
+    def _card_payload(self, section, presentation_mode="rehearse", cue_view="visible", active_chunk_index=0):
         if not section:
             return {}
+        teleprompter = self._teleprompter_state(section, active_chunk_index=active_chunk_index)
         payload = {
             "section_id": section.get("section_id", ""),
             "name": section.get("name", ""),
@@ -1607,14 +1753,14 @@ class PresentationCompanion:
             "target_label": self._format_mmss(section.get("target_seconds", 0)),
             "outline": section.get("outline", ""),
             "speaker_notes": section.get("speaker_notes", ""),
+            "teleprompter_script": section.get("teleprompter_script", ""),
             "cue_cards": section.get("cue_cards", ""),
             "presentation_mode": self._normalize_presentation_mode(presentation_mode),
             "cue_view": self._normalize_cue_view(cue_view),
+            **teleprompter,
         }
         if payload["presentation_mode"] == "present":
             payload["speaker_notes"] = ""
-            if payload["cue_view"] == "hidden":
-                payload["cue_cards"] = ""
         elif payload["cue_view"] == "hidden":
             payload["cue_cards"] = ""
         return payload
@@ -1899,16 +2045,16 @@ class PresentationCompanion:
         return {
             "phone": {
                 "role": "Main controller",
-                "note": "Use the phone for full slide switching, jump, and mode changes.",
-                "actions": ["previous", "next", "jump", "toggle_cue", "set_mode"],
+                "note": "Use the phone for chunk-by-chunk teleprompter reading, explicit slide jumps, and mode changes.",
+                "actions": ["previous", "next", "previous_chunk", "next_chunk", "previous_slide", "next_slide", "jump", "toggle_cue", "set_mode"],
             },
             "rokid_button": {
                 "role": "Quick remote",
-                "note": "Keep glasses-side control lightweight so the presenter does not need complex input during delivery.",
+                "note": "Keep glasses-side control lightweight so the presenter can step through the current slide script before advancing the deck.",
                 "button_map": {
-                    "single_press": "next",
-                    "double_press": "previous",
-                    "long_press": "toggle_cue",
+                    "single_press": "next_chunk",
+                    "double_press": "previous_chunk",
+                    "long_press": "next_slide",
                 },
             },
         }
@@ -2083,7 +2229,7 @@ class PresentationCompanion:
             section = section_lookup.get(timing.get("section_id", ""), {})
             target = max(1, self._safe_float(timing.get("target_seconds"), default=0))
             delta_ratio = abs(self._safe_float(timing.get("delta_seconds"), default=0)) / target
-            content_score = sum(1 for field in ("outline", "speaker_notes", "cue_cards") if section.get(field, "").strip())
+            content_score = sum(1 for field in ("outline", "speaker_notes", "teleprompter_script", "cue_cards") if section.get(field, "").strip())
             interaction_score = 1 if section.get("interaction_goal", "").strip() else 0
             score = (1 - min(delta_ratio, 1.0)) * 100 + content_score * 10 + interaction_score * 6
             if best is None or score > best_score:
@@ -2104,7 +2250,7 @@ class PresentationCompanion:
             section = section_lookup.get(timing.get("section_id", ""), {})
             target = max(1, self._safe_float(timing.get("target_seconds"), default=0))
             delta_ratio = abs(self._safe_float(timing.get("delta_seconds"), default=0)) / target
-            content_penalty = 0 if any(section.get(field, "").strip() for field in ("outline", "speaker_notes", "cue_cards")) else 0.5
+            content_penalty = 0 if any(section.get(field, "").strip() for field in ("outline", "speaker_notes", "teleprompter_script", "cue_cards")) else 0.5
             interaction_penalty = 0 if section.get("interaction_goal", "").strip() else 0.15
             score = delta_ratio + content_penalty + interaction_penalty
             if worst is None or score > worst_score:
@@ -2127,7 +2273,7 @@ class PresentationCompanion:
                 message = "Add one clearer explanation beat or example so this section feels complete."
             elif not section.get("interaction_goal", "").strip():
                 message = "Add one audience-facing cue, pause goal, or transition line so the section feels live."
-            elif not any(section.get(field, "").strip() for field in ("outline", "speaker_notes", "cue_cards")):
+            elif not any(section.get(field, "").strip() for field in ("outline", "speaker_notes", "teleprompter_script", "cue_cards")):
                 message = "Write your own outline or notes here before the next rehearsal."
             else:
                 continue
@@ -2245,6 +2391,9 @@ class PresentationCompanion:
             "active_slide_index": active_card.get("slide_index", 0),
             "active_slide_title": active_card.get("slide_title", ""),
             "active_slide_anchor": active_card.get("slide_anchor", ""),
+            "active_chunk_index": active_card.get("active_chunk_index", 0),
+            "active_chunk_count": active_card.get("active_chunk_count", 0),
+            "chunk_progress_label": active_card.get("active_chunk_label", "0/0"),
             "presentation_mode": presentation_state.get("presentation_mode", "rehearse"),
             "cue_view": presentation_state.get("cue_view", "visible"),
             "control_source": presentation_state.get("control_source", "phone"),
@@ -2291,6 +2440,7 @@ class PresentationCompanion:
         cue_source = ""
         if presentation_state.get("cue_view") == "visible":
             cue_source = (active_card or {}).get("cue_cards") or (active_card or {}).get("outline") or (active_card or {}).get("slide_anchor")
+        teleprompter_text = (active_card or {}).get("active_chunk_text", "") or (active_card or {}).get("teleprompter_text", "")
         issue_line = latest_hud.get("issue") or latest_feedback.get("one_main_issue", "")
         next_action_line = latest_hud.get("next_action") or latest_feedback.get("one_next_action", "")
         return {
@@ -2320,6 +2470,11 @@ class PresentationCompanion:
             "active_slide_index": active_card.get("slide_index", 0),
             "active_slide_title": active_card.get("slide_title", ""),
             "active_slide_anchor": active_card.get("slide_anchor", ""),
+            "active_chunk_index": active_card.get("active_chunk_index", 0),
+            "active_chunk_count": active_card.get("active_chunk_count", 0),
+            "chunk_progress_label": active_card.get("active_chunk_label", "0/0"),
+            "teleprompter_source": active_card.get("teleprompter_source", "empty"),
+            "teleprompter_text": self._shorten_line(teleprompter_text, 320),
             "status_line": self._shorten_line(status_line, 84),
             "cue_line": self._shorten_line(cue_source, 96),
             "interaction_hint": self._shorten_line((active_card or {}).get("interaction_goal", ""), 84),

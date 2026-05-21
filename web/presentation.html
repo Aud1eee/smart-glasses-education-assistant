@@ -1312,9 +1312,15 @@
                                         </div>
                                     </div>
                                     <div class="control-strip">
-                                        <button class="action-btn" onclick="applyPresentationControl('previous')">Previous</button>
-                                        <button class="action-btn" onclick="applyPresentationControl('next')">Next</button>
+                                        <button class="action-btn" onclick="applyPresentationControl('previous')">Previous Step</button>
+                                        <button class="action-btn" onclick="applyPresentationControl('next')">Next Step</button>
                                         <button class="ghost-btn" onclick="applyPresentationControl('toggle_cue')">Show / Hide Cue</button>
+                                    </div>
+                                    <div class="control-strip">
+                                        <button class="ghost-btn" onclick="applyPresentationControl('previous_chunk')">Previous Chunk</button>
+                                        <button class="ghost-btn" onclick="applyPresentationControl('next_chunk')">Next Chunk</button>
+                                        <button class="ghost-btn" onclick="applyPresentationControl('previous_slide')">Previous Slide</button>
+                                        <button class="ghost-btn" onclick="applyPresentationControl('next_slide')">Next Slide</button>
                                     </div>
                                     <div class="controller-summary-shell" id="controller-summary-host"></div>
                                     <div class="status-row">
@@ -1553,6 +1559,7 @@
                 target_seconds: Math.max(10, Number(section?.target_seconds || 45)),
                 outline: String(section?.outline || ""),
                 speaker_notes: String(section?.speaker_notes || ""),
+                teleprompter_script: String(section?.teleprompter_script || ""),
                 cue_cards: String(section?.cue_cards || ""),
             };
         }
@@ -1598,16 +1605,16 @@
             return {
                 phone: {
                     role: "Main controller",
-                    note: "Use the phone for full slide switching, jump, and mode changes.",
-                    actions: ["previous", "next", "jump", "toggle_cue", "set_mode"],
+                    note: "Use the phone for chunk-by-chunk teleprompter reading, explicit slide jumps, and mode changes.",
+                    actions: ["previous", "next", "previous_chunk", "next_chunk", "previous_slide", "next_slide", "jump", "toggle_cue", "set_mode"],
                 },
                 rokid_button: {
                     role: "Quick remote",
-                    note: "Keep glasses-side control lightweight so the presenter can stay focused on delivery.",
+                    note: "Keep glasses-side control lightweight so the presenter can step through the current slide script before advancing the deck.",
                     button_map: {
-                        single_press: "next",
-                        double_press: "previous",
-                        long_press: "toggle_cue",
+                        single_press: "next_chunk",
+                        double_press: "previous_chunk",
+                        long_press: "next_slide",
                     },
                 },
             };
@@ -1777,6 +1784,11 @@
                 active_slide_index: currentPresentationState().active_slide_index,
                 active_slide_title: "",
                 active_slide_anchor: "",
+                active_chunk_index: currentPresentationState().active_chunk_index || 0,
+                active_chunk_count: currentPresentationState().active_chunk_count || 0,
+                chunk_progress_label: currentPresentationState().chunk_progress_label || "0/0",
+                teleprompter_source: "empty",
+                teleprompter_text: "",
                 status_line: "Current slide ready",
                 cue_line: "",
                 interaction_hint: "",
@@ -1810,6 +1822,7 @@
 
         function briefCardPayload(card) {
             if (!card) return {};
+            const teleprompter = teleprompterBundleForCard(card, 0);
             return {
                 section_id: card.section_id || "",
                 name: card.name || "",
@@ -1819,6 +1832,86 @@
                 interaction_goal: card.interaction_goal || "",
                 target_seconds: Number(card.target_seconds || 0),
                 target_label: formatMmss(Number(card.target_seconds || 0)),
+                teleprompter_source: teleprompter.source,
+                chunk_count: teleprompter.chunkCount,
+            };
+        }
+
+        function teleprompterSource(card) {
+            const sourceMap = [
+                ["teleprompter_script", card?.teleprompter_script],
+                ["speaker_notes", card?.speaker_notes],
+                ["cue_cards", card?.cue_cards],
+                ["outline", card?.outline],
+                ["slide_anchor", card?.slide_anchor],
+            ];
+            for (const [field, value] of sourceMap) {
+                const text = String(value || "").trim();
+                if (text) return { source: field, text };
+            }
+            return { source: "empty", text: "" };
+        }
+
+        function splitLongTeleprompterUnit(text, maxWords = 38) {
+            const words = String(text || "").trim().split(/\s+/).filter(Boolean);
+            if (!words.length) return [];
+            const chunks = [];
+            for (let index = 0; index < words.length; index += maxWords) {
+                chunks.push(words.slice(index, index + maxWords).join(" "));
+            }
+            return chunks;
+        }
+
+        function teleprompterChunksFromText(text, maxWords = 38, maxChars = 280) {
+            const safeText = String(text || "").trim();
+            if (!safeText) return [];
+            const paragraphs = safeText.split(/\n{2,}/).map((item) => item.trim()).filter(Boolean);
+            const chunks = [];
+            for (const paragraph of (paragraphs.length ? paragraphs : [safeText])) {
+                const units = paragraph.split(/(?<=[.!?])\s+|\n+/).map((item) => item.trim()).filter(Boolean);
+                let current = "";
+                let currentWords = 0;
+                for (const unit of (units.length ? units : [paragraph])) {
+                    const baseUnits = unit.split(/\s+/).length > maxWords || unit.length > maxChars
+                        ? splitLongTeleprompterUnit(unit, maxWords)
+                        : [unit];
+                    for (const part of baseUnits) {
+                        const partWords = part.trim().split(/\s+/).filter(Boolean).length;
+                        const candidate = current ? `${current} ${part}` : part;
+                        if (current && (currentWords + partWords > maxWords || candidate.length > maxChars)) {
+                            chunks.push(current.trim());
+                            current = part;
+                            currentWords = partWords;
+                        } else {
+                            current = candidate.trim();
+                            currentWords = current.split(/\s+/).filter(Boolean).length;
+                        }
+                    }
+                }
+                if (current) {
+                    chunks.push(current.trim());
+                }
+            }
+            return chunks.filter(Boolean);
+        }
+
+        function teleprompterBundleForCard(card, requestedChunkIndex = 0) {
+            const { source, text } = teleprompterSource(card);
+            const chunks = teleprompterChunksFromText(text);
+            const chunkCount = chunks.length;
+            const safeIndex = chunkCount
+                ? Math.min(chunkCount - 1, Math.max(0, Number(requestedChunkIndex || 0)))
+                : 0;
+            return {
+                source,
+                text,
+                chunks,
+                chunkCount,
+                activeChunkIndex: safeIndex,
+                activeChunkText: chunkCount ? chunks[safeIndex] : "",
+                chunkProgressLabel: chunkCount ? `${safeIndex + 1}/${chunkCount}` : "0/0",
+                hasPreviousChunk: safeIndex > 0,
+                hasNextChunk: safeIndex + 1 < chunkCount,
             };
         }
 
@@ -1830,12 +1923,17 @@
 
         function defaultPresentationState(cards) {
             const first = cards[0] || {};
+            const teleprompter = teleprompterBundleForCard(first, 0);
             return {
                 presentation_mode: "rehearse",
                 control_source: "phone",
                 last_control_source: "phone",
                 active_section_id: first.section_id || "",
                 active_slide_index: Number(first.slide_index || 0),
+                active_chunk_index: teleprompter.activeChunkIndex,
+                active_chunk_count: teleprompter.chunkCount,
+                active_chunk_text: teleprompter.activeChunkText,
+                chunk_progress_label: teleprompter.chunkProgressLabel,
                 cue_view: "visible",
                 last_action: "sync",
                 last_control_at: "",
@@ -1853,12 +1951,15 @@
                 ...(raw || {}),
             };
             const ids = safeCards.map((item) => item.section_id);
+            const previousSectionId = String((state.presentationState || {}).active_section_id || "");
             if (!ids.includes(base.active_section_id)) {
                 const matched = safeCards.find((item) => Number(item.slide_index || 0) === Number(base.active_slide_index || 0));
                 base.active_section_id = matched?.section_id || safeCards[0]?.section_id || "";
             }
             const activeCard = safeCards.find((item) => item.section_id === base.active_section_id) || safeCards[0] || null;
             base.active_slide_index = Number(activeCard?.slide_index || 0);
+            const requestedChunkIndex = ("active_chunk_index" in base) ? Number(base.active_chunk_index || 0) : 0;
+            const teleprompter = teleprompterBundleForCard(activeCard, requestedChunkIndex);
             if (!["edit", "rehearse", "present"].includes(String(base.presentation_mode || "").toLowerCase())) {
                 base.presentation_mode = "rehearse";
             }
@@ -1870,6 +1971,18 @@
             }
             if (!["visible", "hidden"].includes(String(base.cue_view || "").toLowerCase())) {
                 base.cue_view = "visible";
+            }
+            if (base.active_section_id !== previousSectionId && !("active_chunk_index" in (raw || {}))) {
+                const resetTeleprompter = teleprompterBundleForCard(activeCard, 0);
+                base.active_chunk_index = resetTeleprompter.activeChunkIndex;
+                base.active_chunk_count = resetTeleprompter.chunkCount;
+                base.active_chunk_text = resetTeleprompter.activeChunkText;
+                base.chunk_progress_label = resetTeleprompter.chunkProgressLabel;
+            } else {
+                base.active_chunk_index = teleprompter.activeChunkIndex;
+                base.active_chunk_count = teleprompter.chunkCount;
+                base.active_chunk_text = teleprompter.activeChunkText;
+                base.chunk_progress_label = teleprompter.chunkProgressLabel;
             }
             base.active_card = briefCardPayload(activeCard);
             base.next_card = briefCardPayload(nextCardFromCards(safeCards, base.active_section_id));
@@ -1889,6 +2002,11 @@
             return cards.find((item) => item.section_id === presentationState.active_section_id) || cards[0] || null;
         }
 
+        function currentTeleprompterBundle() {
+            const presentationState = currentPresentationState();
+            return teleprompterBundleForCard(currentActiveCard(), presentationState.active_chunk_index || 0);
+        }
+
         function currentFocusedCard() {
             const cards = normalizeSections(state.draftSections);
             return cards.find((item) => item.section_id === state.focusedCardId) || currentActiveCard() || cards[0] || null;
@@ -1901,6 +2019,7 @@
                 ...state.presentationState,
                 active_section_id: active.section_id || "",
                 active_slide_index: Number(active.slide_index || 0),
+                active_chunk_index: Number(state.presentationState?.active_chunk_index || 0),
                 control_source: document.getElementById("controller-source")?.value || state.presentationState?.control_source || "phone",
                 presentation_mode: document.getElementById("presentation-mode")?.value || state.presentationState?.presentation_mode || "rehearse",
             }, cards);
@@ -1948,8 +2067,12 @@
         function weightedWordCount(section) {
             const countWords = (value) => (String(value || "").match(/[A-Za-z0-9']+/g) || []).length;
             const outline = countWords(section.outline);
+            const teleprompter = countWords(section.teleprompter_script);
             const notes = countWords(section.speaker_notes);
             const cues = countWords(section.cue_cards);
+            if (teleprompter > 0) {
+                return Math.round(outline * 0.2 + teleprompter + cues * 0.2);
+            }
             return Math.round(outline * 0.45 + notes + cues * 0.7);
         }
 
@@ -1980,7 +2103,7 @@
             const cards = normalizeSections(state.draftSections);
             const targetTotalSeconds = cards.reduce((sum, item) => sum + Number(item.target_seconds || 0), 0) || Math.round(Number(document.getElementById("mission-duration").value || 0) * 60);
             const estimatedTotalSeconds = cards.reduce((sum, item) => sum + estimateSectionSeconds(item), 0);
-            const completedCards = cards.filter((item) => item.outline || item.speaker_notes || item.cue_cards).length;
+            const completedCards = cards.filter((item) => item.outline || item.speaker_notes || item.teleprompter_script || item.cue_cards).length;
             const interactionCards = cards.filter((item) => item.interaction_goal).length;
             return {
                 targetTotalSeconds,
@@ -2038,6 +2161,7 @@
             const cards = normalizeSections(state.draftSections);
             const presentationState = currentPresentationState();
             const activeCard = currentActiveCard();
+            const teleprompter = currentTeleprompterBundle();
             const nextCard = nextCardFromCards(cards, presentationState.active_section_id);
             const hints = normalizeControlHints(presentationState.control_hints);
             const selectedHint = hints[presentationState.control_source] || hints.phone;
@@ -2060,6 +2184,7 @@
                     <strong>Controller Snapshot</strong>
                     <div class="controller-guide">
                         <div class="guide-row"><span>Active slide</span><strong>Slide ${activeCard.slide_index}: ${escapeHtml(activeCard.slide_title || activeCard.name)}</strong></div>
+                        <div class="guide-row"><span>Chunk</span><strong>${escapeHtml(teleprompter.chunkProgressLabel)} | ${escapeHtml(teleprompter.source)}</strong></div>
                         <div class="guide-row"><span>Next slide</span><strong>${nextCard ? `Slide ${nextCard.slide_index}: ${escapeHtml(nextCard.slide_title || nextCard.name)}` : "Final card"}</strong></div>
                         <div class="guide-row"><span>Mode</span><strong>${escapeHtml(presentationState.presentation_mode)} | cue ${escapeHtml(presentationState.cue_view)}</strong></div>
                         <div class="guide-row"><span>Controller</span><strong>${escapeHtml(presentationState.control_source)} | last ${escapeHtml(presentationState.last_action || "sync")}</strong></div>
@@ -2071,11 +2196,11 @@
                     <strong>Input Guide</strong>
                     <div class="controller-guide">
                         <div class="guide-row"><span>Phone</span><strong>${escapeHtml((hints.phone.actions || []).join(" | "))}</strong></div>
-                        <div class="guide-row"><span>Rokid button</span><strong>${escapeHtml(rokidMap || "single press -> next | double press -> previous | long press -> toggle_cue")}</strong></div>
-                        <div class="guide-row"><span>Keyboard</span><strong>Right / Space / K -> next | Left / J -> previous | C -> cue</strong></div>
+                        <div class="guide-row"><span>Rokid button</span><strong>${escapeHtml(rokidMap || "single press -> next chunk | double press -> previous chunk | long press -> next slide")}</strong></div>
+                        <div class="guide-row"><span>Keyboard</span><strong>Right / Space / K -> next step | Left / J -> previous step | Down / Up -> next or previous chunk | C -> cue</strong></div>
                         <div class="guide-row"><span>Active anchor</span><strong>${escapeHtml(activeCard.slide_anchor || "No slide anchor set")}</strong></div>
                     </div>
-                    <p>Use the phone as the main controller. Keep the glasses-side button path to quick next, previous, and cue toggle only.</p>
+                    <p>Use the phone as the main controller. Keep the glasses-side button path focused on chunk navigation first, then slide changes when needed.</p>
                 </div>
             `;
         }
@@ -2365,6 +2490,10 @@
                         <textarea oninput="updateFocusedCardField('speaker_notes', this.value)" placeholder="What you want to say in your own words.">${escapeHtml(card.speaker_notes || "")}</textarea>
                     </div>
                     <div class="field">
+                        <label>Teleprompter Script</label>
+                        <textarea oninput="updateFocusedCardField('teleprompter_script', this.value)" placeholder="Optional long-form script for this slide when you need teleprompter-style chunk navigation.">${escapeHtml(card.teleprompter_script || "")}</textarea>
+                    </div>
+                    <div class="field">
                         <label>Cue Cards</label>
                         <textarea oninput="updateFocusedCardField('cue_cards', this.value)" placeholder="Short prompts, pauses, and transitions.">${escapeHtml(card.cue_cards || "")}</textarea>
                     </div>
@@ -2434,6 +2563,7 @@
                 host.innerHTML = `<div class="empty-state">Load a mission to activate the current slide stage.</div>`;
                 return;
             }
+            const teleprompter = currentTeleprompterBundle();
             const estimatedSeconds = estimateSectionSeconds(card);
             const hint = durationHint(estimatedSeconds, Number(card.target_seconds || 0));
             const compactMode = presentationState.presentation_mode === "present";
@@ -2447,14 +2577,17 @@
                 ? (card.cue_cards || card.outline || card.slide_anchor || "Write short cue lines for this slide.")
                 : "Cue cards are hidden for the current presentation view.";
             const interactionMove = card.interaction_goal || "No interaction move has been written for this slide yet.";
+            const teleprompterText = teleprompter.activeChunkText || teleprompter.text || card.speaker_notes || card.outline || "Write a teleprompter script or longer speaker notes for this slide.";
+            const teleprompterSourceLabel = teleprompter.source.replaceAll("_", " ");
 
             if (compactMode) {
                 host.innerHTML = `
-                    <div class="stage-card present-stage">
+                    <div class="stage-card present-stage" data-teleprompter-surface="true">
                         <div class="stage-meta">
                             <span class="stage-label">Present mode</span>
                             <span class="stage-label">Source ${escapeHtml(presentationState.control_source)}</span>
                             <span class="stage-label">Slide ${card.slide_index}</span>
+                            <span class="stage-label">Chunk ${escapeHtml(teleprompter.chunkProgressLabel)}</span>
                             <span class="stage-label">Cue ${cueVisible ? "visible" : "hidden"}</span>
                         </div>
                         <h3>Slide ${card.slide_index}: ${escapeHtml(card.slide_title || card.name)}</h3>
@@ -2474,16 +2607,30 @@
                             </div>
                         </div>
                         <div class="stage-prompt">
-                            <strong>Current Cue</strong>
-                            <div class="stage-copy">${escapeHtml(promptText)}</div>
+                            <strong>Teleprompter Chunk</strong>
+                            <div class="stage-copy">${escapeHtml(teleprompterText)}</div>
                         </div>
                         <div class="stage-block">
-                            <strong>Audience Move</strong>
-                            <div class="stage-copy">${escapeHtml(interactionMove)}</div>
+                            <strong>Chunk Navigation</strong>
+                            <div class="stage-copy">${escapeHtml(`Chunk ${teleprompter.chunkProgressLabel} from ${teleprompterSourceLabel}. Swipe up or down for chunk navigation, or use the controller buttons.`)}</div>
+                        </div>
+                        <div class="action-row" style="margin-top: 12px;">
+                            <button class="ghost-btn" onclick="applyPresentationControl('previous_chunk')">Previous Chunk</button>
+                            <button class="ghost-btn" onclick="applyPresentationControl('next_chunk')">Next Chunk</button>
+                            <button class="ghost-btn" onclick="applyPresentationControl('previous_slide')">Previous Slide</button>
+                            <button class="ghost-btn" onclick="applyPresentationControl('next_slide')">Next Slide</button>
                         </div>
                         <div class="stage-block">
                             <strong>Next Slide</strong>
                             <div class="stage-copy">${nextCard ? `Slide ${nextCard.slide_index}: ${escapeHtml(nextCard.slide_title || nextCard.name)} | ${escapeHtml(nextCard.slide_anchor || "No anchor set")}` : "This is the final slide card. Use the ending pause and land the takeaway."}</div>
+                        </div>
+                        <div class="stage-block">
+                            <strong>${cueVisible ? "Cue Support" : "Cue Support Hidden"}</strong>
+                            <div class="stage-copy">${cueVisible ? escapeHtml(promptText) : "Cue support is hidden for the current view."}</div>
+                        </div>
+                        <div class="stage-block">
+                            <strong>Audience Move</strong>
+                            <div class="stage-copy">${escapeHtml(interactionMove)}</div>
                         </div>
                     </div>
                 `;
@@ -2491,16 +2638,33 @@
             }
 
             host.innerHTML = `
-                <div class="stage-card">
+                <div class="stage-card" data-teleprompter-surface="true">
                     <div class="stage-meta">
                         <span class="stage-label">Mode: ${escapeHtml(presentationState.presentation_mode)}</span>
                         <span class="stage-label">Source: ${escapeHtml(presentationState.control_source)}</span>
                         <span class="stage-label">Slide ${card.slide_index}</span>
+                        <span class="stage-label">Chunk ${escapeHtml(teleprompter.chunkProgressLabel)}</span>
                         <span class="stage-label">Target ${formatMmss(card.target_seconds)}</span>
                         <span class="stage-label">Cue ${cueVisible ? "visible" : "hidden"}</span>
                     </div>
                     <h3>Slide ${card.slide_index}: ${escapeHtml(card.slide_title || card.name)}</h3>
                     <p class="stage-copy">${escapeHtml(card.slide_anchor || "No slide anchor set yet.")}</p>
+                    <div class="stage-block">
+                        <strong>Teleprompter Script</strong>
+                        <div class="stage-copy">${escapeHtml(teleprompter.text || "No teleprompter script or longer notes yet.")}</div>
+                    </div>
+                    <div class="stage-block">
+                        <strong>Current Chunk</strong>
+                        <div class="stage-copy">${escapeHtml(teleprompterText)}</div>
+                    </div>
+                    <div class="action-row" style="margin-top: 12px;">
+                        <button class="ghost-btn" onclick="applyPresentationControl('previous')">Previous Step</button>
+                        <button class="ghost-btn" onclick="applyPresentationControl('next')">Next Step</button>
+                        <button class="ghost-btn" onclick="applyPresentationControl('previous_chunk')">Previous Chunk</button>
+                        <button class="ghost-btn" onclick="applyPresentationControl('next_chunk')">Next Chunk</button>
+                        <button class="ghost-btn" onclick="applyPresentationControl('previous_slide')">Previous Slide</button>
+                        <button class="ghost-btn" onclick="applyPresentationControl('next_slide')">Next Slide</button>
+                    </div>
                     <div class="stage-block">
                         <strong>Interaction Goal</strong>
                         <div class="stage-copy">${escapeHtml(interactionMove)}</div>
@@ -2512,6 +2676,10 @@
                     <div class="stage-block">
                         <strong>Speaker Notes</strong>
                         <div class="stage-copy">${escapeHtml(card.speaker_notes || "No speaker notes yet.")}</div>
+                    </div>
+                    <div class="stage-block">
+                        <strong>Teleprompter Source</strong>
+                        <div class="stage-copy">${escapeHtml(teleprompterSourceLabel)} | ${escapeHtml(`chunk ${teleprompter.chunkProgressLabel}`)}</div>
                     </div>
                     <div class="stage-block">
                         <strong>${cueVisible ? "Cue Cards" : "Cue Cards Hidden"}</strong>
@@ -2706,6 +2874,7 @@
                 target_seconds: 45,
                 outline: "",
                 speaker_notes: "",
+                teleprompter_script: "",
                 cue_cards: "",
             }, nextSlideIndex);
             state.draftSections = [...cards, nextCard];
@@ -3215,6 +3384,7 @@
                 state.presentationState = normalizePresentationState({
                     ...state.presentationState,
                     active_section_id: sectionId,
+                    active_chunk_index: 0,
                 }, state.draftSections);
                 state.focusedCardId = sectionId;
                 renderAll();
@@ -3258,12 +3428,56 @@
                 const current = currentPresentationState();
                 const ids = cards.map((item) => item.section_id);
                 let nextIndex = Math.max(0, ids.indexOf(current.active_section_id));
-                if (action === "next") nextIndex = Math.min(cards.length - 1, nextIndex + 1);
-                if (action === "previous") nextIndex = Math.max(0, nextIndex - 1);
+                const currentCard = cards[nextIndex] || cards[0] || null;
+                const teleprompter = teleprompterBundleForCard(currentCard, current.active_chunk_index || 0);
+                let nextChunkIndex = teleprompter.activeChunkIndex;
+                if (action === "next") {
+                    if (teleprompter.hasNextChunk) {
+                        nextChunkIndex = teleprompter.activeChunkIndex + 1;
+                    } else {
+                        nextIndex = Math.min(cards.length - 1, nextIndex + 1);
+                        nextChunkIndex = 0;
+                    }
+                }
+                if (action === "previous") {
+                    if (teleprompter.hasPreviousChunk) {
+                        nextChunkIndex = Math.max(0, teleprompter.activeChunkIndex - 1);
+                    } else {
+                        nextIndex = Math.max(0, nextIndex - 1);
+                        const previousTeleprompter = teleprompterBundleForCard(cards[nextIndex] || null, 9999);
+                        nextChunkIndex = previousTeleprompter.activeChunkIndex;
+                    }
+                }
+                if (action === "next_chunk") {
+                    if (teleprompter.hasNextChunk) {
+                        nextChunkIndex = teleprompter.activeChunkIndex + 1;
+                    } else {
+                        nextIndex = Math.min(cards.length - 1, nextIndex + 1);
+                        nextChunkIndex = 0;
+                    }
+                }
+                if (action === "previous_chunk") {
+                    if (teleprompter.hasPreviousChunk) {
+                        nextChunkIndex = Math.max(0, teleprompter.activeChunkIndex - 1);
+                    } else {
+                        nextIndex = Math.max(0, nextIndex - 1);
+                        const previousTeleprompter = teleprompterBundleForCard(cards[nextIndex] || null, 9999);
+                        nextChunkIndex = previousTeleprompter.activeChunkIndex;
+                    }
+                }
+                if (action === "next_slide") {
+                    nextIndex = Math.min(cards.length - 1, nextIndex + 1);
+                    nextChunkIndex = 0;
+                }
+                if (action === "previous_slide") {
+                    nextIndex = Math.max(0, nextIndex - 1);
+                    nextChunkIndex = 0;
+                }
                 const nextCard = cards[nextIndex] || cards[0] || null;
                 state.presentationState = normalizePresentationState({
                     ...current,
                     active_section_id: nextCard?.section_id || current.active_section_id,
+                    active_chunk_index: nextChunkIndex,
                     control_source: payload.control_source,
                     last_control_source: payload.control_source,
                     last_action: action,
@@ -3543,6 +3757,48 @@
             return tag === "input" || tag === "textarea" || tag === "select" || target.isContentEditable;
         }
 
+        let presentationStageTouch = null;
+
+        function bindPresentationStageGestures() {
+            const host = document.getElementById("presentation-stage-host");
+            if (!host || host.dataset.gesturesBound === "true") return;
+            host.dataset.gesturesBound = "true";
+            host.addEventListener("touchstart", (event) => {
+                if (event.target && event.target.closest("button, input, textarea, select")) return;
+                const touch = event.changedTouches && event.changedTouches[0];
+                if (!touch) return;
+                presentationStageTouch = {
+                    x: touch.clientX,
+                    y: touch.clientY,
+                    startedAt: Date.now(),
+                };
+            }, { passive: true });
+            host.addEventListener("touchend", async (event) => {
+                if (!presentationStageTouch) return;
+                if (event.target && event.target.closest("button, input, textarea, select")) {
+                    presentationStageTouch = null;
+                    return;
+                }
+                const touch = event.changedTouches && event.changedTouches[0];
+                if (!touch) {
+                    presentationStageTouch = null;
+                    return;
+                }
+                const deltaX = touch.clientX - presentationStageTouch.x;
+                const deltaY = touch.clientY - presentationStageTouch.y;
+                const elapsed = Date.now() - presentationStageTouch.startedAt;
+                presentationStageTouch = null;
+                if (elapsed > 1200) return;
+                if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) >= 42) {
+                    await applyPresentationControl(deltaY < 0 ? "next_chunk" : "previous_chunk");
+                    return;
+                }
+                if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) >= 54) {
+                    await applyPresentationControl(deltaX < 0 ? "next_slide" : "previous_slide");
+                }
+            }, { passive: true });
+        }
+
         document.addEventListener("keydown", async (event) => {
             if (shouldIgnoreShortcutTarget(event.target) || document.getElementById("tab-rehearse").classList.contains("hidden")) {
                 return;
@@ -3553,6 +3809,12 @@
             } else if (event.code === "ArrowLeft" || event.code === "KeyJ") {
                 event.preventDefault();
                 await applyPresentationControl("previous");
+            } else if (event.code === "ArrowDown") {
+                event.preventDefault();
+                await applyPresentationControl("next_chunk");
+            } else if (event.code === "ArrowUp") {
+                event.preventDefault();
+                await applyPresentationControl("previous_chunk");
             } else if (event.code === "KeyC") {
                 event.preventDefault();
                 await applyPresentationControl("toggle_cue");
@@ -3567,6 +3829,7 @@
             state.liveHud = normalizeLiveHud(null);
             state.bridgeAutoClaimedMissionId = "";
             state.focusedCardId = state.draftSections[0]?.section_id || "";
+            bindPresentationStageGestures();
             if (phoneControllerMode) {
                 switchTab("rehearse");
             }

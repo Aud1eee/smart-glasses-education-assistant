@@ -152,6 +152,7 @@ The current demo-ready checkpoint includes:
     - `slide_title`
     - outline
     - speaker notes
+    - teleprompter script
     - cue cards
     - slide / visual anchors
     - interaction goals
@@ -180,10 +181,21 @@ The current demo-ready checkpoint includes:
     - auto-refresh while pairing is waiting / paired / expired
     - explicit joined-surface vs owner-surface visibility
   - phone-first presentation control with Rokid-button scaffolding for:
-    - next
-    - previous
+    - next / previous step navigation
+    - previous / next chunk
+    - previous / next slide
     - cue toggle
-    - present-mode current-slide view
+    - present-mode current-slide teleprompter view
+  - slide teleprompter runtime:
+    - long slide scripts are split into chunk-sized prompts
+    - `next` and `previous` are chunk-first before moving across slides
+    - phone-side stage supports vertical swipe for chunk navigation
+    - phone-side stage supports horizontal swipe for slide navigation
+    - default Rokid mapping:
+      - `single_press -> next_chunk`
+      - `double_press -> previous_chunk`
+      - `long_press -> next_slide`
+    - live HUD payload now includes `teleprompter_text` and `chunk_progress_label`
   - rehearsal run storage:
     - audio source
     - total duration
