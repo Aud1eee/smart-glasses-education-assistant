@@ -22,6 +22,9 @@ class ReflectionCoach:
         use_llm=False,
         provider_override="auto",
         model_override="",
+        live_guardian_state=None,
+        live_session_state=None,
+        live_difficulty_state=None,
     ):
         learner_note = self._clean_text(learner_note, max_length=1200)
         next_goal = self._clean_text(next_goal, max_length=240)
@@ -139,6 +142,17 @@ class ReflectionCoach:
                 if self._valid_experiment_list(llm_payload.get("next_session_experiments")):
                     payload["next_session_experiments"] = llm_payload["next_session_experiments"][:3]
             payload["generation"] = generation
+
+        self._attach_regulation_cycle_overlay(
+            payload,
+            context,
+            signature=signature,
+            live_guardian_state=live_guardian_state,
+            live_session_state=live_session_state,
+            live_difficulty_state=live_difficulty_state,
+            learner_note=learner_note,
+            next_goal=next_goal,
+        )
 
         return payload
 
@@ -540,6 +554,418 @@ class ReflectionCoach:
             f"{int(round(self._safe_float(summary.get('low_confidence_ratio', 0))))}% low-confidence exposure."
             f"{event_line} The next coaching boundary is: {signature['next_boundary']}.{note_line}{goal_line}"
         ).strip()
+
+    def _attach_regulation_cycle_overlay(
+        self,
+        payload,
+        context,
+        signature=None,
+        live_guardian_state=None,
+        live_session_state=None,
+        live_difficulty_state=None,
+        learner_note="",
+        next_goal="",
+    ):
+        cycle = self._build_regulation_cycle(
+            context,
+            signature=signature,
+            live_guardian_state=live_guardian_state,
+            live_session_state=live_session_state,
+            live_difficulty_state=live_difficulty_state,
+            learner_note=learner_note,
+            next_goal=next_goal,
+        )
+        payload["regulation_cycle"] = cycle
+        if not cycle:
+            return payload
+
+        payload["coach_summary"]["regulation_focus"] = cycle["coach_bridge"]
+        payload["reflection_questions"] = self._prepend_unique_question(
+            payload.get("reflection_questions", []),
+            cycle.get("reflection_question"),
+        )
+        payload["next_session_experiments"] = self._prepend_unique_experiment(
+            payload.get("next_session_experiments", []),
+            cycle.get("recommended_experiment"),
+        )
+        payload["coach_cards"] = self._prepend_regulation_card(
+            payload.get("coach_cards", []),
+            cycle,
+        )
+        memo_suffix = cycle.get("memo_suffix", "")
+        if memo_suffix:
+            base_memo = str(payload.get("coach_memo", "")).strip()
+            payload["coach_memo"] = f"{base_memo} {memo_suffix}".strip()
+        return payload
+
+    def _build_regulation_cycle(
+        self,
+        context,
+        signature=None,
+        live_guardian_state=None,
+        live_session_state=None,
+        live_difficulty_state=None,
+        learner_note="",
+        next_goal="",
+    ):
+        summary = context.get("summary", {}) or {}
+        anchors = context.get("anchors", {}) or {}
+        highlight_event = context.get("highlight_event") or {}
+        closing_state = anchors.get("closing_state") or {}
+        guardian = live_guardian_state if isinstance(live_guardian_state, dict) else {}
+        session_state = live_session_state if isinstance(live_session_state, dict) else {}
+        difficulty_state = live_difficulty_state if isinstance(live_difficulty_state, dict) else {}
+        active_event = difficulty_state.get("active_event") if isinstance(difficulty_state.get("active_event"), dict) else None
+        last_event = difficulty_state.get("last_event") if isinstance(difficulty_state.get("last_event"), dict) else None
+        reference_event = active_event or last_event or highlight_event
+
+        state_hint = self._regulation_state_hint(guardian, closing_state, highlight_event, signature)
+        task_mode = (
+            str(guardian.get("task_mode") or session_state.get("task_mode") or reference_event.get("task_mode") or summary.get("primary_task_mode") or "reading")
+            .strip()
+            .lower()
+        ) or "reading"
+        guidance = str(session_state.get("guidance") or reference_event.get("guidance") or closing_state.get("guidance") or "").strip()
+        signature_detail = signature.get("detail", "") if isinstance(signature, dict) else ""
+        load_reason = str(
+            guardian.get("load_reason")
+            or reference_event.get("trigger_reason")
+            or signature_detail
+        ).strip()
+        focus_score = self._safe_float(guardian.get("focus_score"))
+        load_score = self._safe_float(guardian.get("cognitive_load", summary.get("avg_load", 0)))
+        fatigue_score = self._safe_float(guardian.get("fatigue_risk", summary.get("avg_fatigue", 0)))
+        switching_index = self._safe_float(guardian.get("switching_index", summary.get("avg_switching", 0)))
+        uncertainty_score = self._safe_float(guardian.get("uncertainty_score", summary.get("low_confidence_ratio", 0)))
+        checkpoint = self._regulation_checkpoint(state_hint, task_mode, next_goal)
+
+        if not any([
+            guardian,
+            session_state,
+            active_event,
+            last_event,
+            highlight_event,
+            summary,
+        ]):
+            return None
+
+        question = self._regulation_question(state_hint, task_mode, reference_event, learner_note=learner_note)
+        action = self._regulation_next_action(
+            state_hint,
+            task_mode,
+            guidance,
+            load_reason,
+            next_goal=next_goal,
+        )
+        experiment = self._regulation_experiment(state_hint, task_mode, next_goal=next_goal)
+        outcome_review = self._regulation_outcome_review(
+            state_hint,
+            active_event=active_event,
+            reference_event=reference_event,
+            focus_score=focus_score,
+            load_score=load_score,
+            fatigue_score=fatigue_score,
+            switching_index=switching_index,
+            uncertainty_score=uncertainty_score,
+        )
+        cycle_status = outcome_review["status"]
+        state_label = self._state_hint_label(state_hint)
+        cycle_title = self._regulation_cycle_title(state_hint, cycle_status)
+        trigger_reason = str(
+            reference_event.get("trigger_reason")
+            or reference_event.get("review_note")
+            or load_reason
+            or guidance
+            or "The current study rhythm shows regulation pressure that should be handled before simply adding more effort."
+        ).strip()
+
+        coach_bridge = (
+            f"Current regulation loop: {state_label} in {task_mode.replace('-', ' ')} mode. "
+            f"Next move: {action['title']}. Checkpoint: {checkpoint}"
+        )
+        memo_suffix = (
+            f"Regulation loop: {trigger_reason} "
+            f"Action: {action['detail']} "
+            f"Checkpoint: {checkpoint} "
+            f"Outcome signal: {outcome_review['detail']}"
+        ).strip()
+
+        return {
+            "status": cycle_status,
+            "cycle_title": cycle_title,
+            "task_mode": task_mode,
+            "trigger_state_hint": state_hint,
+            "trigger_state_label": state_label,
+            "trigger_reason": trigger_reason,
+            "guidance": guidance or action["detail"],
+            "active_event": active_event,
+            "reference_event": reference_event if reference_event else None,
+            "focus_score": round(focus_score, 1),
+            "cognitive_load": round(load_score, 1),
+            "fatigue_risk": round(fatigue_score, 1),
+            "switching_index": round(switching_index, 1),
+            "uncertainty_score": round(uncertainty_score, 1),
+            "reflection_question": question,
+            "recommended_next_action": action,
+            "recommended_experiment": experiment,
+            "next_checkpoint": checkpoint,
+            "outcome_review": outcome_review,
+            "coach_bridge": coach_bridge,
+            "memo_suffix": memo_suffix,
+        }
+
+    def _regulation_state_hint(self, guardian, closing_state, highlight_event, signature=None):
+        for source in (guardian, closing_state, highlight_event):
+            if not isinstance(source, dict):
+                continue
+            state_hint = str(source.get("state_hint", "")).strip().lower()
+            if state_hint:
+                return state_hint
+
+        key = str((signature or {}).get("key", "")).strip().lower()
+        mapping = {
+            "productive_challenge": "productive_struggle",
+            "switching_drift": "off_task_risk",
+            "fatigue_drag": "fatigue_risk",
+            "signal_check": "signal_check",
+            "steady_control": "stable",
+            "mixed_regulation": "load_rising",
+        }
+        return mapping.get(key, "stable")
+
+    def _regulation_cycle_title(self, state_hint, cycle_status):
+        if cycle_status == "active":
+            return "Intervention is active"
+        if cycle_status == "stabilizing":
+            return "State is stabilizing"
+        if cycle_status == "improved":
+            return "Recovery looks better"
+        if cycle_status == "monitor":
+            return "Monitor the next block"
+        return f"{self._state_hint_label(state_hint)} loop"
+
+    def _regulation_question(self, state_hint, task_mode, reference_event, learner_note=""):
+        window = str(reference_event.get("time_window") or reference_event.get("end_timestamp") or "the current learning window").strip()
+        note_suffix = f' The learner already noticed: "{learner_note}".' if learner_note else ""
+        if state_hint == "off_task_risk":
+            return f"What triggered the first unnecessary source switch before or during {window} in {task_mode.replace('-', ' ')} mode?{note_suffix}".strip()
+        if state_hint == "fatigue_risk":
+            return f"When did effort stop feeling useful and start feeling heavy during {window}?{note_suffix}".strip()
+        if state_hint == "productive_struggle":
+            return f"What exact reasoning step became effortful during {window}, even though behavior stayed mostly aligned?{note_suffix}".strip()
+        if state_hint == "signal_check":
+            return f"What part of the setup was unstable during {window}: posture, scene quality, or tracking consistency?{note_suffix}".strip()
+        if state_hint == "load_rising":
+            return f"What changed first in {window}: pace, uncertainty, or target switching?{note_suffix}".strip()
+        return f"What should stay stable in the next {task_mode.replace('-', ' ')} block so the learning state remains interpretable?{note_suffix}".strip()
+
+    def _regulation_next_action(self, state_hint, task_mode, guidance, load_reason, next_goal=""):
+        goal_suffix = f' while still aiming for "{next_goal}"' if next_goal else ""
+        if state_hint == "off_task_risk":
+            return {
+                "title": "Source-lock reset",
+                "detail": f"Commit to one source only for the next two minutes{goal_suffix} and do not open a second input unless it is pre-planned.",
+                "reason": guidance or load_reason or "Switching pressure is currently stronger than understanding pressure.",
+                "expected_effect": "Switching should fall before you judge whether the material itself is the problem.",
+            }
+        if state_hint == "fatigue_risk":
+            return {
+                "title": "Micro-recovery first",
+                "detail": f"Take a short reset, then replay only the highest-value slice instead of pushing through the whole block{goal_suffix}.",
+                "reason": guidance or load_reason or "Fatigue is likely distorting the quality of the next attempt.",
+                "expected_effect": "The replay should start from a cleaner state with lower fatigue drag.",
+            }
+        if state_hint == "productive_struggle":
+            return {
+                "title": "Protect the challenge point",
+                "detail": f"Replay the difficult step slowly, but keep the same target and do not add rescue materials immediately{goal_suffix}.",
+                "reason": guidance or load_reason or "The pressure looks conceptual rather than purely off-task.",
+                "expected_effect": "You should be able to name the exact step that needs rebuilding.",
+            }
+        if state_hint == "signal_check":
+            return {
+                "title": "Clean calibration minute",
+                "detail": f"Use the next minute only to stabilize posture, scene, and task mode before reading the coaching output{goal_suffix}.",
+                "reason": guidance or load_reason or "The current signal quality is not stable enough to over-interpret.",
+                "expected_effect": "The next state reading should have higher confidence and less setup noise.",
+            }
+        if state_hint == "load_rising":
+            return {
+                "title": "One-variable retry",
+                "detail": f"Keep the same material, but change only one control variable next: pace, switching, or break timing{goal_suffix}.",
+                "reason": guidance or load_reason or "Mixed regulation pressure is easier to read when only one variable changes.",
+                "expected_effect": "The next block should make the dominant pressure easier to isolate.",
+            }
+        return {
+            "title": "Preserve the stable setup",
+            "detail": f"Keep the same task mode and opening setup for the next block{goal_suffix}, then add only one small stretch if needed.",
+            "reason": guidance or "The current rhythm is stable enough to be used as a control condition.",
+            "expected_effect": "The next session should start from a reliable baseline instead of a moving target.",
+        }
+
+    def _regulation_experiment(self, state_hint, task_mode, next_goal=""):
+        goal_suffix = f' while still aiming for {next_goal}' if next_goal else ""
+        if state_hint == "off_task_risk":
+            return self._experiment(
+                "Two-minute source lock",
+                f"Start the next {task_mode.replace('-', ' ')} block with one source only and pre-commit the single allowed switch{goal_suffix}.",
+                "Switching pressure falls and the state hint moves away from off-task risk.",
+            )
+        if state_hint == "fatigue_risk":
+            return self._experiment(
+                "Short replay block",
+                f"Replay only the highest-value segment after a short reset instead of repeating the full tired block{goal_suffix}.",
+                "Fatigue drops enough that clarity improves before endurance becomes the issue again.",
+            )
+        if state_hint == "productive_struggle":
+            return self._experiment(
+                "Slow replay, same target",
+                f"Replay the challenge point more slowly without changing source or adding new materials{goal_suffix}.",
+                "The exact concept boundary becomes easier to name while alignment stays relatively high.",
+            )
+        if state_hint == "signal_check":
+            return self._experiment(
+                "Single-mode warm start",
+                f"Spend the first minute in one mode only, with a cleaner visual setup, before mixing in extra actions{goal_suffix}.",
+                "Confidence rises and the coach stops defaulting to signal-check behavior.",
+            )
+        return self._experiment(
+            "One-variable retry",
+            f"Keep the same material, but change one regulation variable only: pace, switching, or break timing{goal_suffix}.",
+            "The next block makes the dominant pressure easier to interpret.",
+        )
+
+    def _regulation_checkpoint(self, state_hint, task_mode, next_goal=""):
+        goal_suffix = f" before moving back to {next_goal}" if next_goal else ""
+        if state_hint == "off_task_risk":
+            return f"Watch the first 2 minutes of the next {task_mode.replace('-', ' ')} block for fewer reactive switches{goal_suffix}."
+        if state_hint == "fatigue_risk":
+            return f"Check whether the next replay begins with lower fatigue and cleaner focus within the first 90 seconds{goal_suffix}."
+        if state_hint == "productive_struggle":
+            return f"Check whether the exact difficult step can be named more clearly on the next replay{goal_suffix}."
+        if state_hint == "signal_check":
+            return f"Check whether posture, scene, and task mode stay stable long enough to trust the next reading{goal_suffix}."
+        if state_hint == "load_rising":
+            return f"Check whether one controlled change makes the next {task_mode.replace('-', ' ')} block easier to diagnose{goal_suffix}."
+        return f"Check whether the next {task_mode.replace('-', ' ')} block stays stable enough to use as a clean baseline{goal_suffix}."
+
+    def _regulation_outcome_review(
+        self,
+        state_hint,
+        active_event=None,
+        reference_event=None,
+        focus_score=0.0,
+        load_score=0.0,
+        fatigue_score=0.0,
+        switching_index=0.0,
+        uncertainty_score=0.0,
+    ):
+        if active_event:
+            return {
+                "status": "active",
+                "label": "Intervention still needed",
+                "detail": "A sustained difficulty event is still active, so the loop should stay in adjust-and-recheck mode rather than treating the issue as resolved.",
+            }
+
+        if state_hint == "stable" and load_score <= 42 and fatigue_score <= 45 and switching_index <= 34:
+            return {
+                "status": "improved",
+                "label": "Recovery looks credible",
+                "detail": "The current state is comparatively stable, with lower load and switching pressure than a typical active-risk segment.",
+            }
+
+        if state_hint in {"productive_struggle", "load_rising"} and fatigue_score < 55:
+            return {
+                "status": "stabilizing",
+                "label": "Keep the pressure interpretable",
+                "detail": "The session still carries effort, but it looks more controllable than a fully active risk event. The next block should test one adjustment, not many.",
+            }
+
+        if state_hint in {"off_task_risk", "fatigue_risk", "signal_check"}:
+            return {
+                "status": "monitor",
+                "label": "Risk is still present",
+                "detail": "The dominant pressure is still visible, so the next step should stay tightly scoped and be re-checked quickly.",
+            }
+
+        event_text = ""
+        if isinstance(reference_event, dict) and reference_event.get("event_id"):
+            event_text = f" after D{reference_event.get('event_id')}"
+        return {
+            "status": "monitor",
+            "label": "Needs a follow-up check",
+            "detail": f"The regulation loop should be checked again on the next focused block{event_text}, because the current signal is not yet strong enough to claim recovery.",
+        }
+
+    def _prepend_unique_question(self, items, question):
+        question_text = self._clean_text(question or "", max_length=400)
+        normalized = [{"question": question_text}] if question_text else []
+        seen = {question_text.lower()} if question_text else set()
+        for item in items or []:
+            text = self._clean_text((item or {}).get("question", ""), max_length=400)
+            if not text or text.lower() in seen:
+                continue
+            normalized.append({"question": text})
+            seen.add(text.lower())
+        return normalized[:3]
+
+    def _prepend_unique_experiment(self, items, experiment):
+        normalized = []
+        seen = set()
+        candidate_title = self._clean_text((experiment or {}).get("title", ""), max_length=240)
+        if candidate_title:
+            normalized.append(self._experiment(
+                candidate_title,
+                self._clean_text((experiment or {}).get("detail", ""), max_length=1200),
+                self._clean_text((experiment or {}).get("success_marker", ""), max_length=800),
+            ))
+            seen.add(candidate_title.lower())
+        for item in items or []:
+            title = self._clean_text((item or {}).get("title", ""), max_length=240)
+            detail = self._clean_text((item or {}).get("detail", ""), max_length=1200)
+            success_marker = self._clean_text((item or {}).get("success_marker", ""), max_length=800)
+            if not title or title.lower() in seen or not detail or not success_marker:
+                continue
+            normalized.append(self._experiment(title, detail, success_marker))
+            seen.add(title.lower())
+        return normalized[:3]
+
+    def _prepend_regulation_card(self, cards, cycle):
+        cycle_card = {
+            "eyebrow": "Regulation loop",
+            "title": cycle.get("cycle_title", "Regulation focus"),
+            "detail": cycle.get("coach_bridge", ""),
+            "tone": self._regulation_card_tone(cycle.get("status")),
+        }
+        normalized = [cycle_card]
+        for item in cards or []:
+            if not isinstance(item, dict):
+                continue
+            if str(item.get("eyebrow", "")).strip().lower() == "regulation loop":
+                continue
+            normalized.append(item)
+        return normalized[:3]
+
+    def _regulation_card_tone(self, status):
+        status = str(status or "").strip().lower()
+        if status == "active":
+            return "high"
+        if status in {"stabilizing", "monitor"}:
+            return "warn"
+        if status == "improved":
+            return "good"
+        return "signal"
+
+    def _state_hint_label(self, state_hint):
+        mapping = {
+            "stable": "Stable",
+            "load_rising": "Load rising",
+            "productive_struggle": "Productive struggle",
+            "off_task_risk": "Off-task risk",
+            "fatigue_risk": "Fatigue risk",
+            "signal_check": "Signal check",
+        }
+        return mapping.get(str(state_hint or "").strip().lower(), "Stable")
 
     def _maybe_generate_model_layer(
         self,

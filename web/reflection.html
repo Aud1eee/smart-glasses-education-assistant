@@ -599,6 +599,11 @@
             margin-bottom: 18px;
         }
 
+        .regulation-panel {
+            padding: 22px;
+            margin-bottom: 18px;
+        }
+
         .compare-toolbar,
         .compare-links,
         .compare-card-head,
@@ -1069,6 +1074,21 @@
             <div class="compare-grid" id="compare-grid"></div>
         </section>
 
+        <section class="panel regulation-panel">
+            <div class="input-header">
+                <div>
+                    <div class="panel-eyebrow">Guardian → Reflection Loop</div>
+                    <h2 style="margin-top:10px;">How the current state becomes a reflection action.</h2>
+                </div>
+                <p>
+                    This panel shows the closure path from live state detection to reflection coaching, the next action, and the
+                    outcome signal we want to check in the next study block.
+                </p>
+            </div>
+            <div class="anchor-metrics" id="regulation-meta"></div>
+            <div class="list-stack" id="regulation-list"></div>
+        </section>
+
         <section class="coach-strip" id="coach-strip"></section>
 
         <section class="content-grid">
@@ -1481,6 +1501,59 @@
             `).join("");
         }
 
+        function renderRegulationCycle(cycle) {
+            const metaShell = document.getElementById("regulation-meta");
+            const listShell = document.getElementById("regulation-list");
+            if (!cycle) {
+                metaShell.innerHTML = "";
+                listShell.innerHTML = `
+                    <div class="list-item">
+                        <strong>No active regulation loop yet.</strong>
+                        <p>Generate a reflection view after a live or demo session so the page can connect guardian state, reflection prompts, and re-check guidance.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const action = cycle.recommended_next_action || {};
+            const experiment = cycle.recommended_experiment || {};
+            const outcome = cycle.outcome_review || {};
+            const eventId = cycle.active_event?.event_id || cycle.reference_event?.event_id || "--";
+
+            metaShell.innerHTML = `
+                <div class="anchor-chip"><strong>Status</strong>${escapeHtml(cycle.cycle_title || prettyLabel(cycle.status, "--"))}</div>
+                <div class="anchor-chip"><strong>State</strong>${escapeHtml(cycle.trigger_state_label || "--")}</div>
+                <div class="anchor-chip"><strong>Mode</strong>${escapeHtml(prettyLabel(cycle.task_mode || "--"))}</div>
+                <div class="anchor-chip"><strong>Event</strong>D${escapeHtml(eventId)}</div>
+                <div class="anchor-chip"><strong>Checkpoint</strong>${escapeHtml(cycle.next_checkpoint || "--")}</div>
+            `;
+
+            listShell.innerHTML = `
+                <div class="list-item">
+                    <strong>Trigger</strong>
+                    <p>${escapeHtml(cycle.trigger_reason || "No explicit trigger reason was recorded.")}</p>
+                </div>
+                <div class="list-item">
+                    <strong>Reflection question</strong>
+                    <p>${escapeHtml(cycle.reflection_question || "--")}</p>
+                </div>
+                <div class="list-item">
+                    <strong>${escapeHtml(action.title || "Next action")}</strong>
+                    <p>${escapeHtml(action.detail || "--")}</p>
+                    <p><strong>Expected effect:</strong> ${escapeHtml(action.expected_effect || "--")}</p>
+                </div>
+                <div class="list-item">
+                    <strong>${escapeHtml(experiment.title || "Next-session experiment")}</strong>
+                    <p>${escapeHtml(experiment.detail || "--")}</p>
+                    <p><strong>Success marker:</strong> ${escapeHtml(experiment.success_marker || "--")}</p>
+                </div>
+                <div class="list-item">
+                    <strong>${escapeHtml(outcome.label || "Outcome review")}</strong>
+                    <p>${escapeHtml(outcome.detail || "--")}</p>
+                </div>
+            `;
+        }
+
         function renderExperimentList(items) {
             const shell = document.getElementById("experiment-list");
             shell.innerHTML = (Array.isArray(items) ? items : []).map((item, index) => `
@@ -1866,6 +1939,7 @@
                 syncReflectionRoute();
                 renderHero(payload);
                 renderAnchor(payload);
+                renderRegulationCycle(payload.regulation_cycle || null);
                 renderCoachCards(payload.coach_cards || []);
                 renderQuestionList(payload.reflection_questions || []);
                 renderExperimentList(payload.next_session_experiments || []);
@@ -1883,6 +1957,7 @@
                 document.getElementById("coach-note").innerText =
                     error.message || "The page could not reach the local reflection endpoint.";
                 renderAnchor(null);
+                renderRegulationCycle(null);
                 document.getElementById("provider-state-title").innerText = "Reflection runtime is offline.";
                 document.getElementById("provider-state-title").className = "tone-warn";
                 document.getElementById("provider-state-note").innerText = "The page could not reach the Flask reflection endpoint, so provider status is unavailable.";
@@ -1895,6 +1970,7 @@
             resetCompareResults();
             renderSnapshotLinks(null);
             renderAnchor(null);
+            renderRegulationCycle(null);
             syncReviewLinks(currentEventId);
             await loadProviderStatus();
             await loadCoach(false, false);

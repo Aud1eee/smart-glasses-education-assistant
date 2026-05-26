@@ -180,10 +180,18 @@ def _active_scene_metrics():
         "scene_lock_score": posture.scene_lock_score,
         "blur_score": posture.blur_score,
         "brightness_score": posture.brightness_score,
+        "focus_score": posture.focus_score,
         "behavioral_alignment": posture.behavioral_alignment,
+        "behavioral_level": posture.behavioral_level,
         "cognitive_load": posture.cognitive_load,
+        "load_level": posture.load_level,
+        "load_reason": posture.load_reason,
         "fatigue_risk": posture.fatigue_risk,
+        "fatigue_level": posture.fatigue_level,
         "uncertainty_score": posture.uncertainty_score,
+        "confidence_level": posture.confidence_level,
+        "switching_index": posture.switching_index,
+        "drift_trend": posture.drift_trend,
         "state_hint": posture.state_hint,
         "task_mode": posture.task_mode,
     }
@@ -1164,6 +1172,9 @@ def _build_reflection_compare_variant(dataset, session_id, event_id, learner_not
         use_llm=True,
         provider_override="ollama",
         model_override=model_name,
+        live_guardian_state=_active_scene_metrics(),
+        live_session_state=latest_session,
+        live_difficulty_state=latest_difficulty,
     )
     duration_ms = int(round((time.perf_counter() - started_at) * 1000))
     generation = payload.get("generation", {}) or {}
@@ -1534,6 +1545,9 @@ def reflection_coach_summary():
             use_llm=use_llm,
             provider_override=provider_override,
             model_override=model_override,
+            live_guardian_state=_active_scene_metrics(),
+            live_session_state=latest_session,
+            live_difficulty_state=latest_difficulty,
         )
     )
 
