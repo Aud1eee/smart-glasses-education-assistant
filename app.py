@@ -10,6 +10,7 @@ import bootstrap_windows_runtime  # noqa: F401
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request, send_from_directory, Response
 from flask_cors import CORS
+import pandas as pd
 
 from core.difficulty_marker import DifficultyEventMarker
 from core.edu import EduEngine
@@ -24,6 +25,7 @@ from core.rokid_adapter import (
     build_simulator_packet,
 )
 from core.rokid_frame_adapter import RokidFrameAdapter
+from core.state_classifier import rule_baseline
 from core.vision import VisionEngine
 from utils.storage import DataLogger
 
@@ -36,6 +38,8 @@ EXPORT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "exports")
 REFLECTION_SNAPSHOT_DIR = os.path.join(EXPORT_DIR, "reflection_snapshots")
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 ROKID_PROFILE_STORE_PATH = os.path.join(PROJECT_ROOT, "data", "rokid_scene_profiles.json")
+STATE_WINDOW_FEATURES_PATH = os.path.join(PROJECT_ROOT, "data", "state_window_features.csv")
+STATE_VALIDATION_METRICS_PATH = os.path.join(EXPORT_DIR, "state_validation_metrics.json")
 REFLECTION_RUNTIME_VERSION = "reflection-runtime-info-2026-05-19-v1"
 REFLECTION_SNAPSHOT_EXPORTER_VERSION = "reflection-html-card-2026-05-19-v1"
 APP_BOOTED_AT = datetime.now().isoformat(timespec="seconds")
@@ -165,6 +169,144 @@ ROKID_SCENE_PRESETS = {
 def _build_session_id(now=None):
     now = now or datetime.now()
     return now.strftime("session-%Y%m%d-%H%M%S-%f")
+
+
+def _safe_float(value, default=None):
+    try:
+        if pd.isna(value):
+            return default
+        return float(value)
+    except Exception:
+        return default
+
+
+def _safe_int(value, default=0):
+    try:
+        if pd.isna(value):
+            return default
+        return int(float(value))
+    except Exception:
+        return default
+
+
+def _window_overlap(start_a, end_a, start_b, end_b):
+    return max(0, min(end_a, end_b) - max(start_a, start_b) + 1)
+
+
+def _load_state_window_frame(session_id=None):
+    if not os.path.exists(STATE_WINDOW_FEATURES_PATH) or os.path.getsize(STATE_WINDOW_FEATURES_PATH) <= 0:
+        return pd.DataFrame()
+    try:
+        frame = pd.read_csv(STATE_WINDOW_FEATURES_PATH)
+    except Exception:
+        return pd.DataFrame()
+    if frame.empty:
+        return pd.DataFrame()
+    if session_id:
+        normalized = str(session_id).strip()
+        frame = frame[frame.get("session_id", pd.Series(dtype=str)).fillna("").astype(str).str.strip() == normalized]
+    if frame.empty:
+        return pd.DataFrame()
+    order_columns = [column for column in ("session_id", "start_sample", "end_sample") if column in frame.columns]
+    if order_columns:
+        frame = frame.sort_values(order_columns, kind="stable").reset_index(drop=True)
+    return frame
+
+
+def _serialize_state_validation_window(row):
+    prediction = rule_baseline(row)
+    return {
+        "session_id": str(row.get("session_id", "")).strip(),
+        "start_sample": _safe_int(row.get("start_sample"), default=0),
+        "end_sample": _safe_int(row.get("end_sample"), default=0),
+        "task_mode_majority": str(row.get("task_mode_majority", "")).strip(),
+        "state_hint_majority": str(row.get("state_hint_majority", "")).strip(),
+        "load_level_majority": str(row.get("load_level_majority", "")).strip(),
+        "predicted_label": prediction["label"],
+        "confidence": prediction["confidence"],
+        "evidence": prediction["evidence"],
+        "uncertainty_reason": prediction["uncertainty_reason"],
+        "model": prediction["model"],
+        "metrics": {
+            "cognitive_load_mean": _safe_float(row.get("cognitive_load_mean")),
+            "behavioral_alignment_mean": _safe_float(row.get("behavioral_alignment_mean")),
+            "fatigue_risk_mean": _safe_float(row.get("fatigue_risk_mean")),
+            "scene_lock_score_mean": _safe_float(row.get("scene_lock_score_mean")),
+            "scene_switch_rate_mean": _safe_float(row.get("scene_switch_rate_mean")),
+            "study_surface_score_mean": _safe_float(row.get("study_surface_score_mean")),
+        },
+    }
+
+
+def _match_state_validation_window(frame, start_sample=None, end_sample=None):
+    if frame.empty:
+        return None
+    if start_sample is None or end_sample is None:
+        return frame.iloc[-1]
+
+    best_row = None
+    best_overlap = 0
+    for _, row in frame.iterrows():
+        overlap = _window_overlap(
+            _safe_int(row.get("start_sample"), default=0),
+            _safe_int(row.get("end_sample"), default=0),
+            _safe_int(start_sample, default=0),
+            _safe_int(end_sample, default=0),
+        )
+        if overlap > best_overlap:
+            best_overlap = overlap
+            best_row = row
+    if best_row is None or best_overlap <= 0:
+        return None
+    return best_row
+
+
+def _validation_metrics_snapshot():
+    if not os.path.exists(STATE_VALIDATION_METRICS_PATH) or os.path.getsize(STATE_VALIDATION_METRICS_PATH) <= 0:
+        return False, None
+    try:
+        with open(STATE_VALIDATION_METRICS_PATH, "r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+    except Exception:
+        return True, None
+    return True, {
+        "generated_at": payload.get("generated_at"),
+        "feature_rows": payload.get("feature_rows"),
+        "labeled_window_rows": payload.get("labeled_window_rows"),
+        "missing_fields": payload.get("missing_fields", []),
+        "window_seconds": payload.get("window_seconds"),
+        "step_seconds": payload.get("step_seconds"),
+        "rule_baseline": payload.get("rule_baseline", {}),
+        "sklearn_baseline": payload.get("sklearn_baseline", {}),
+        "correlations": payload.get("correlations", {}),
+        "confusion_matrix_path": payload.get("confusion_matrix_path", ""),
+    }
+
+
+def _build_state_validation_summary(session_id=None, start_sample=None, end_sample=None, limit=8):
+    metrics_exists, validation_metrics = _validation_metrics_snapshot()
+    frame = _load_state_window_frame(session_id=session_id)
+    recent_windows = []
+    selected_window = None
+    if not frame.empty:
+        recent_windows = [
+            _serialize_state_validation_window(row)
+            for _, row in frame.tail(max(1, min(int(limit or 8), 24))).iterrows()
+        ]
+        matched_row = _match_state_validation_window(frame, start_sample=start_sample, end_sample=end_sample)
+        if matched_row is not None:
+            selected_window = _serialize_state_validation_window(matched_row)
+
+    return {
+        "status": "ok",
+        "has_validation_metrics": metrics_exists,
+        "features_available": bool(not frame.empty),
+        "validation_metrics": validation_metrics,
+        "recent_windows": recent_windows,
+        "selected_window": selected_window,
+        "features_path": STATE_WINDOW_FEATURES_PATH,
+        "metrics_path": STATE_VALIDATION_METRICS_PATH,
+    }
 
 
 def _active_scene_metrics():
@@ -1521,6 +1663,21 @@ def review_summary():
     dataset = request.args.get("dataset", "live")
     session_id = request.args.get("session_id") or None
     payload = logger.build_review_payload(session_id=session_id, dataset=dataset)
+    return jsonify(payload)
+
+
+@app.route("/api/state_validation_summary")
+def state_validation_summary():
+    session_id = str(request.args.get("session_id", "")).strip() or None
+    start_sample = request.args.get("start_sample")
+    end_sample = request.args.get("end_sample")
+    limit = _safe_int(request.args.get("limit"), default=8)
+    payload = _build_state_validation_summary(
+        session_id=session_id,
+        start_sample=_safe_int(start_sample, default=0) if start_sample not in (None, "") else None,
+        end_sample=_safe_int(end_sample, default=0) if end_sample not in (None, "") else None,
+        limit=limit,
+    )
     return jsonify(payload)
 
 

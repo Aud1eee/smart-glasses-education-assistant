@@ -766,6 +766,62 @@
             font-size: 14px;
         }
 
+        .validation-banner {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(159, 215, 255, 0.16);
+            background: rgba(159, 215, 255, 0.08);
+            color: rgba(255, 242, 218, 0.84);
+            line-height: 1.55;
+            font-size: 13px;
+        }
+
+        .validation-chip-row {
+            margin-top: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .validation-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 189, 92, 0.14);
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .validation-state-grid {
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .validation-list {
+            margin: 10px 0 0;
+            padding-left: 18px;
+            color: rgba(255, 242, 218, 0.74);
+            line-height: 1.55;
+        }
+
+        .validation-list li + li {
+            margin-top: 8px;
+        }
+
+        .validation-note {
+            margin-top: 14px;
+            color: rgba(255, 242, 218, 0.68);
+            line-height: 1.55;
+            font-size: 13px;
+        }
+
         .empty-state {
             margin-top: 18px;
             padding: 24px;
@@ -785,7 +841,8 @@
             .event-meta,
             .event-actions,
             .summary-grid,
-            .spotlight-meta {
+            .spotlight-meta,
+            .validation-state-grid {
                 grid-template-columns: 1fr 1fr;
             }
 
@@ -817,7 +874,8 @@
             .event-meta,
             .event-actions,
             .summary-grid,
-            .spotlight-meta {
+            .spotlight-meta,
+            .validation-state-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -973,6 +1031,14 @@
                 </section>
 
                 <section class="panel section">
+                    <h2>Learning State Evidence</h2>
+                    <div class="section-sub">
+                        Conservative confidence and evidence for the current learning-state proxy window. This layer supports review, not precise attention detection.
+                    </div>
+                    <div id="state-validation-card" class="asset-card"></div>
+                </section>
+
+                <section class="panel section">
                     <h2>Report Assets</h2>
                     <div class="section-sub">
                         Open the exported heatmap when you want to compare the event list with the full learning-state curve.
@@ -992,6 +1058,7 @@
         let currentEvents = [];
         let currentAssets = null;
         let selectedEventId = params.get("event_id") || "";
+        let stateValidationSequence = 0;
         const APP_BASE_URL = window.location.protocol === "file:" ? "http://127.0.0.1:5000" : "";
 
         document.getElementById("back-link").href = `${APP_BASE_URL}/`;
@@ -1044,6 +1111,140 @@
                 .filter(Boolean)
                 .map(part => part.charAt(0).toUpperCase() + part.slice(1))
                 .join(" ");
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll("\"", "&quot;")
+                .replaceAll("'", "&#39;");
+        }
+
+        function formatMetric(value, digits = 1) {
+            const numeric = Number(value);
+            return Number.isFinite(numeric) ? numeric.toFixed(digits) : "--";
+        }
+
+        function renderStateValidation(payload, event = null) {
+            const host = document.getElementById("state-validation-card");
+            if (!payload) {
+                host.innerHTML = `
+                    <div class="asset-kicker">Validation status</div>
+                    <h3>Unavailable</h3>
+                    <div class="asset-copy">The state-validation summary API is not available yet. Start the Flask backend, then run the validation script when you want confidence and evidence here.</div>
+                `;
+                return;
+            }
+
+            const metrics = payload.validation_metrics || {};
+            const activeWindow = payload.selected_window || (payload.recent_windows || []).slice(-1)[0] || null;
+            const ruleMetrics = metrics.rule_baseline || {};
+            const correlations = metrics.correlations || {};
+            const metricsBanner = ruleMetrics.accuracy == null
+                ? "Validation metrics are not available yet. You can still inspect conservative rule-based evidence after extracting state windows."
+                : `Rule baseline accuracy ${escapeHtml(ruleMetrics.accuracy)} | macro F1 ${escapeHtml(ruleMetrics.macro_f1)} | load/self-report correlation ${escapeHtml(correlations.correlation_between_predicted_load_and_self_report_load ?? "--")}`;
+            const eventWindowNote = event && !payload.selected_window
+                ? "No overlapping validation window was found for the selected difficulty event yet."
+                : (event ? `Matched to samples ${activeWindow?.start_sample || "--"}-${activeWindow?.end_sample || "--"}.` : "Showing the latest extracted learning-state proxy window.");
+
+            if (!payload.features_available && !payload.has_validation_metrics) {
+                host.innerHTML = `
+                    <div class="asset-kicker">Validation status</div>
+                    <h3>No validation data yet</h3>
+                    <div class="asset-copy">Run <code>analytics/validate_learning_state.py</code> to create state window features, a label template, and a validation report without touching the original study report schema.</div>
+                    <div class="validation-note">This card stays optional, so the rest of the review page still works even before validation data exists.</div>
+                `;
+                return;
+            }
+
+            const evidenceItems = activeWindow && (activeWindow.evidence || []).length
+                ? activeWindow.evidence.map(item => `<li>${escapeHtml(item)}</li>`).join("")
+                : "<li>No evidence phrases are available for this window yet.</li>";
+            const predictedLabel = activeWindow ? titleCase(String(activeWindow.predicted_label || "").replaceAll("_", " ")) : "Awaiting window match";
+            const confidenceText = activeWindow ? `${Math.round((Number(activeWindow.confidence) || 0) * 100)}%` : "--";
+
+            host.innerHTML = `
+                <div class="asset-kicker">Learning-state proxy</div>
+                <h3>${escapeHtml(predictedLabel)}</h3>
+                <div class="asset-copy">This panel summarizes confidence and evidence from the added validation layer. It should be read as a conservative learning-state proxy estimation, not precise attention detection.</div>
+                <div class="validation-banner">${metricsBanner}</div>
+                <div class="validation-chip-row">
+                    <div class="validation-chip">Confidence ${escapeHtml(confidenceText)}</div>
+                    <div class="validation-chip">Model ${escapeHtml(activeWindow?.model || "rule_baseline")}</div>
+                    <div class="validation-chip">Window ${escapeHtml(eventWindowNote)}</div>
+                </div>
+                ${activeWindow ? `
+                    <div class="validation-state-grid">
+                        <div class="meta-item">
+                            <span>Predicted Label</span>
+                            <strong>${escapeHtml(predictedLabel)}</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>Task Mode</span>
+                            <strong>${escapeHtml(titleCase(activeWindow.task_mode_majority || "unknown"))}</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>Cognitive Load Mean</span>
+                            <strong>${escapeHtml(formatMetric(activeWindow.metrics?.cognitive_load_mean))}</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>Behavioral Alignment Mean</span>
+                            <strong>${escapeHtml(formatMetric(activeWindow.metrics?.behavioral_alignment_mean))}</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>Fatigue Risk Mean</span>
+                            <strong>${escapeHtml(formatMetric(activeWindow.metrics?.fatigue_risk_mean))}</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>Scene Lock Mean</span>
+                            <strong>${escapeHtml(formatMetric(activeWindow.metrics?.scene_lock_score_mean))}</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>Scene Switch Mean</span>
+                            <strong>${escapeHtml(formatMetric(activeWindow.metrics?.scene_switch_rate_mean))}</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>Study Surface Mean</span>
+                            <strong>${escapeHtml(formatMetric(activeWindow.metrics?.study_surface_score_mean))}</strong>
+                        </div>
+                    </div>
+                    <div class="event-actions">
+                        <div class="event-action">
+                            <strong>Evidence</strong>
+                            <ul class="validation-list">${evidenceItems}</ul>
+                        </div>
+                        <div class="event-action">
+                            <strong>Uncertainty Reason</strong>
+                            <p>${escapeHtml(activeWindow.uncertainty_reason || "No dominant uncertainty warning was found in this window.")}</p>
+                        </div>
+                    </div>
+                ` : `
+                    <div class="validation-note">Window features exist, but no matching window was found for the current selection yet.</div>
+                `}
+            `;
+        }
+
+        async function loadStateValidation(event = null) {
+            const requestId = ++stateValidationSequence;
+            const query = new URLSearchParams();
+            const sessionId = currentReviewSessionId();
+            if (sessionId) query.set("session_id", sessionId);
+            if (event?.start_sample) query.set("start_sample", String(event.start_sample));
+            if (event?.end_sample) query.set("end_sample", String(event.end_sample));
+            query.set("limit", "8");
+
+            try {
+                const response = await fetch(`${APP_BASE_URL}/api/state_validation_summary?${query.toString()}`);
+                const payload = await response.json();
+                if (requestId !== stateValidationSequence) return;
+                renderStateValidation(payload, event);
+            } catch (error) {
+                if (requestId !== stateValidationSequence) return;
+                renderStateValidation(null, event);
+                console.error(error);
+            }
         }
 
         function renderSummary(summary) {
@@ -1239,6 +1440,7 @@
                 }
             });
             renderSpotlight(selected);
+            loadStateValidation(selected);
             syncReviewRoute();
         }
 
@@ -1295,6 +1497,7 @@
                 empty.hidden = false;
                 selectedEventId = "";
                 renderSpotlight(null);
+                loadStateValidation(null);
                 syncReviewRoute();
                 return;
             }
@@ -1463,6 +1666,7 @@
                     detail: "Run start_windows.ps1 or launch the Flask app in VSCode, then refresh this page.",
                 }]);
                 renderEvents([]);
+                renderStateValidation(null);
                 console.error(error);
             }
         }

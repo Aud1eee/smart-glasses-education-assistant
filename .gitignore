@@ -11,6 +11,12 @@ Thumbs.db
 .vscode/*.log
 
 exports/*.png
+exports/state_validation_report.md
+exports/state_validation_metrics.json
+exports/state_classifier_model.joblib
+# `exports/*.png` already covers `exports/state_confusion_matrix.png`.
+data/state_labels.csv
+data/state_window_features.csv
 data/difficulty_events.csv
 data/rokid_scene_profiles.json
 data/presentation_companion_store.json
