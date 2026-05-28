@@ -596,7 +596,7 @@
                         </div>
                         <div class="field">
                             <label for="image-path">Local image path</label>
-                            <input id="image-path" type="text" value="C:/Users/11721/Desktop/focus_project_windows/images/demo.jpg">
+                            <input id="image-path" type="text" value="images/demo.jpg">
                         </div>
                         <div class="button-row">
                             <button class="primary" onclick="sendUploadedFrame()">Send uploaded frame</button>
@@ -787,7 +787,7 @@
 
     <script>
         const APP_BASE_URL = window.location.protocol === "file:" ? "http://127.0.0.1:5000" : "";
-        const DEFAULT_DEMO_IMAGE = "C:/Users/11721/Desktop/focus_project_windows/images/demo.jpg";
+        const DEFAULT_DEMO_IMAGE = "images/demo.jpg";
         let scenePresets = [];
         let savedSceneProfiles = [];
         const POSTURE_TUNING_FIELDS = {

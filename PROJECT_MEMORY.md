@@ -7,7 +7,7 @@ Read this file first before exploring the rest of the project.
 - Project name: `Focus Project`
 - Current presentation name: `Learning State Guardian`
 - Domain: `AI glasses for education / Rokid glasses`
-- Main environment for future work: `C:\Users\11721\Desktop\focus_project_windows`
+- Main environment for future work: the local project workspace root
 
 ## Team-positioning summary
 
@@ -47,6 +47,26 @@ Recommended structure:
 - A understands the learner's state
 - B regulates the learning rhythm in real time
 - C supports after-class reflection and review
+
+## Current release checkpoint
+
+The project is now beyond the original phase-1 HUD prototype stage.
+
+The current demo-ready checkpoint includes:
+
+- `Learning State Guardian` live sensing and adaptive regulation
+- difficulty-event marking and the `/review` follow-up page
+- `Learning Reflection Coach` as an independent `/reflection` module
+- `Academic Presentation Companion` as an independent `/presentation` module
+- evidence-anchor linking from `/review -> /reflection`
+- local free-model support through `Ollama`
+- local model compare for the reflection module
+- JSON / Markdown / HTML reflection-card export
+- runtime badges and exporter-version hints in the reflection UI
+- Windows startup stabilization for the Flask backend
+- repeatable validation through:
+  - `scripts/legacy/generate_validation_report.ps1`
+  - `scripts/legacy/generate_reflection_smoke_report.ps1`
 
 ## Current implementation status
 
@@ -92,15 +112,111 @@ Recommended structure:
   - generated outputs:
     - `exports/validation_summary.md`
     - `exports/validation_summary.json`
-    - `THESIS_EXPERIMENT_DRAFT.md`
+    - `docs/research/THESIS_EXPERIMENT_DRAFT.md`
   - Windows launcher:
-    - `generate_validation_report.ps1`
+    - `scripts/legacy/generate_validation_report.ps1`
 - future-work algorithm framework with:
-  - [MULTIMODAL_FUTURE_WORK.md](</C:/Users/11721/Desktop/focus_project_windows/MULTIMODAL_FUTURE_WORK.md>)
+  - [docs/research/MULTIMODAL_FUTURE_WORK.md](docs/research/MULTIMODAL_FUTURE_WORK.md)
   - code-level placeholder schema:
     - `core/multimodal_schema.py`
   - explanation API:
     - `/api/multimodal_blueprint`
+- independent reflection coach module with:
+  - `/reflection`
+  - `/api/reflection_coach`
+  - rule-based session signature + metacognitive question generation
+  - switchable provider architecture:
+    - `heuristic`
+    - `ollama`
+    - `remote`
+    - `openai`
+  - free local-model-first default through `Ollama`
+  - review-linked `event_id` anchoring
+  - local compare mode for two Ollama models
+  - snapshot export to:
+    - JSON
+    - Markdown
+    - HTML reflection card
+  - runtime-info surface:
+    - `/api/runtime_info`
+    - runtime badge in `/reflection`
+  - reflection smoke validation:
+    - `exports/reflection_smoke_summary.md`
+    - `exports/reflection_smoke_summary.json`
+- independent academic presentation module with:
+  - `/presentation`
+  - local mission brief creation
+  - editable intake extraction with heuristic fallback
+  - student-written slide-linked script cards:
+    - `slide_index`
+    - `slide_title`
+    - outline
+    - speaker notes
+    - teleprompter script
+    - cue cards
+    - slide / visual anchors
+    - interaction goals
+  - lightweight presentation control state:
+    - `presentation_mode`
+    - `control_source`
+    - `active_slide_index`
+    - `cue_view`
+    - `next_card`
+    - `control_hints`
+  - companion sync scaffold:
+    - `/presentation/controller`
+    - `companion_sync`
+    - `pairing_state`
+    - `pairing_start`
+    - `pairing_join`
+    - `pairing_end`
+    - `bridge_state`
+    - `bridge_claim`
+    - `bridge_release`
+    - `rokid_event`
+    - `live_hud`
+  - join UX polish:
+    - phone-side pairing sheet with large join code
+    - readable `status_label` and `next_step`
+    - auto-refresh while pairing is waiting / paired / expired
+    - explicit joined-surface vs owner-surface visibility
+  - phone-first presentation control with Rokid-button scaffolding for:
+    - next / previous step navigation
+    - previous / next chunk
+    - previous / next slide
+    - cue toggle
+    - present-mode current-slide teleprompter view
+  - slide teleprompter runtime:
+    - long slide scripts are split into chunk-sized prompts
+    - `next` and `previous` are chunk-first before moving across slides
+    - the phone-side controller now includes a chunk navigator rail for direct chunk jumps
+    - previous / current / next chunk previews help the presenter recover position quickly
+    - phone-side stage supports vertical swipe for chunk navigation
+    - phone-side stage supports horizontal swipe for slide navigation
+    - keyboard `1-9` jumps to specific chunks during local browser or desktop testing
+    - default Rokid mapping:
+      - `single_press -> next_chunk`
+      - `double_press -> previous_chunk`
+      - `long_press -> next_slide`
+    - live HUD payload now includes `teleprompter_text`, `chunk_progress_label`, and `next_chunk_preview`
+  - rehearsal run storage:
+    - audio source
+    - total duration
+    - section timings
+    - transcript text
+    - self-rating
+    - notes
+  - rehearsal analysis output:
+    - pacing
+    - strongest / weakest section
+    - one main issue
+    - one main strength
+    - one next action
+    - section suggestions
+  - lightweight HUD summary payload for future Rokid-side prompts
+  - local JSON store:
+    - `data/presentation_companion_store.json`
+    - `data/presentation_audio/`
 
 ### Latest algorithm upgrade
 
@@ -131,7 +247,7 @@ Recommended structure:
   - `study_surface_score`
   - `scene_lock_score`
 - the runtime now includes a **Rokid scene tuning page** in:
-  - [rokid_debug.html](</C:/Users/11721/Desktop/focus_project_windows/web/rokid_debug.html>)
+  - [web/rokid_debug.html](web/rokid_debug.html)
 - the tuning page can:
   - read current posture and frame-adapter thresholds
   - apply threshold overrides without editing code
@@ -161,9 +277,9 @@ Recommended structure:
   - `data/rokid_scene_profiles.json`
 - that JSON store should stay local and should not be committed as team source code
 - a standard Rokid calibration method is now documented in:
-  - [ROKID_SCENE_CALIBRATION_PROTOCOL.md](</C:/Users/11721/Desktop/focus_project_windows/ROKID_SCENE_CALIBRATION_PROTOCOL.md>)
+  - [docs/research/ROKID_SCENE_CALIBRATION_PROTOCOL.md](docs/research/ROKID_SCENE_CALIBRATION_PROTOCOL.md)
 - a fillable worksheet can now be generated with:
-  - `generate_scene_calibration_sheet.ps1`
+  - `scripts/legacy/generate_scene_calibration_sheet.ps1`
 - that generator writes:
   - `exports/rokid_scene_calibration_sheet.md`
   - it should not be described as simple distraction
@@ -198,13 +314,13 @@ Recommended structure:
 - `.vscode/launch.json`
 - `.vscode/tasks.json`
 - `.vscode/settings.json`
-- `setup_windows.ps1`
-- `start_windows.ps1`
-- `start_simulator.ps1`
+- `scripts/legacy/setup_windows.ps1`
+- `scripts/legacy/start_windows.ps1`
+- `scripts/legacy/start_simulator.ps1`
 
 ### Windows launcher behavior
 
-- `start_windows.ps1` now starts `run.py --serve-only` by default
+- `scripts/legacy/start_windows.ps1` now starts `run.py --serve-only` by default
 - the default VSCode config `Run Focus Project` also uses `--serve-only`
 - this avoids the old issue where the interactive console menu could exit and stop the Flask HUD child process at the same time
 - if analytics menu access is needed, use:
@@ -241,6 +357,38 @@ Recommended structure:
 - adaptive regulation
 - attention heatmap / review
 
+### Independent follow-up module
+
+- `Learning Reflection Coach` should be presented as a separate follow-up surface
+- it uses the existing learning-state logs as evidence
+- it should stay process-focused:
+  - reflection
+  - self-regulation
+  - replay strategy
+  - next-session experiment design
+- it should not drift into:
+  - knowledge explanation
+  - AI tutoring dialogue
+  - writing correction
+  - language tutoring
+  - AI note taking
+  - gesture interaction
+
+### Separate independent module
+
+- `Academic Presentation Companion` should be presented as a parallel academic-preparation module rather than part of the learning-state pipeline
+- it focuses on:
+  - presentation-task understanding
+  - self-written outline / notes / cue cards
+  - rehearsal timing
+  - rehearsal transcript review
+  - audience-interaction planning
+- it should not drift into:
+  - auto-writing the final presentation script
+  - tutoring the academic content
+  - answering the assignment for the student
+  - replacing the student's own preparation work
+
 ### Secondary supporting features
 
 - OCR word capture
@@ -258,19 +406,15 @@ These should support the demo, but not dominate the project story.
 
 ## Recommended next steps
 
-1. Install Windows `Tesseract OCR` and add it to `PATH`
-2. Verify `run.py` and `simulate_motion.py` together in local VSCode
-3. Polish the HUD text for presentation screenshots
-4. Prepare a concise demo flow:
-   - launch HUD
-   - run motion simulator
-   - show cognitive load changes
-   - show adaptive guidance
-   - generate heatmap report
-5. Optionally add:
-   - difficulty event markers
-   - missed-content markers
-   - more classroom-like simulated states
+The next priorities are no longer basic feature creation. They are mostly presentation and integration tasks:
+
+1. lock a stable default local reflection model for demos
+2. prepare a fixed screenshot / export-card set for defense use
+3. keep the `/review -> /reflection -> HTML card` path as the main demo story
+4. decide whether the next deployment-facing step is:
+   - remote reflection provider hardening
+   - Rokid-side interface cleanup
+   - final GitHub PR / merge packaging
 
 ## Development roadmap
 
@@ -347,7 +491,7 @@ This was checked with `analytics/verify_demo_states.py` using the deterministic 
 
 There is now a non-destructive demo asset flow:
 
-- `generate_demo_assets.ps1`
+- `scripts/legacy/generate_demo_assets.ps1`
 - `analytics/generate_demo_assets.py`
 
 It creates:
@@ -361,6 +505,20 @@ This is preferred when preparing screenshots or presentation materials, because 
 ### Demo asset verification
 
 The demo asset pipeline was run successfully on Windows local.
+
+### Reflection-coach completion note
+
+The independent reflection module should now be treated as a completed V1 rather than an experimental stub.
+
+Current V1 state:
+
+- session-aware reflection context is stable
+- difficulty-event anchoring is stable
+- heuristic fallback is stable
+- local Ollama path has been verified
+- compare and snapshot export flows are implemented
+- HTML reflection cards are available for defense use
+- smoke checks cover the main reflection endpoints and export behavior
 
 Latest generated summary:
 
@@ -500,7 +658,7 @@ New HUD interaction highlights:
   - active scene features include `scene_content_score / scene_text_score / scene_stability_score / scene_switch_rate / study_surface_score / scene_lock_score / blur_score / brightness_score`
   - scene quality is folded into the active uncertainty path, so blurred, low-visibility, or content-sparse frames degrade into `Signal check` instead of fake stability
   - in the current Windows bundled runtime, this path still depends on native OpenCV availability; if OpenCV is missing, the adapter stays in scaffold mode and reports `frame_unavailable` / `opencv-unavailable`
-  - `start_windows.ps1` now prefers a Python runtime that can actually import `cv2`, so local app startup will choose the OpenCV-capable `.venv` when needed
+  - `scripts/legacy/start_windows.ps1` now prefers a Python runtime that can actually import `cv2`, so local app startup will choose the OpenCV-capable `.venv` when needed
 - a dedicated Rokid frame debug surface is now part of the local workflow:
   - `/rokid_debug` renders `web/rokid_debug.html`
   - it accepts upload, local-path, and demo-image probes for `/api/v1/rokid/frame`
@@ -508,11 +666,11 @@ New HUD interaction highlights:
   - HUD now links to it with `K`, and the review page also exposes a `Rokid Debug` entry
 - a continuous Rokid frame-stream test chain is now available:
   - `stream_rokid_frames.py` continuously posts JPEG frames into `/api/v1/rokid/frame`
-  - `start_rokid_frame_stream.ps1` is the Windows launcher for `image / video / camera` sources
+  - `scripts/legacy/start_rokid_frame_stream.ps1` is the Windows launcher for `image / video / camera` sources
   - it can optionally reset, warm up, calibrate, and restart a session before the measured run
   - terminal output now shows `tracking_state / tracking_confidence / state_hint / alignment / load / fatigue / study_surface / scene_lock` per frame
 - recent-paper rationale for the scene-driven Rokid path is now stored in:
-  - `ROKID_SCENE_LOGIC_LITERATURE.md`
+  - `docs/research/ROKID_SCENE_LOGIC_LITERATURE.md`
 - the adapter keeps the active runtime constrained to Rokid-realistic signals:
   - `pitch / yaw / roll`
   - optional `motion_intensity`
@@ -605,7 +763,7 @@ If future context is tight, start with:
 
 The long-form explanation draft now lives in:
 
-- `PROJECT_EXPLANATION.md`
+- `docs/archive/PROJECT_EXPLANATION.md`
 
 This should be the main expandable document for:
 

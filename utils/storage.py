@@ -320,6 +320,79 @@ class DataLogger:
             "empty": False,
         }
 
+    def build_reflection_context(self, session_id=None, dataset="live", event_id=None):
+        report_path, difficulty_path = self._resolve_review_paths(dataset)
+        report_df = self._read_optional_csv(report_path)
+        difficulty_df = self._read_optional_csv(difficulty_path)
+        requested_event_id = self._safe_int(event_id, default=0)
+
+        if report_df.empty and difficulty_df.empty:
+            return {
+                "dataset": dataset,
+                "session_id": session_id or "",
+                "session_options": [],
+                "summary": self._empty_review_summary(),
+                "events": [],
+                "highlight_event": None,
+                "requested_event_id": requested_event_id or None,
+                "selected_event_id": None,
+                "timeline": self._empty_timeline(),
+                "assets": self._build_assets(dataset),
+                "distributions": self._empty_distributions(),
+                "anchors": self._empty_anchors(),
+                "empty": True,
+            }
+
+        resolved_session_id = session_id or self._latest_session_id(report_df, difficulty_df)
+        session_report = self._filter_session(report_df, resolved_session_id)
+        session_events = self._filter_session(difficulty_df, resolved_session_id)
+        summary = self._build_review_summary(resolved_session_id, session_report, session_events)
+        events = self._build_review_events(session_report, session_events)
+        highlight_event = self._pick_requested_or_highlight_event(events, requested_event_id)
+        selected_event_id = int(highlight_event["event_id"]) if highlight_event else None
+
+        return {
+            "dataset": dataset,
+            "session_id": resolved_session_id,
+            "session_options": self._build_session_options(report_df, difficulty_df),
+            "summary": summary,
+            "events": events,
+            "highlight_event": highlight_event,
+            "requested_event_id": requested_event_id or None,
+            "selected_event_id": selected_event_id,
+            "timeline": self._build_timeline(summary, session_report, events),
+            "assets": self._build_assets(dataset),
+            "distributions": {
+                "task_modes": self._series_breakdown(session_report.get("Task_Mode"), labeler=self._display_label),
+                "phases": self._series_breakdown(session_report.get("Phase"), labeler=self._display_label),
+                "state_hints": self._series_breakdown(session_report.get("State_Hint"), labeler=self._state_hint_label),
+                "confidence_levels": self._series_breakdown(session_report.get("Confidence_Level"), labeler=self._display_label),
+                "guidance": self._series_breakdown(session_report.get("Guidance"), top_n=4),
+            },
+            "anchors": {
+                "peak_load": self._extreme_sample(
+                    session_report,
+                    column="Cognitive_Load",
+                    mode="max",
+                    label="Peak load",
+                ),
+                "lowest_alignment": self._extreme_sample(
+                    session_report,
+                    column="Behavioral_Alignment",
+                    mode="min",
+                    label="Lowest alignment",
+                ),
+                "peak_switching": self._extreme_sample(
+                    session_report,
+                    column="Switching_Index",
+                    mode="max",
+                    label="Peak switching",
+                ),
+                "closing_state": self._closing_state(session_report),
+            },
+            "empty": False,
+        }
+
     def _resolve_review_paths(self, dataset):
         if str(dataset).lower() == "demo":
             return self.demo_report_path, self.demo_difficulty_path
@@ -561,6 +634,14 @@ class DataLogger:
             key=lambda item: (0 if item["severity"] == "high" else 1, -item["peak_load"], -item["duration_seconds"]),
         )[0]
 
+    def _pick_requested_or_highlight_event(self, events, event_id=None):
+        requested = self._safe_int(event_id, default=0)
+        if requested:
+            for event in events or []:
+                if self._safe_int(event.get("event_id", 0), default=0) == requested:
+                    return event
+        return self._pick_highlight_event(events)
+
     def _build_review_insights(self, summary, events):
         insights = []
         priority = str(summary.get("review_priority", "clear")).lower()
@@ -643,6 +724,102 @@ class DataLogger:
             }
         }
 
+    def _empty_timeline(self):
+        return {
+            "samples": 0,
+            "duration_label": "00:00",
+            "events": [],
+            "risk_segments": {
+                "high_load": [],
+                "low_confidence": [],
+                "fatigue": [],
+                "productive_struggle": [],
+                "off_task": [],
+            },
+        }
+
+    def _empty_distributions(self):
+        return {
+            "task_modes": [],
+            "phases": [],
+            "state_hints": [],
+            "confidence_levels": [],
+            "guidance": [],
+        }
+
+    def _empty_anchors(self):
+        return {
+            "peak_load": {},
+            "lowest_alignment": {},
+            "peak_switching": {},
+            "closing_state": {},
+        }
+
+    def _series_breakdown(self, series, labeler=None, top_n=5):
+        if series is None:
+            return []
+
+        values = pd.Series(series).fillna("").astype(str).str.strip()
+        values = values[values != ""]
+        if values.empty:
+            return []
+
+        counts = values.value_counts()
+        total = int(counts.sum())
+        items = []
+        for value, count in counts.head(top_n).items():
+            label = labeler(value) if callable(labeler) else value
+            items.append({
+                "key": str(value),
+                "label": str(label),
+                "count": int(count),
+                "ratio": self._ratio(count, total),
+            })
+        return items
+
+    def _extreme_sample(self, frame, column, mode="max", label=""):
+        if frame.empty or column not in frame.columns:
+            return {}
+
+        numeric = pd.to_numeric(frame[column], errors="coerce").dropna()
+        if numeric.empty:
+            return {}
+
+        index = numeric.idxmin() if str(mode).lower() == "min" else numeric.idxmax()
+        row = frame.loc[index]
+        value = self._safe_float(row.get(column, 0))
+        sample_index = int(frame.index.get_loc(index)) + 1
+        return {
+            "label": label or self._display_label(column),
+            "sample_index": sample_index,
+            "timestamp": str(row.get("Timestamp", "--")),
+            "elapsed_seconds": self._safe_int(row.get("Elapsed_Seconds", 0)),
+            "task_mode": str(row.get("Task_Mode", "reading")).strip() or "reading",
+            "state_hint": str(row.get("State_Hint", "stable")).strip().lower() or "stable",
+            "state_hint_label": self._state_hint_label(row.get("State_Hint", "stable")),
+            "guidance": str(row.get("Guidance", "")).strip(),
+            "confidence_level": str(row.get("Confidence_Level", "medium")).strip().lower() or "medium",
+            "value": round(value, 1),
+        }
+
+    def _closing_state(self, frame):
+        if frame.empty:
+            return {}
+
+        row = frame.iloc[-1]
+        return {
+            "task_mode": str(row.get("Task_Mode", "reading")).strip() or "reading",
+            "phase": str(row.get("Phase", "focus")).strip() or "focus",
+            "guidance": str(row.get("Guidance", "")).strip(),
+            "state_hint": str(row.get("State_Hint", "stable")).strip().lower() or "stable",
+            "state_hint_label": self._state_hint_label(row.get("State_Hint", "stable")),
+            "confidence_level": str(row.get("Confidence_Level", "medium")).strip().lower() or "medium",
+            "load_level": str(row.get("Load_Level", "low")).strip().lower() or "low",
+            "fatigue_level": str(row.get("Fatigue_Level", "low")).strip().lower() or "low",
+            "timestamp": str(row.get("Timestamp", "--")),
+            "elapsed_seconds": self._safe_int(row.get("Elapsed_Seconds", 0)),
+        }
+
     def _missed_content_risk(self, severity, avg_load, low_conf_ratio):
         if severity == "high" or avg_load >= 70 or low_conf_ratio >= 25:
             return "high"
@@ -715,6 +892,10 @@ class DataLogger:
             return default
         return pd.Series(values).mode().iloc[0]
 
+    def _display_label(self, value):
+        text = str(value).strip().replace("_", " ").replace("-", " ")
+        return " ".join(part.capitalize() for part in text.split()) or "--"
+
     def _format_mmss(self, seconds):
         total = max(0, self._safe_int(seconds))
         minutes = total // 60
@@ -734,10 +915,10 @@ class DataLogger:
         except Exception:
             return 0.0
 
-    def _safe_int(self, value):
+    def _safe_int(self, value, default=0):
         try:
             if pd.isna(value):
-                return 0
+                return default
             return int(float(value))
         except Exception:
-            return 0
+            return default

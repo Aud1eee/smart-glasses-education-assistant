@@ -766,6 +766,62 @@
             font-size: 14px;
         }
 
+        .validation-banner {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(159, 215, 255, 0.16);
+            background: rgba(159, 215, 255, 0.08);
+            color: rgba(255, 242, 218, 0.84);
+            line-height: 1.55;
+            font-size: 13px;
+        }
+
+        .validation-chip-row {
+            margin-top: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .validation-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 189, 92, 0.14);
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .validation-state-grid {
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .validation-list {
+            margin: 10px 0 0;
+            padding-left: 18px;
+            color: rgba(255, 242, 218, 0.74);
+            line-height: 1.55;
+        }
+
+        .validation-list li + li {
+            margin-top: 8px;
+        }
+
+        .validation-note {
+            margin-top: 14px;
+            color: rgba(255, 242, 218, 0.68);
+            line-height: 1.55;
+            font-size: 13px;
+        }
+
         .empty-state {
             margin-top: 18px;
             padding: 24px;
@@ -785,7 +841,8 @@
             .event-meta,
             .event-actions,
             .summary-grid,
-            .spotlight-meta {
+            .spotlight-meta,
+            .validation-state-grid {
                 grid-template-columns: 1fr 1fr;
             }
 
@@ -817,7 +874,8 @@
             .event-meta,
             .event-actions,
             .summary-grid,
-            .spotlight-meta {
+            .spotlight-meta,
+            .validation-state-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -847,6 +905,8 @@
             </div>
 
             <div class="nav-links">
+                <a class="nav-link" href="/presentation">Presentation Companion</a>
+                <a class="nav-link" id="reflection-link" href="/reflection">Reflection Coach</a>
                 <a class="nav-link" id="debug-link" href="/rokid_debug">Rokid Debug</a>
                 <a class="nav-link" id="back-link" href="/">Back to HUD</a>
             </div>
@@ -971,6 +1031,22 @@
                 </section>
 
                 <section class="panel section">
+                    <h2>Reflection Coach</h2>
+                    <div class="section-sub">
+                        Post-session reflection support built from review cues, difficulty markers, and learning-state proxies. This card is conservative by design and does not claim precise attention detection.
+                    </div>
+                    <div id="reflection-coach-card" class="asset-card"></div>
+                </section>
+
+                <section class="panel section">
+                    <h2>Learning State Evidence</h2>
+                    <div class="section-sub">
+                        Conservative confidence and evidence for the current learning-state proxy window. This layer supports review, not precise attention detection.
+                    </div>
+                    <div id="state-validation-card" class="asset-card"></div>
+                </section>
+
+                <section class="panel section">
                     <h2>Report Assets</h2>
                     <div class="section-sub">
                         Open the exported heatmap when you want to compare the event list with the full learning-state curve.
@@ -984,16 +1060,51 @@
     <script>
         const params = new URLSearchParams(window.location.search);
         let activeDataset = params.get("dataset") === "demo" ? "demo" : "live";
+        const initialSessionId = params.get("session_id") || "";
         let currentTimeline = null;
         let currentSummary = null;
         let currentEvents = [];
         let currentAssets = null;
+        let selectedEventId = params.get("event_id") || "";
+        let stateValidationSequence = 0;
+        let reflectionCoachSequence = 0;
         const APP_BASE_URL = window.location.protocol === "file:" ? "http://127.0.0.1:5000" : "";
 
         document.getElementById("back-link").href = `${APP_BASE_URL}/`;
+        document.getElementById("reflection-link").href = `${APP_BASE_URL}/reflection`;
+
+        function currentReviewSessionId() {
+            const select = document.getElementById("session-select");
+            return String(currentSummary?.session_id || select.value || initialSessionId || "").trim();
+        }
+
+        function buildReflectionHref(eventId = "") {
+            const query = new URLSearchParams({ dataset: activeDataset });
+            const sessionId = currentReviewSessionId();
+            const normalizedEventId = String(eventId || selectedEventId || "").trim();
+            if (sessionId) query.set("session_id", sessionId);
+            if (normalizedEventId) query.set("event_id", normalizedEventId);
+            return `${APP_BASE_URL}/reflection?${query.toString()}`;
+        }
+
+        function syncReflectionEntry(event = null) {
+            const targetEventId = event ? String(event.event_id || "").trim() : String(selectedEventId || "").trim();
+            document.getElementById("reflection-link").href = buildReflectionHref(targetEventId);
+        }
+
+        function syncReviewRoute() {
+            const query = new URLSearchParams({ dataset: activeDataset });
+            const sessionId = currentReviewSessionId();
+            if (sessionId) query.set("session_id", sessionId);
+            if (selectedEventId) query.set("event_id", String(selectedEventId));
+            const nextUrl = `${window.location.pathname}?${query.toString()}`;
+            window.history.replaceState({}, "", nextUrl);
+            syncReflectionEntry(currentEvents.find((event) => String(event.event_id) === String(selectedEventId)) || null);
+        }
 
         function switchDataset(dataset) {
             activeDataset = dataset === "demo" ? "demo" : "live";
+            selectedEventId = "";
             document.getElementById("live-btn").classList.toggle("active", activeDataset === "live");
             document.getElementById("demo-btn").classList.toggle("active", activeDataset === "demo");
             loadReview(true);
@@ -1009,6 +1120,225 @@
                 .filter(Boolean)
                 .map(part => part.charAt(0).toUpperCase() + part.slice(1))
                 .join(" ");
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll("\"", "&quot;")
+                .replaceAll("'", "&#39;");
+        }
+
+        function formatMetric(value, digits = 1) {
+            const numeric = Number(value);
+            return Number.isFinite(numeric) ? numeric.toFixed(digits) : "--";
+        }
+
+        function renderStateValidation(payload, event = null) {
+            const host = document.getElementById("state-validation-card");
+            if (!payload) {
+                host.innerHTML = `
+                    <div class="asset-kicker">Validation status</div>
+                    <h3>Unavailable</h3>
+                    <div class="asset-copy">The state-validation summary API is not available yet. Start the Flask backend, then run the validation script when you want confidence and evidence here.</div>
+                `;
+                return;
+            }
+
+            const metrics = payload.validation_metrics || {};
+            const activeWindow = payload.selected_window || (payload.recent_windows || []).slice(-1)[0] || null;
+            const ruleMetrics = metrics.rule_baseline || {};
+            const correlations = metrics.correlations || {};
+            const metricsBanner = ruleMetrics.accuracy == null
+                ? "Validation metrics are not available yet. You can still inspect conservative rule-based evidence after extracting state windows."
+                : `Rule baseline accuracy ${escapeHtml(ruleMetrics.accuracy)} | macro F1 ${escapeHtml(ruleMetrics.macro_f1)} | load/self-report correlation ${escapeHtml(correlations.correlation_between_predicted_load_and_self_report_load ?? "--")}`;
+            const eventWindowNote = event && !payload.selected_window
+                ? "No overlapping validation window was found for the selected difficulty event yet."
+                : (event ? `Matched to samples ${activeWindow?.start_sample || "--"}-${activeWindow?.end_sample || "--"}.` : "Showing the latest extracted learning-state proxy window.");
+
+            if (!payload.features_available && !payload.has_validation_metrics) {
+                host.innerHTML = `
+                    <div class="asset-kicker">Validation status</div>
+                    <h3>No validation data yet</h3>
+                    <div class="asset-copy">Run <code>analytics/validate_learning_state.py</code> to create state window features, a label template, and a validation report without touching the original study report schema.</div>
+                    <div class="validation-note">This card stays optional, so the rest of the review page still works even before validation data exists.</div>
+                `;
+                return;
+            }
+
+            const evidenceItems = activeWindow && (activeWindow.evidence || []).length
+                ? activeWindow.evidence.map(item => `<li>${escapeHtml(item)}</li>`).join("")
+                : "<li>No evidence phrases are available for this window yet.</li>";
+            const predictedLabel = activeWindow ? titleCase(String(activeWindow.predicted_label || "").replaceAll("_", " ")) : "Awaiting window match";
+            const confidenceText = activeWindow ? `${Math.round((Number(activeWindow.confidence) || 0) * 100)}%` : "--";
+
+            host.innerHTML = `
+                <div class="asset-kicker">Learning-state proxy</div>
+                <h3>${escapeHtml(predictedLabel)}</h3>
+                <div class="asset-copy">This panel summarizes confidence and evidence from the added validation layer. It should be read as a conservative learning-state proxy estimation, not precise attention detection.</div>
+                <div class="validation-banner">${metricsBanner}</div>
+                <div class="validation-chip-row">
+                    <div class="validation-chip">Confidence ${escapeHtml(confidenceText)}</div>
+                    <div class="validation-chip">Model ${escapeHtml(activeWindow?.model || "rule_baseline")}</div>
+                    <div class="validation-chip">Window ${escapeHtml(eventWindowNote)}</div>
+                </div>
+                ${activeWindow ? `
+                    <div class="validation-state-grid">
+                        <div class="meta-item">
+                            <span>Predicted Label</span>
+                            <strong>${escapeHtml(predictedLabel)}</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>Task Mode</span>
+                            <strong>${escapeHtml(titleCase(activeWindow.task_mode_majority || "unknown"))}</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>Cognitive Load Mean</span>
+                            <strong>${escapeHtml(formatMetric(activeWindow.metrics?.cognitive_load_mean))}</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>Behavioral Alignment Mean</span>
+                            <strong>${escapeHtml(formatMetric(activeWindow.metrics?.behavioral_alignment_mean))}</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>Fatigue Risk Mean</span>
+                            <strong>${escapeHtml(formatMetric(activeWindow.metrics?.fatigue_risk_mean))}</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>Scene Lock Mean</span>
+                            <strong>${escapeHtml(formatMetric(activeWindow.metrics?.scene_lock_score_mean))}</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>Scene Switch Mean</span>
+                            <strong>${escapeHtml(formatMetric(activeWindow.metrics?.scene_switch_rate_mean))}</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>Study Surface Mean</span>
+                            <strong>${escapeHtml(formatMetric(activeWindow.metrics?.study_surface_score_mean))}</strong>
+                        </div>
+                    </div>
+                    <div class="event-actions">
+                        <div class="event-action">
+                            <strong>Evidence</strong>
+                            <ul class="validation-list">${evidenceItems}</ul>
+                        </div>
+                        <div class="event-action">
+                            <strong>Uncertainty Reason</strong>
+                            <p>${escapeHtml(activeWindow.uncertainty_reason || "No dominant uncertainty warning was found in this window.")}</p>
+                        </div>
+                    </div>
+                ` : `
+                    <div class="validation-note">Window features exist, but no matching window was found for the current selection yet.</div>
+                `}
+            `;
+        }
+
+        function renderReflectionCoach(payload) {
+            const host = document.getElementById("reflection-coach-card");
+            if (!payload) {
+                host.innerHTML = `
+                    <div class="asset-kicker">Reflection status</div>
+                    <h3>Unavailable</h3>
+                    <div class="asset-copy">The Reflection Coach summary API is not available yet. Start the Flask backend to load a local post-session reflection summary here.</div>
+                `;
+                return;
+            }
+
+            const keyMoments = Array.isArray(payload.key_moments) ? payload.key_moments.slice(0, 3) : [];
+            const questions = Array.isArray(payload.reflection_questions) ? payload.reflection_questions.slice(0, 3) : [];
+            const actions = Array.isArray(payload.next_actions) ? payload.next_actions.slice(0, 3) : [];
+            const keyMomentCards = keyMoments.length
+                ? keyMoments.map((moment) => `
+                    <div class="event-action">
+                        <strong>${escapeHtml(moment.title || "Key moment")}</strong>
+                        <p>${escapeHtml(moment.detail || "No detail available.")}</p>
+                        <div class="validation-note">${escapeHtml((moment.source || "session_summary") + " | " + (moment.window || "session-wide"))}</div>
+                    </div>
+                `).join("")
+                : `
+                    <div class="event-action">
+                        <strong>No key moments yet</strong>
+                        <p>Run a live or demo session first, then reopen this page for a structured reflection summary.</p>
+                    </div>
+                `;
+            const questionItems = questions.length
+                ? questions.map((question) => `<li>${escapeHtml(question)}</li>`).join("")
+                : "<li>No reflection questions are available yet.</li>";
+            const actionCards = actions.length
+                ? actions.map((action) => `
+                    <article class="action-card">
+                        <strong>${escapeHtml(action.title || "Next action")}</strong>
+                        <p>${escapeHtml(action.detail || "No action detail available.")}</p>
+                    </article>
+                `).join("")
+                : `
+                    <article class="action-card">
+                        <strong>No next action yet</strong>
+                        <p>The coach will suggest a next step here once session evidence is available.</p>
+                    </article>
+                `;
+
+            host.innerHTML = `
+                <div class="asset-kicker">Reflection summary</div>
+                <h3>${payload.empty ? "Awaiting session evidence" : "Overall session summary"}</h3>
+                <div class="asset-copy">${escapeHtml(payload.session_summary || "No reflection summary is available yet.")}</div>
+                <div class="validation-banner">${escapeHtml(payload.module_boundary || "This panel is a post-session reflection aid built from conservative learning-state proxies.")}</div>
+                <div class="event-actions">${keyMomentCards}</div>
+                <div class="event-actions">
+                    <div class="event-action">
+                        <strong>Reflection Questions</strong>
+                        <ul class="validation-list">${questionItems}</ul>
+                    </div>
+                    <div class="event-action">
+                        <strong>Encouragement</strong>
+                        <p>${escapeHtml(payload.encouragement || "Use the next session as a comparison point instead of treating one report as a final verdict.")}</p>
+                    </div>
+                </div>
+                <div class="action-list">${actionCards}</div>
+            `;
+        }
+
+        async function loadStateValidation(event = null) {
+            const requestId = ++stateValidationSequence;
+            const query = new URLSearchParams();
+            const sessionId = currentReviewSessionId();
+            if (sessionId) query.set("session_id", sessionId);
+            if (event?.start_sample) query.set("start_sample", String(event.start_sample));
+            if (event?.end_sample) query.set("end_sample", String(event.end_sample));
+            query.set("limit", "8");
+
+            try {
+                const response = await fetch(`${APP_BASE_URL}/api/state_validation_summary?${query.toString()}`);
+                const payload = await response.json();
+                if (requestId !== stateValidationSequence) return;
+                renderStateValidation(payload, event);
+            } catch (error) {
+                if (requestId !== stateValidationSequence) return;
+                renderStateValidation(null, event);
+                console.error(error);
+            }
+        }
+
+        async function loadReflectionCoach(event = null) {
+            const requestId = ++reflectionCoachSequence;
+            const query = new URLSearchParams({ dataset: activeDataset });
+            const sessionId = currentReviewSessionId();
+            const eventId = String(event?.event_id || selectedEventId || "").trim();
+            if (sessionId) query.set("session_id", sessionId);
+            if (eventId) query.set("event_id", eventId);
+
+            try {
+                const response = await fetch(`${APP_BASE_URL}/api/reflection_coach_summary?${query.toString()}`);
+                const payload = await response.json();
+                if (requestId !== reflectionCoachSequence) return;
+                renderReflectionCoach(payload);
+            } catch (error) {
+                if (requestId !== reflectionCoachSequence) return;
+                renderReflectionCoach(null);
+                console.error(error);
+            }
         }
 
         function renderSummary(summary) {
@@ -1102,6 +1432,7 @@
                         No flagged event is selected yet. Use the event list on the left to focus this panel, or keep the heatmap as a general reflection asset.
                     </div>
                 `;
+                syncReflectionEntry(null);
                 return;
             }
 
@@ -1149,6 +1480,9 @@
                         <p>${event.catch_up_action}</p>
                     </div>
                 </div>
+                <div class="asset-actions">
+                    <a class="asset-link" href="${buildReflectionHref(event.event_id)}">Open in Reflection Coach</a>
+                </div>
             `;
         }
 
@@ -1188,6 +1522,7 @@
 
         function selectEvent(eventId) {
             const selected = currentEvents.find((event) => String(event.event_id) === String(eventId)) || currentEvents[0] || null;
+            selectedEventId = selected ? String(selected.event_id) : "";
             document.querySelectorAll(".timeline-event").forEach((block) => {
                 block.classList.toggle("selected", selected && String(block.dataset.eventId) === String(selected.event_id));
             });
@@ -1199,6 +1534,9 @@
                 }
             });
             renderSpotlight(selected);
+            loadStateValidation(selected);
+            loadReflectionCoach(selected);
+            syncReviewRoute();
         }
 
         function renderTimeline(timeline) {
@@ -1244,7 +1582,7 @@
             });
         }
 
-        function renderEvents(events) {
+        function renderEvents(events, preferredEventId = "") {
             currentEvents = events || [];
             const host = document.getElementById("event-list");
             const empty = document.getElementById("event-empty");
@@ -1252,7 +1590,11 @@
 
             if (!currentEvents.length) {
                 empty.hidden = false;
+                selectedEventId = "";
                 renderSpotlight(null);
+                loadStateValidation(null);
+                loadReflectionCoach(null);
+                syncReviewRoute();
                 return;
             }
 
@@ -1331,7 +1673,11 @@
             });
 
             if (currentEvents.length) {
-                selectEvent(currentEvents[0].event_id);
+                const fallbackEventId = preferredEventId || currentEvents[0].event_id;
+                const targetEventId = currentEvents.some((event) => String(event.event_id) === String(selectedEventId))
+                    ? selectedEventId
+                    : fallbackEventId;
+                selectEvent(targetEventId);
             }
         }
 
@@ -1361,7 +1707,11 @@
 
         async function loadReview(resetSession = false) {
             const select = document.getElementById("session-select");
-            const sessionId = resetSession ? "" : (select.value || params.get("session_id") || "");
+            const previousSessionId = String(currentSummary?.session_id || initialSessionId || "").trim();
+            const sessionId = resetSession ? "" : (select.value || previousSessionId || "");
+            if (resetSession || (previousSessionId && sessionId && sessionId !== previousSessionId)) {
+                selectedEventId = "";
+            }
             const query = new URLSearchParams({ dataset: activeDataset });
             if (sessionId) query.set("session_id", sessionId);
 
@@ -1375,11 +1725,12 @@
                 renderTimeline(payload.timeline || null);
                 renderAssets(payload.assets || {});
                 renderActions(payload.next_actions || []);
-                renderEvents(payload.events || []);
+                renderEvents(payload.events || [], payload.highlight_event?.event_id || "");
             } catch (error) {
                 document.getElementById("timeline-note").innerText = "Review API unavailable. Start the local Flask app first.";
                 document.getElementById("hero-copy").innerText =
                     "This page can read local review data only after the Flask backend is running on http://127.0.0.1:5000.";
+                selectedEventId = "";
                 renderSummary({
                     session_id: "--",
                     primary_task_mode: "unknown",
@@ -1411,6 +1762,8 @@
                     detail: "Run start_windows.ps1 or launch the Flask app in VSCode, then refresh this page.",
                 }]);
                 renderEvents([]);
+                renderStateValidation(null);
+                renderReflectionCoach(null);
                 console.error(error);
             }
         }

@@ -1,0 +1,4076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Presentation Companion</title>
+    <style>
+        :root {
+            --bg: #07131a;
+            --ink: #eef6f9;
+            --muted: rgba(238, 246, 249, 0.68);
+            --line: rgba(109, 191, 213, 0.18);
+            --line-strong: rgba(109, 191, 213, 0.34);
+            --panel: rgba(12, 26, 34, 0.84);
+            --panel-soft: rgba(255, 255, 255, 0.04);
+            --accent: #72d4f5;
+            --accent-2: #ffd27a;
+            --good: #8ce5b0;
+            --warn: #ffc46a;
+            --high: #ff8f6b;
+            --cool: #9ac8ff;
+            --round: 24px;
+            --shadow: 0 28px 68px rgba(0, 0, 0, 0.26);
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            min-height: 100%;
+            background:
+                radial-gradient(circle at 14% 18%, rgba(114, 212, 245, 0.16), transparent 28%),
+                radial-gradient(circle at 86% 12%, rgba(255, 210, 122, 0.10), transparent 24%),
+                linear-gradient(135deg, #041018 0%, #0b1c25 48%, #07131a 100%);
+            color: var(--ink);
+            font-family: "Aptos", "Bahnschrift", "Segoe UI", "PingFang SC", sans-serif;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(rgba(255, 255, 255, 0.014) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.014) 1px, transparent 1px);
+            background-size: 56px 56px;
+            opacity: 0.34;
+        }
+
+        main {
+            position: relative;
+            z-index: 1;
+            width: min(1360px, calc(100vw - 36px));
+            margin: 0 auto;
+            padding: 18px 0 28px;
+        }
+
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: var(--round);
+            background: var(--panel);
+            backdrop-filter: blur(18px);
+            box-shadow: var(--shadow);
+        }
+
+        .topbar,
+        .hero,
+        .tabbar,
+        .tab-panel,
+        .sidebar {
+            overflow: hidden;
+        }
+
+        .topbar {
+            display: grid;
+            grid-template-columns: minmax(280px, 1fr) minmax(240px, 360px) auto;
+            gap: 18px;
+            align-items: center;
+            padding: 16px 18px;
+        }
+
+        .brand,
+        .brand-copy,
+        .hero-copy,
+        .nav-links,
+        .hero-metrics,
+        .stat-grid,
+        .summary-grid,
+        .field-grid,
+        .section-grid,
+        .action-row,
+        .timing-grid,
+        .result-grid,
+        .mission-list,
+        .recent-list,
+        .stack {
+            display: flex;
+        }
+
+        .brand {
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-mark {
+            width: 46px;
+            height: 46px;
+            border-radius: 16px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(114, 212, 245, 0.34);
+            background: linear-gradient(145deg, rgba(114, 212, 245, 0.18), rgba(255, 210, 122, 0.10));
+            color: var(--ink);
+            font-weight: 800;
+            letter-spacing: 0.16em;
+        }
+
+        .brand-copy {
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .brand-copy strong {
+            font-size: 18px;
+            letter-spacing: 0.03em;
+        }
+
+        .brand-copy span {
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+        }
+
+        .hero-badge {
+            padding: 12px 16px;
+            border-radius: 18px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .hero-badge strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .hero-badge p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .nav-links {
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .nav-link,
+        .tab-btn,
+        .action-btn,
+        .ghost-btn,
+        .mission-link,
+        .pill {
+            border: 0;
+            cursor: pointer;
+            text-decoration: none;
+            transition: 180ms ease;
+            color: var(--ink);
+            font: inherit;
+        }
+
+        .nav-link,
+        .tab-btn,
+        .ghost-btn,
+        .pill {
+            padding: 10px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .action-btn {
+            padding: 12px 16px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(114, 212, 245, 0.22), rgba(255, 210, 122, 0.16));
+            border: 1px solid rgba(114, 212, 245, 0.3);
+            font-weight: 700;
+        }
+
+        .ghost-btn {
+            color: var(--muted);
+        }
+
+        .tab-btn.active,
+        .mission-link.active {
+            background: linear-gradient(135deg, rgba(114, 212, 245, 0.22), rgba(114, 212, 245, 0.08));
+            color: var(--ink);
+            border-color: var(--line-strong);
+        }
+
+        .nav-link:hover,
+        .tab-btn:hover,
+        .action-btn:hover,
+        .ghost-btn:hover,
+        .mission-link:hover {
+            transform: translateY(-1px);
+            border-color: var(--line-strong);
+        }
+
+        .hero {
+            margin-top: 16px;
+            padding: 24px;
+            display: grid;
+            grid-template-columns: minmax(0, 1.18fr) minmax(360px, 0.92fr);
+            gap: 20px;
+        }
+
+        .hero-copy {
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .eyebrow {
+            color: rgba(114, 212, 245, 0.88);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+        }
+
+        h1, h2, h3, h4, p {
+            margin: 0;
+        }
+
+        h1 {
+            font-size: clamp(30px, 4vw, 46px);
+            line-height: 1.04;
+            letter-spacing: -0.02em;
+        }
+
+        .hero-copy p {
+            color: var(--muted);
+            line-height: 1.68;
+            max-width: 820px;
+        }
+
+        .hero-metrics {
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .pill strong {
+            color: var(--ink);
+        }
+
+        .summary-grid {
+            gap: 14px;
+            flex-direction: column;
+        }
+
+        .summary-card {
+            border-radius: 20px;
+            padding: 18px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .summary-card h3 {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: rgba(114, 212, 245, 0.88);
+            margin-bottom: 10px;
+        }
+
+        .summary-card .value {
+            font-size: 26px;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 8px;
+        }
+
+        .summary-card p {
+            color: var(--muted);
+            line-height: 1.55;
+            font-size: 13px;
+        }
+
+        .layout {
+            margin-top: 18px;
+            display: grid;
+            grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
+            gap: 18px;
+            align-items: start;
+        }
+
+        .sidebar {
+            padding: 16px;
+            position: sticky;
+            top: 16px;
+        }
+
+        .sidebar-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .sidebar-head h2 {
+            font-size: 18px;
+        }
+
+        .sidebar-note {
+            color: var(--muted);
+            line-height: 1.6;
+            font-size: 13px;
+            margin-bottom: 14px;
+        }
+
+        .mission-list,
+        .recent-list,
+        .stack {
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .mission-link,
+        .recent-card,
+        .section-card,
+        .result-card,
+        .status-card,
+        .timing-card {
+            border-radius: 20px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .mission-link {
+            text-align: left;
+            padding: 14px;
+        }
+
+        .mission-link strong {
+            display: block;
+            font-size: 15px;
+            margin-bottom: 6px;
+        }
+
+        .mission-link span {
+            display: block;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .workspace {
+            min-width: 0;
+        }
+
+        .tabbar {
+            padding: 14px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tab-panel {
+            margin-top: 16px;
+            padding: 18px;
+        }
+
+        .tab-panel.hidden {
+            display: none;
+        }
+
+        .panel-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .panel-head p {
+            color: var(--muted);
+            line-height: 1.6;
+            max-width: 820px;
+        }
+
+        .field-grid {
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .field {
+            flex: 1 1 220px;
+            min-width: 220px;
+        }
+
+        .field.wide {
+            flex-basis: 100%;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: rgba(114, 212, 245, 0.86);
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.045);
+            color: var(--ink);
+            font: inherit;
+            padding: 12px 14px;
+        }
+
+        textarea {
+            min-height: 116px;
+            resize: vertical;
+            line-height: 1.58;
+        }
+
+        .compact textarea {
+            min-height: 96px;
+        }
+
+        .status-row {
+            margin-top: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .status-note {
+            color: var(--muted);
+            line-height: 1.6;
+            font-size: 13px;
+        }
+
+        .status-good { color: var(--good); }
+        .status-warn { color: var(--warn); }
+        .status-high { color: var(--high); }
+        .status-cool { color: var(--cool); }
+
+        .section-grid,
+        .timing-grid,
+        .result-grid,
+        .stat-grid {
+            gap: 14px;
+            flex-direction: column;
+        }
+
+        .section-card,
+        .recent-card,
+        .result-card,
+        .status-card,
+        .timing-card {
+            padding: 16px;
+        }
+
+        .section-card header,
+        .recent-card header,
+        .result-card header,
+        .status-card header,
+        .timing-card header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .section-card header strong,
+        .recent-card header strong {
+            font-size: 17px;
+        }
+
+        .meta-line,
+        .tiny {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .section-metrics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .card-switcher,
+        .control-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .card-chip {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+            min-width: 140px;
+            padding: 12px 14px;
+            border-radius: 18px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.035);
+            color: var(--muted);
+            cursor: pointer;
+            transition: 180ms ease;
+        }
+
+        .card-chip.active {
+            background: linear-gradient(135deg, rgba(114, 212, 245, 0.22), rgba(255, 210, 122, 0.10));
+            border-color: var(--line-strong);
+            color: var(--ink);
+        }
+
+        .card-chip:hover {
+            transform: translateY(-1px);
+            border-color: var(--line-strong);
+        }
+
+        .card-chip strong {
+            font-size: 14px;
+        }
+
+        .focus-grid,
+        .controller-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 14px;
+        }
+
+        .controller-summary-shell {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .controller-summary-card {
+            border-radius: 18px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.03);
+            padding: 14px;
+        }
+
+        .controller-summary-card strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .controller-summary-card p {
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.55;
+        }
+
+        .controller-guide {
+            display: grid;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .sync-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .pairing-sheet {
+            margin-bottom: 14px;
+            padding: 18px;
+            border-radius: 22px;
+            border: 1px solid rgba(109, 191, 213, 0.2);
+            background:
+                radial-gradient(circle at 12% 20%, rgba(114, 212, 245, 0.16), transparent 28%),
+                radial-gradient(circle at 88% 18%, rgba(255, 210, 122, 0.14), transparent 24%),
+                rgba(255, 255, 255, 0.04);
+        }
+
+        .pairing-sheet.waiting {
+            border-color: rgba(255, 196, 106, 0.4);
+        }
+
+        .pairing-sheet.paired {
+            border-color: rgba(140, 229, 176, 0.34);
+        }
+
+        .pairing-sheet.expired {
+            border-color: rgba(255, 143, 107, 0.4);
+        }
+
+        .pairing-sheet-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+            align-items: flex-start;
+        }
+
+        .pairing-sheet-head strong {
+            display: block;
+            font-size: 18px;
+            margin-bottom: 6px;
+        }
+
+        .pairing-sheet-head p {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+            max-width: 620px;
+        }
+
+        .pairing-badge {
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--muted);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .pairing-badge strong {
+            display: inline;
+            margin: 0;
+            font-size: 12px;
+            color: var(--ink);
+        }
+
+        .pairing-sheet-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .pairing-code-card,
+        .pairing-status-card {
+            border-radius: 18px;
+            border: 1px solid rgba(109, 191, 213, 0.16);
+            background: rgba(255, 255, 255, 0.03);
+            padding: 14px;
+        }
+
+        .pairing-code-card span,
+        .pairing-status-card span {
+            display: block;
+            color: rgba(114, 212, 245, 0.84);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            margin-bottom: 8px;
+        }
+
+        .pairing-code-value {
+            font-size: clamp(28px, 7vw, 42px);
+            line-height: 1;
+            letter-spacing: 0.18em;
+            font-weight: 800;
+        }
+
+        .pairing-code-meta,
+        .pairing-status-card p {
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .pairing-steps {
+            display: grid;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .pairing-step {
+            padding: 10px 12px;
+            border-radius: 14px;
+            border: 1px solid rgba(109, 191, 213, 0.14);
+            background: rgba(255, 255, 255, 0.025);
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .pairing-step strong {
+            color: var(--ink);
+        }
+
+        .sync-chip {
+            border-radius: 16px;
+            border: 1px solid rgba(109, 191, 213, 0.16);
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px;
+        }
+
+        .sync-chip span {
+            display: block;
+            color: rgba(114, 212, 245, 0.84);
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .sync-chip strong {
+            display: block;
+            font-size: 15px;
+            line-height: 1.35;
+        }
+
+        .link-stack {
+            display: grid;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .link-chip {
+            border-radius: 14px;
+            border: 1px solid rgba(109, 191, 213, 0.14);
+            background: rgba(255, 255, 255, 0.025);
+            padding: 10px 12px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
+        .guide-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 9px 10px;
+            border-radius: 14px;
+            border: 1px solid rgba(109, 191, 213, 0.14);
+            background: rgba(255, 255, 255, 0.025);
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .guide-row strong {
+            margin: 0;
+            color: var(--ink);
+            font-size: 12px;
+        }
+
+        .stage-card {
+            border-radius: 22px;
+            border: 1px solid var(--line);
+            background:
+                radial-gradient(circle at 16% 18%, rgba(114, 212, 245, 0.12), transparent 28%),
+                rgba(255, 255, 255, 0.03);
+            padding: 18px;
+        }
+
+        .stage-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .stage-label {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.035);
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .stage-card h3 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .present-stage {
+            background:
+                radial-gradient(circle at 18% 18%, rgba(255, 210, 122, 0.16), transparent 24%),
+                radial-gradient(circle at 82% 16%, rgba(114, 212, 245, 0.14), transparent 24%),
+                rgba(255, 255, 255, 0.028);
+        }
+
+        .stage-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin: 14px 0 0;
+        }
+
+        .stage-kpi {
+            border-radius: 16px;
+            border: 1px solid rgba(109, 191, 213, 0.16);
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px;
+        }
+
+        .stage-kpi span {
+            display: block;
+            color: rgba(114, 212, 245, 0.84);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            margin-bottom: 6px;
+        }
+
+        .stage-kpi strong {
+            display: block;
+            font-size: 18px;
+            line-height: 1.15;
+        }
+
+        .stage-prompt {
+            margin-top: 14px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(109, 191, 213, 0.16);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .stage-prompt strong {
+            display: block;
+            margin-bottom: 8px;
+            color: rgba(255, 210, 122, 0.9);
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .stage-divider {
+            margin: 14px 0 0;
+            height: 1px;
+            background: var(--line);
+        }
+
+        .stage-copy {
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        .stage-block {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--line);
+        }
+
+        .stage-block strong {
+            display: block;
+            margin-bottom: 8px;
+            color: rgba(114, 212, 245, 0.9);
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .chunk-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .chunk-preview-card {
+            min-height: 100%;
+            border-radius: 16px;
+            border: 1px solid rgba(109, 191, 213, 0.16);
+            background: rgba(255, 255, 255, 0.028);
+            padding: 12px;
+        }
+
+        .chunk-preview-card strong {
+            display: block;
+            margin-bottom: 6px;
+            color: rgba(255, 210, 122, 0.9);
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .chunk-preview-card p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .chunk-rail {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .chunk-pill {
+            min-width: 110px;
+            max-width: 220px;
+            padding: 9px 12px;
+            border-radius: 16px;
+            border: 1px solid rgba(109, 191, 213, 0.16);
+            background: rgba(255, 255, 255, 0.03);
+            text-align: left;
+        }
+
+        .chunk-pill.active {
+            border-color: rgba(114, 212, 245, 0.4);
+            background: linear-gradient(135deg, rgba(114, 212, 245, 0.18), rgba(255, 210, 122, 0.08));
+            color: var(--ink);
+        }
+
+        .chunk-pill.compact {
+            min-width: 96px;
+            max-width: 176px;
+            padding: 8px 10px;
+        }
+
+        .chunk-pill strong,
+        .chunk-pill span {
+            display: block;
+        }
+
+        .chunk-pill strong {
+            margin-bottom: 4px;
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(114, 212, 245, 0.9);
+        }
+
+        .chunk-pill.active strong {
+            color: var(--ink);
+        }
+
+        .chunk-pill span {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .chunk-pill.active span {
+            color: rgba(238, 246, 249, 0.92);
+        }
+
+        .mini-label {
+            color: rgba(114, 212, 245, 0.84);
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .metric-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .metric-chip strong {
+            color: var(--ink);
+        }
+
+        .action-row {
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .status-shell {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .status-card strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 28px;
+        }
+
+        .status-card p {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .rehearse-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 0.94fr) minmax(360px, 0.88fr);
+            gap: 16px;
+            align-items: start;
+        }
+
+        .timer {
+            font-size: clamp(34px, 6vw, 54px);
+            font-weight: 800;
+            letter-spacing: 0.08em;
+        }
+
+        .transcript-box {
+            min-height: 180px;
+            white-space: pre-wrap;
+            line-height: 1.62;
+            color: var(--ink);
+        }
+
+        .empty-state {
+            padding: 22px;
+            border-radius: 20px;
+            border: 1px dashed var(--line);
+            color: var(--muted);
+            line-height: 1.7;
+            background: rgba(255, 255, 255, 0.025);
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .three-col {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .key-value {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .key-value span {
+            color: rgba(114, 212, 245, 0.84);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+        }
+
+        .key-value strong {
+            font-size: 15px;
+            line-height: 1.45;
+        }
+
+        .mono {
+            font-family: "Cascadia Mono", "Consolas", monospace;
+        }
+
+        .checkbox {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .checkbox input {
+            width: 16px;
+            height: 16px;
+            margin: 0;
+        }
+
+        @media (max-width: 1120px) {
+            .layout,
+            .hero,
+            .rehearse-grid,
+            .topbar {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+            }
+
+            .two-col,
+            .three-col,
+            .status-shell,
+            .controller-summary-shell,
+            .stage-kpi-grid,
+            .chunk-preview-grid,
+            .pairing-sheet-grid,
+            .sync-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        body.phone-controller-mode main {
+            width: min(840px, calc(100vw - 20px));
+            padding-top: 12px;
+        }
+
+        body.phone-controller-mode .hero,
+        body.phone-controller-mode .sidebar,
+        body.phone-controller-mode .tabbar,
+        body.phone-controller-mode #tab-brief,
+        body.phone-controller-mode #tab-script,
+        body.phone-controller-mode .phone-surface-hidden {
+            display: none !important;
+        }
+
+        body.phone-controller-mode .layout,
+        body.phone-controller-mode .rehearse-grid {
+            grid-template-columns: 1fr;
+        }
+
+        body.phone-controller-mode .workspace,
+        body.phone-controller-mode .tab-panel {
+            margin-top: 0;
+            padding-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <header class="panel topbar">
+            <div class="brand">
+                <div class="brand-mark">AP</div>
+                <div class="brand-copy">
+                    <strong>Academic Presentation Companion</strong>
+                    <span>Brief -> Script -> Rehearse</span>
+                </div>
+            </div>
+            <div class="hero-badge">
+                <strong>Boundary</strong>
+                <p>The student writes the outline, notes, and cue cards. AI only supports intake extraction and rehearsal feedback.</p>
+            </div>
+            <div class="nav-links">
+                <a class="nav-link" href="/">HUD</a>
+                <a class="nav-link" href="/review">Review</a>
+                <a class="nav-link" href="/reflection">Reflection</a>
+            </div>
+        </header>
+
+        <section class="panel hero">
+            <div class="hero-copy">
+                <div class="eyebrow">Independent Module</div>
+                <h1>Turn one academic presentation task into a full rehearsal workflow.</h1>
+                <p>
+                    Build a mission from the assignment brief, map your script to sections and audience interaction,
+                    rehearse with browser audio or uploads, then review timing, transcript, feedback, and a future Rokid-ready HUD summary.
+                </p>
+                <div class="hero-metrics">
+                    <div class="pill"><strong>Brief</strong> Mission intake with editable field extraction</div>
+                    <div class="pill"><strong>Script</strong> Student-written sections, slide anchors, and cue goals</div>
+                    <div class="pill"><strong>Rehearse</strong> Audio, transcript, feedback, and HUD summary</div>
+                </div>
+            </div>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h3>Current Mission</h3>
+                    <div class="value" id="hero-mission-title">No mission selected</div>
+                    <p id="hero-mission-meta">Create a mission, then fill your own structure before rehearsal.</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Script Fit</h3>
+                    <div class="value" id="hero-script-fit">--</div>
+                    <p id="hero-script-note">Duration hints will appear after you add sections and notes.</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Latest HUD Signal</h3>
+                    <div class="value" id="hero-hud-status">Waiting</div>
+                    <p id="hero-hud-note">Analyze a rehearsal run to produce the lightweight Rokid summary payload.</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="layout">
+            <aside class="panel sidebar">
+                <div class="sidebar-head">
+                    <h2>Missions</h2>
+                    <button class="ghost-btn" onclick="newMissionDraft()">New Draft</button>
+                </div>
+                <p class="sidebar-note">
+                    Use one mission per presentation task. The current page keeps the mission brief, your own script sections,
+                    and rehearsal runs together without becoming a tutor or auto-script generator.
+                </p>
+                <div class="mission-list" id="mission-list"></div>
+            </aside>
+
+            <section class="workspace">
+                <div class="panel tabbar">
+                    <button class="tab-btn active" id="tab-btn-brief" onclick="switchTab('brief')">Brief</button>
+                    <button class="tab-btn" id="tab-btn-script" onclick="switchTab('script')">Script</button>
+                    <button class="tab-btn" id="tab-btn-rehearse" onclick="switchTab('rehearse')">Rehearse</button>
+                </div>
+
+                <section class="panel tab-panel" id="tab-brief">
+                    <div class="panel-head">
+                        <div>
+                            <h2>Build the Mission Brief</h2>
+                            <p>Paste the assignment text for editable extraction, or fill the form manually. Nothing is locked; you stay in control of every field before saving.</p>
+                        </div>
+                    </div>
+
+                    <div class="section-card compact">
+                        <header>
+                            <div>
+                                <strong>Assignment Intake</strong>
+                                <div class="meta-line">Paste the teacher brief or assignment prompt. The extractor suggests editable values and a structural section scaffold.</div>
+                            </div>
+                        </header>
+                        <label for="task-text">Task Text</label>
+                        <textarea id="task-text" placeholder="Paste the assignment brief here..."></textarea>
+                        <div class="status-row">
+                            <label class="checkbox">
+                                <input type="checkbox" id="use-intake-ai" checked>
+                                <span>Use AI-assisted extraction when available</span>
+                            </label>
+                            <button class="action-btn" onclick="extractIntake()">Extract Brief Fields</button>
+                            <span class="status-note" id="intake-status">No extraction has been run yet.</span>
+                        </div>
+                    </div>
+
+                    <div class="section-card">
+                        <header>
+                            <div>
+                                <strong>Mission Fields</strong>
+                                <div class="meta-line">These fields stay fully editable after extraction.</div>
+                            </div>
+                        </header>
+                        <div class="field-grid">
+                            <div class="field">
+                                <label for="mission-title">Title</label>
+                                <input id="mission-title" placeholder="Research Methods Presentation">
+                            </div>
+                            <div class="field">
+                                <label for="mission-course">Course</label>
+                                <input id="mission-course" placeholder="Research Methods">
+                            </div>
+                            <div class="field">
+                                <label for="mission-deadline">Deadline</label>
+                                <input id="mission-deadline" placeholder="May 28">
+                            </div>
+                            <div class="field">
+                                <label for="mission-deliverable">Deliverable Type</label>
+                                <input id="mission-deliverable" placeholder="Presentation">
+                            </div>
+                            <div class="field">
+                                <label for="mission-duration">Target Duration (minutes)</label>
+                                <input id="mission-duration" type="number" min="0" step="0.5" placeholder="6">
+                            </div>
+                            <div class="field">
+                                <label for="mission-audience">Audience</label>
+                                <input id="mission-audience" placeholder="Classmates and teacher">
+                            </div>
+                            <div class="field wide">
+                                <label for="mission-requirements">Teacher Requirements</label>
+                                <textarea id="mission-requirements" placeholder="- Use at least one case study&#10;- Keep within 6 minutes"></textarea>
+                            </div>
+                            <div class="field wide">
+                                <label for="mission-description">Task Description</label>
+                                <textarea id="mission-description" placeholder="Summarize the task, scope, constraints, and expectations here."></textarea>
+                            </div>
+                        </div>
+                        <div class="status-row">
+                            <button class="action-btn" onclick="saveMission()">Save Mission</button>
+                            <button class="ghost-btn" onclick="loadSuggestedSectionsIntoScript()">Use Suggested Section Scaffold</button>
+                            <span class="status-note" id="brief-save-status">Mission changes are not saved yet.</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel tab-panel hidden" id="tab-script">
+                    <div class="panel-head">
+                        <div>
+                            <h2>Write Slide-Linked Script Cards</h2>
+                            <p>Each card should map to one PPT page or one clearly bounded speaking unit. Build the card around the slide it belongs to, then keep your audience cue and timing target beside it.</p>
+                        </div>
+                        <div class="action-row">
+                            <button class="ghost-btn" onclick="addSection()">Add Slide Card</button>
+                            <button class="action-btn" onclick="saveScript()">Save Slide Cards</button>
+                        </div>
+                    </div>
+
+                    <div class="status-shell">
+                        <div class="status-card">
+                            <strong id="script-summary-target">--</strong>
+                            <p>Target total duration from the mission brief and slide-card plan.</p>
+                        </div>
+                        <div class="status-card">
+                            <strong id="script-summary-estimate">--</strong>
+                            <p>Lightweight estimated speaking time from your own written words.</p>
+                        </div>
+                        <div class="status-card">
+                            <strong id="script-summary-hint">Waiting</strong>
+                            <p id="script-summary-note">Add your own outline or notes to start the timing check.</p>
+                        </div>
+                    </div>
+
+                    <div class="section-card">
+                        <header>
+                            <div>
+                                <strong>Slide Card Navigator</strong>
+                                <div class="meta-line">Use these cards like a phone-side preparation strip. Each card should correspond to one slide or one tightly linked speaking unit.</div>
+                            </div>
+                        </header>
+                        <div class="card-switcher" id="script-card-switcher-host"></div>
+                    </div>
+
+                    <div class="focus-grid">
+                        <div class="section-card" id="focused-card-host"></div>
+                    </div>
+                </section>
+
+                <section class="panel tab-panel hidden" id="tab-rehearse">
+                    <div class="panel-head">
+                        <div>
+                            <h2>Rehearse and Review</h2>
+                            <p>Start a live rehearsal with browser audio, or upload an audio file from another device. The analysis can still run without a model provider, and transcript text can come from browser speech capture or manual paste.</p>
+                        </div>
+                    </div>
+
+                    <div class="rehearse-grid">
+                        <div class="stack">
+                            <div class="status-card phone-surface-hidden">
+                                <header>
+                                    <div>
+                                        <strong>Live Rehearsal</strong>
+                                        <div class="meta-line">Mic capture uses the browser when available. Browser speech transcript is optional and will not block the run.</div>
+                                    </div>
+                                    <div class="timer mono" id="live-timer">00:00</div>
+                                </header>
+                                <div class="action-row">
+                                    <button class="action-btn" id="live-start-btn" onclick="startLiveRehearsal()">Start Live Rehearsal</button>
+                                    <button class="ghost-btn" id="live-stop-btn" onclick="stopLiveRehearsal()">Stop</button>
+                                    <label class="checkbox">
+                                        <input type="checkbox" id="use-browser-speech" checked>
+                                        <span>Capture browser speech transcript when supported</span>
+                                    </label>
+                                </div>
+                                <div class="status-row">
+                                    <span class="status-note" id="live-status">Ready for a live rehearsal or an uploaded audio file.</span>
+                                </div>
+                            </div>
+
+                            <div class="section-card">
+                                <header>
+                                    <div>
+                                        <strong>Presentation Controller</strong>
+                                        <div class="meta-line">Phone should be the main controller. Rokid button input should stay lightweight: next, previous, and cue toggle.</div>
+                                    </div>
+                                </header>
+                                <div class="controller-grid">
+                                    <div class="field-grid">
+                                        <div class="field">
+                                            <label for="controller-mission-select">Mission Quick Switch</label>
+                                            <select id="controller-mission-select" onchange="loadMission(this.value)"></select>
+                                        </div>
+                                        <div class="field">
+                                            <label for="controller-source">Control Source</label>
+                                            <select id="controller-source" onchange="syncPresentationStateFromUi()">
+                                                <option value="phone">phone</option>
+                                                <option value="rokid_button">rokid_button</option>
+                                            </select>
+                                        </div>
+                                        <div class="field">
+                                            <label for="presentation-mode">Presentation Mode</label>
+                                            <select id="presentation-mode" onchange="updatePresentationMode()">
+                                                <option value="rehearse">rehearse</option>
+                                                <option value="present">present</option>
+                                                <option value="edit">edit</option>
+                                            </select>
+                                        </div>
+                                        <div class="field">
+                                            <label for="jump-slide-select">Jump to Slide</label>
+                                            <select id="jump-slide-select" onchange="jumpToSelectedSlide()"></select>
+                                        </div>
+                                    </div>
+                                    <div class="control-strip">
+                                        <button class="action-btn" onclick="applyPresentationControl('previous')">Previous Step</button>
+                                        <button class="action-btn" onclick="applyPresentationControl('next')">Next Step</button>
+                                        <button class="ghost-btn" onclick="applyPresentationControl('toggle_cue')">Show / Hide Cue</button>
+                                    </div>
+                                    <div class="control-strip">
+                                        <button class="ghost-btn" onclick="applyPresentationControl('previous_chunk')">Previous Chunk</button>
+                                        <button class="ghost-btn" onclick="applyPresentationControl('next_chunk')">Next Chunk</button>
+                                        <button class="ghost-btn" onclick="applyPresentationControl('previous_slide')">Previous Slide</button>
+                                        <button class="ghost-btn" onclick="applyPresentationControl('next_slide')">Next Slide</button>
+                                    </div>
+                                    <div class="controller-summary-shell" id="controller-summary-host"></div>
+                                    <div class="status-row">
+                                        <span class="status-note" id="controller-status">Phone control is ready. Switch to Rokid button mode when you want to simulate the glasses-side input path.</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="section-card phone-surface-hidden">
+                                <header>
+                                    <div>
+                                        <strong>Audio and Run Meta</strong>
+                                        <div class="meta-line">Use upload when the audio comes from a phone or another device. Future Rokid and companion-phone sources can fit the same structure.</div>
+                                    </div>
+                                </header>
+                                <div class="field-grid">
+                                    <div class="field">
+                                        <label for="audio-source">Audio Source</label>
+                                        <select id="audio-source">
+                                            <option value="browser_mic">browser_mic</option>
+                                            <option value="phone_mic">phone_mic</option>
+                                            <option value="rokid_mic">rokid_mic</option>
+                                        </select>
+                                    </div>
+                                    <div class="field">
+                                        <label for="audio-upload">Upload Audio</label>
+                                        <input id="audio-upload" type="file" accept="audio/*" onchange="handleAudioUpload(event)">
+                                    </div>
+                                    <div class="field">
+                                        <label for="self-rating">Self Rating (1-5)</label>
+                                        <select id="self-rating">
+                                            <option value="0">Not set</option>
+                                            <option value="1">1</option>
+                                            <option value="2">2</option>
+                                            <option value="3">3</option>
+                                            <option value="4">4</option>
+                                            <option value="5">5</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="status-row">
+                                    <span class="status-note" id="audio-meta">No audio file selected yet.</span>
+                                </div>
+                            </div>
+
+                            <div class="section-card phone-surface-hidden">
+                                <header>
+                                    <div>
+                                        <strong>Transcript and Notes</strong>
+                                        <div class="meta-line">Browser speech capture will fill this box when supported. You can also paste your own transcript or a short summary after the run.</div>
+                                    </div>
+                                </header>
+                                <div class="field-grid">
+                                    <div class="field wide">
+                                        <label for="run-transcript">Transcript Text</label>
+                                        <textarea id="run-transcript" placeholder="Transcript text from browser speech capture or your own transcript goes here."></textarea>
+                                    </div>
+                                    <div class="field wide">
+                                        <label for="run-notes">Run Notes</label>
+                                        <textarea id="run-notes" placeholder="Add a short note about how the rehearsal felt, where you hesitated, or what changed."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="section-card phone-surface-hidden">
+                                <header>
+                                    <div>
+                                        <strong>Section Timing Support</strong>
+                                        <div class="meta-line">These values can come from your own split timing, a phone timer, or a quick estimate after the run.</div>
+                                    </div>
+                                </header>
+                                <div class="timing-grid" id="section-timing-host"></div>
+                            </div>
+
+                            <div class="action-row phone-surface-hidden">
+                                <label class="checkbox">
+                                    <input type="checkbox" id="use-analysis-ai" checked>
+                                    <span>Use AI-backed feedback wording when available</span>
+                                </label>
+                                <button class="action-btn" onclick="saveRehearsal()">Save Rehearsal Run</button>
+                                <button class="ghost-btn" onclick="analyzeCurrentRehearsal()">Analyze Saved Run</button>
+                                <span class="status-note" id="rehearsal-save-status">No rehearsal run has been saved yet.</span>
+                            </div>
+                        </div>
+
+                        <div class="stack">
+                            <div class="result-card">
+                                <header>
+                                    <div>
+                                        <strong>Current Slide Stage</strong>
+                                        <div class="meta-line">This card is the slide-linked presentation view. In `present` mode it stays lightweight enough for a Rokid-style HUD or quick phone glance.</div>
+                                    </div>
+                                </header>
+                                <div id="presentation-stage-host">
+                                    <div class="empty-state">Load a mission to activate the current slide stage.</div>
+                                </div>
+                            </div>
+
+                            <div class="result-card">
+                                <header>
+                                    <div>
+                                        <strong>Companion Sync Scaffold</strong>
+                                        <div class="meta-line">This keeps the phone controller, future Rokid HUD pull, and lightweight button events on one shared mission state.</div>
+                                    </div>
+                                </header>
+                                <div id="companion-sync-host">
+                                    <div class="empty-state">Load a mission to activate the companion sync scaffold.</div>
+                                </div>
+                            </div>
+
+                            <div class="result-card phone-surface-hidden">
+                                <header>
+                                    <div>
+                                        <strong>Feedback Snapshot</strong>
+                                        <div class="meta-line">Overall pacing, strongest section, weakest section, next action, and section suggestions.</div>
+                                    </div>
+                                </header>
+                                <div class="result-grid" id="feedback-host">
+                                    <div class="empty-state">Analyze a saved run to populate rehearsal feedback.</div>
+                                </div>
+                            </div>
+
+                            <div class="result-card phone-surface-hidden">
+                                <header>
+                                    <div>
+                                        <strong>Transcript View</strong>
+                                        <div class="meta-line">This stays on the detailed web surface. The future Rokid HUD only receives the lightweight summary.</div>
+                                    </div>
+                                </header>
+                                <div class="transcript-box" id="transcript-view">No transcript available yet.</div>
+                            </div>
+
+                            <div class="result-card phone-surface-hidden">
+                                <header>
+                                    <div>
+                                        <strong>HUD Summary Payload</strong>
+                                        <div class="meta-line">This is the compact payload intended for future Rokid-side prompting.</div>
+                                    </div>
+                                </header>
+                                <div class="transcript-box mono" id="hud-summary-view">No HUD summary yet.</div>
+                            </div>
+
+                            <div class="result-card phone-surface-hidden">
+                                <header>
+                                    <div>
+                                        <strong>Recent Rehearsals</strong>
+                                        <div class="meta-line">Reload a saved run to compare transcript, timing, and feedback.</div>
+                                    </div>
+                                </header>
+                                <div class="recent-list" id="recent-rehearsals-host"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        const routeQuery = new URLSearchParams(window.location.search);
+        const phoneControllerMode = window.location.pathname.includes("/presentation/controller");
+        const requestedMissionId = routeQuery.get("mission_id") || "";
+
+        const state = {
+            missions: [],
+            currentMissionId: "",
+            currentMission: null,
+            presentationState: null,
+            companionSync: null,
+            liveHud: null,
+            bridgeAutoClaimedMissionId: "",
+            focusedCardId: "",
+            rehearsalList: [],
+            draftSections: [],
+            suggestedSections: [],
+            currentRehearsal: null,
+            recordedAudioBlob: null,
+            uploadedAudioFile: null,
+            uploadedDurationSeconds: 0,
+            liveDurationSeconds: 0,
+            liveTimerHandle: null,
+            liveStartedAt: 0,
+            mediaRecorder: null,
+            mediaStream: null,
+            recordedChunks: [],
+            speechRecognition: null,
+            companionHeartbeatHandle: null,
+            pairingMonitorHandle: null,
+        };
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function escapeAttr(value) {
+            return escapeHtml(value).replace(/\n/g, "&#10;");
+        }
+
+        function formatMmss(totalSeconds) {
+            const safe = Math.max(0, Math.round(Number(totalSeconds) || 0));
+            const minutes = String(Math.floor(safe / 60)).padStart(2, "0");
+            const seconds = String(safe % 60).padStart(2, "0");
+            return `${minutes}:${seconds}`;
+        }
+
+        function formatSignedMmss(totalSeconds) {
+            const value = Number(totalSeconds) || 0;
+            const sign = value >= 0 ? "+" : "-";
+            return `${sign}${formatMmss(Math.abs(value))}`;
+        }
+
+        function formatIsoStamp(value) {
+            return value ? String(value).replace("T", " ") : "";
+        }
+
+        function shortenInline(value, maxLength = 84) {
+            const text = String(value || "").replace(/\s+/g, " ").trim();
+            if (!text) return "";
+            if (text.length <= maxLength) return text;
+            return `${text.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
+        }
+
+        function switchTab(tab) {
+            for (const value of ["brief", "script", "rehearse"]) {
+                document.getElementById(`tab-btn-${value}`).classList.toggle("active", value === tab);
+                document.getElementById(`tab-${value}`).classList.toggle("hidden", value !== tab);
+            }
+        }
+
+        function normalizeSection(section, index) {
+            return {
+                section_id: String(section?.section_id || `draft-${Date.now()}-${index}`),
+                name: String(section?.name || `Card ${index}`),
+                slide_index: Math.max(1, Number(section?.slide_index || index)),
+                slide_title: String(section?.slide_title || section?.name || `Slide ${index}`),
+                slide_anchor: String(section?.slide_anchor || ""),
+                interaction_goal: String(section?.interaction_goal || ""),
+                target_seconds: Math.max(10, Number(section?.target_seconds || 45)),
+                outline: String(section?.outline || ""),
+                speaker_notes: String(section?.speaker_notes || ""),
+                teleprompter_script: String(section?.teleprompter_script || ""),
+                cue_cards: String(section?.cue_cards || ""),
+            };
+        }
+
+        function normalizeSections(sections) {
+            const items = (sections || []).map((item, index) => normalizeSection(item, index + 1));
+            return items.sort((a, b) => a.slide_index - b.slide_index || a.name.localeCompare(b.name));
+        }
+
+        function buildDefaultDraftSections(targetMinutes = 5) {
+            const totalSeconds = Math.max(120, Math.round((Number(targetMinutes) || 5) * 60));
+            const skeleton = totalSeconds <= 240
+                ? [
+                    ["Opening", "Opening", "Slide 1", "Frame the task and preview the route.", 0.2],
+                    ["Main Point", "Main Point", "Slide 2", "State the key idea in your own words.", 0.32],
+                    ["Example", "Example", "Slide 3", "Slow down and guide the audience through the example.", 0.28],
+                    ["Conclusion", "Conclusion", "Slide 4", "Land the takeaway and leave a short pause.", 0.2],
+                ]
+                : [
+                    ["Opening", "Opening", "Slide 1", "Set the topic and the route for the audience.", 0.16],
+                    ["Background", "Background", "Slide 2", "Give the context the audience needs.", 0.18],
+                    ["Core Idea", "Core Idea", "Slide 3", "Explain the central point without reading full sentences.", 0.24],
+                    ["Evidence or Example", "Evidence or Example", "Slide 4", "Use one strong example and signpost the transition.", 0.24],
+                    ["Conclusion", "Conclusion", "Slide 5", "Close with the takeaway and invite one question.", 0.18],
+                ];
+            let remaining = totalSeconds;
+            return skeleton.map((item, index) => {
+                const target = index === skeleton.length - 1 ? remaining : Math.max(15, Math.round(totalSeconds * item[4]));
+                remaining -= target;
+                return normalizeSection({
+                    section_id: `draft-${Date.now()}-${index + 1}`,
+                    name: item[0],
+                    slide_index: index + 1,
+                    slide_title: item[1],
+                    slide_anchor: item[2],
+                    interaction_goal: item[3],
+                    target_seconds: target,
+                }, index + 1);
+            });
+        }
+
+        function defaultControlHints() {
+            return {
+                phone: {
+                    role: "Main controller",
+                    note: "Use the phone for chunk-by-chunk teleprompter reading, explicit slide jumps, and mode changes.",
+                    actions: ["previous", "next", "previous_chunk", "next_chunk", "previous_slide", "next_slide", "jump", "jump_chunk", "toggle_cue", "set_mode"],
+                },
+                rokid_button: {
+                    role: "Quick remote",
+                    note: "Keep glasses-side control lightweight so the presenter can step through the current slide script before advancing the deck.",
+                    button_map: {
+                        single_press: "next_chunk",
+                        double_press: "previous_chunk",
+                        long_press: "next_slide",
+                    },
+                },
+            };
+        }
+
+        function normalizeControlHints(raw) {
+            const hints = raw && typeof raw === "object" ? raw : {};
+            const fallback = defaultControlHints();
+            return {
+                phone: {
+                    ...fallback.phone,
+                    ...(hints.phone || {}),
+                },
+                rokid_button: {
+                    ...fallback.rokid_button,
+                    ...(hints.rokid_button || {}),
+                    button_map: {
+                        ...fallback.rokid_button.button_map,
+                        ...((hints.rokid_button || {}).button_map || {}),
+                    },
+                },
+            };
+        }
+
+        function defaultCompanionSync() {
+            return {
+                session_id: "",
+                sync_status: "ready",
+                active_surface: phoneControllerMode ? "phone" : "web",
+                controller_surface: "phone",
+                hud_surface: "rokid_hud",
+                sync_revision: 1,
+                last_event: "initialized",
+                last_button_event: "",
+                last_sync_at: "",
+                last_phone_seen_at: "",
+                last_web_seen_at: "",
+                last_hud_seen_at: "",
+                last_rokid_event_at: "",
+                controller_path: state.currentMissionId ? `/presentation/controller?mission_id=${encodeURIComponent(state.currentMissionId)}` : "/presentation/controller",
+                workspace_path: state.currentMissionId ? `/presentation?mission_id=${encodeURIComponent(state.currentMissionId)}` : "/presentation",
+                sync_api_path: "",
+                rokid_event_api_path: "",
+                live_hud_api_path: "",
+                pairing_state_api_path: "",
+                pairing_start_api_path: "",
+                pairing_join_api_path: "",
+                pairing_end_api_path: "",
+                bridge_state_api_path: "",
+                bridge_claim_api_path: "",
+                bridge_release_api_path: "",
+                pairing_state: {
+                pairing_status: "inactive",
+                pairing_code: "",
+                pairing_expires_at: "",
+                pairing_expires_in_seconds: null,
+                countdown_label: "",
+                status_label: "Pairing inactive",
+                next_step: "Start pairing when you are ready to connect the companion surface.",
+                join_ready: false,
+                paired_surface: "",
+                paired_device_label: "",
+                paired_at: "",
+                    pairing_revision: 0,
+                    pairing_window_seconds: 180,
+                    last_pairing_start_at: "",
+                    last_pairing_join_at: "",
+                    last_pairing_end_at: "",
+                    owner_surface: "",
+                },
+                bridge_state: {
+                    bridge_status: "waiting",
+                    bridge_pin: "",
+                    bridge_key: "",
+                    claimed_surface: "",
+                    claimed_device_label: "",
+                    claimed_at: "",
+                    claim_revision: 0,
+                    last_release_at: "",
+                },
+                surface_status: {
+                    web: { status: "offline", last_seen_at: "" },
+                    phone: { status: "offline", last_seen_at: "" },
+                    rokid_hud: { status: "offline", last_seen_at: "" },
+                },
+            };
+        }
+
+        function normalizePairingState(raw) {
+            const fallback = defaultCompanionSync().pairing_state;
+            const value = raw && typeof raw === "object" ? raw : {};
+            return {
+                ...fallback,
+                ...value,
+                pairing_status: ["inactive", "waiting", "paired", "expired"].includes(String(value.pairing_status || "").toLowerCase())
+                    ? String(value.pairing_status).toLowerCase()
+                    : fallback.pairing_status,
+                pairing_code: String(value.pairing_code || "").toUpperCase(),
+                countdown_label: String(value.countdown_label || ""),
+                status_label: String(value.status_label || fallback.status_label),
+                next_step: String(value.next_step || fallback.next_step),
+                join_ready: Boolean(value.join_ready),
+                pairing_window_seconds: Math.max(1, Number(value.pairing_window_seconds || fallback.pairing_window_seconds)),
+            };
+        }
+
+        function normalizeCompanionSync(raw) {
+            const fallback = defaultCompanionSync();
+            const value = raw && typeof raw === "object" ? raw : {};
+            const surfaceStatus = value.surface_status && typeof value.surface_status === "object" ? value.surface_status : {};
+            const pairingState = value.pairing_state && typeof value.pairing_state === "object" ? value.pairing_state : {};
+            const bridgeState = value.bridge_state && typeof value.bridge_state === "object" ? value.bridge_state : {};
+            return {
+                ...fallback,
+                ...value,
+                pairing_state: normalizePairingState({
+                    ...fallback.pairing_state,
+                    ...pairingState,
+                }),
+                bridge_state: {
+                    ...fallback.bridge_state,
+                    ...bridgeState,
+                },
+                surface_status: {
+                    web: { ...fallback.surface_status.web, ...(surfaceStatus.web || {}) },
+                    phone: { ...fallback.surface_status.phone, ...(surfaceStatus.phone || {}) },
+                    rokid_hud: { ...fallback.surface_status.rokid_hud, ...(surfaceStatus.rokid_hud || {}) },
+                },
+            };
+        }
+
+        function currentCompanionSync() {
+            state.companionSync = normalizeCompanionSync(state.companionSync);
+            return state.companionSync;
+        }
+
+        function currentPairingState() {
+            return normalizePairingState(currentCompanionSync().pairing_state);
+        }
+
+        function defaultLiveHud() {
+            return {
+                mode: "presentation_live",
+                mission_id: state.currentMissionId || "",
+                session_id: "",
+                sync_status: "ready",
+                sync_revision: 1,
+                pairing_status: "inactive",
+                pairing_status_label: "Pairing inactive",
+                pairing_code: "",
+                pairing_expires_at: "",
+                pairing_expires_in_seconds: null,
+                pairing_countdown_label: "",
+                paired_surface: "",
+                paired_device_label: "",
+                pairing_next_step: "",
+                bridge_status: "waiting",
+                bridge_pin: "",
+                bridge_key: "",
+                claimed_surface: "",
+                claimed_device_label: "",
+                owner_surface: "",
+                claim_revision: 0,
+                control_source: "phone",
+                presentation_mode: currentPresentationState().presentation_mode,
+                cue_view: currentPresentationState().cue_view,
+                active_slide_index: currentPresentationState().active_slide_index,
+                active_slide_title: "",
+                active_slide_anchor: "",
+                active_chunk_index: currentPresentationState().active_chunk_index || 0,
+                active_chunk_count: currentPresentationState().active_chunk_count || 0,
+                chunk_progress_label: currentPresentationState().chunk_progress_label || "0/0",
+                previous_chunk_preview: "",
+                next_chunk_preview: "",
+                chunk_jump_supported: false,
+                teleprompter_source: "empty",
+                teleprompter_text: "",
+                status_line: "Current slide ready",
+                cue_line: "",
+                interaction_hint: "",
+                next_slide_index: 0,
+                next_slide_title: "",
+                issue_line: "",
+                next_action_line: "",
+                target_seconds: 0,
+                target_label: "--",
+                surface_status: {
+                    web: "offline",
+                    phone: "offline",
+                    rokid_hud: "offline",
+                },
+                updated_at: "",
+            };
+        }
+
+        function normalizeLiveHud(raw) {
+            const fallback = defaultLiveHud();
+            const value = raw && typeof raw === "object" ? raw : {};
+            return {
+                ...fallback,
+                ...value,
+                surface_status: {
+                    ...fallback.surface_status,
+                    ...((value && value.surface_status) || {}),
+                },
+            };
+        }
+
+        function briefCardPayload(card) {
+            if (!card) return {};
+            const teleprompter = teleprompterBundleForCard(card, 0);
+            return {
+                section_id: card.section_id || "",
+                name: card.name || "",
+                slide_index: Number(card.slide_index || 0),
+                slide_title: card.slide_title || card.name || "",
+                slide_anchor: card.slide_anchor || "",
+                interaction_goal: card.interaction_goal || "",
+                target_seconds: Number(card.target_seconds || 0),
+                target_label: formatMmss(Number(card.target_seconds || 0)),
+                teleprompter_source: teleprompter.source,
+                chunk_count: teleprompter.chunkCount,
+            };
+        }
+
+        function teleprompterSource(card) {
+            const sourceMap = [
+                ["teleprompter_script", card?.teleprompter_script],
+                ["speaker_notes", card?.speaker_notes],
+                ["cue_cards", card?.cue_cards],
+                ["outline", card?.outline],
+                ["slide_anchor", card?.slide_anchor],
+            ];
+            for (const [field, value] of sourceMap) {
+                const text = String(value || "").trim();
+                if (text) return { source: field, text };
+            }
+            return { source: "empty", text: "" };
+        }
+
+        function splitLongTeleprompterUnit(text, maxWords = 38) {
+            const words = String(text || "").trim().split(/\s+/).filter(Boolean);
+            if (!words.length) return [];
+            const chunks = [];
+            for (let index = 0; index < words.length; index += maxWords) {
+                chunks.push(words.slice(index, index + maxWords).join(" "));
+            }
+            return chunks;
+        }
+
+        function teleprompterChunksFromText(text, maxWords = 38, maxChars = 280) {
+            const safeText = String(text || "").trim();
+            if (!safeText) return [];
+            const paragraphs = safeText.split(/\n{2,}/).map((item) => item.trim()).filter(Boolean);
+            const chunks = [];
+            for (const paragraph of (paragraphs.length ? paragraphs : [safeText])) {
+                const units = paragraph.split(/(?<=[.!?])\s+|\n+/).map((item) => item.trim()).filter(Boolean);
+                let current = "";
+                let currentWords = 0;
+                for (const unit of (units.length ? units : [paragraph])) {
+                    const baseUnits = unit.split(/\s+/).length > maxWords || unit.length > maxChars
+                        ? splitLongTeleprompterUnit(unit, maxWords)
+                        : [unit];
+                    for (const part of baseUnits) {
+                        const partWords = part.trim().split(/\s+/).filter(Boolean).length;
+                        const candidate = current ? `${current} ${part}` : part;
+                        if (current && (currentWords + partWords > maxWords || candidate.length > maxChars)) {
+                            chunks.push(current.trim());
+                            current = part;
+                            currentWords = partWords;
+                        } else {
+                            current = candidate.trim();
+                            currentWords = current.split(/\s+/).filter(Boolean).length;
+                        }
+                    }
+                }
+                if (current) {
+                    chunks.push(current.trim());
+                }
+            }
+            return chunks.filter(Boolean);
+        }
+
+        function teleprompterBundleForCard(card, requestedChunkIndex = 0) {
+            const { source, text } = teleprompterSource(card);
+            const chunks = teleprompterChunksFromText(text);
+            const chunkCount = chunks.length;
+            const safeIndex = chunkCount
+                ? Math.min(chunkCount - 1, Math.max(0, Number(requestedChunkIndex || 0)))
+                : 0;
+            return {
+                source,
+                text,
+                chunks,
+                chunkCount,
+                activeChunkIndex: safeIndex,
+                activeChunkText: chunkCount ? chunks[safeIndex] : "",
+                chunkProgressLabel: chunkCount ? `${safeIndex + 1}/${chunkCount}` : "0/0",
+                previousChunkText: safeIndex > 0 ? chunks[safeIndex - 1] : "",
+                nextChunkText: safeIndex + 1 < chunkCount ? chunks[safeIndex + 1] : "",
+                hasPreviousChunk: safeIndex > 0,
+                hasNextChunk: safeIndex + 1 < chunkCount,
+                chunkJumpSupported: chunkCount > 1,
+            };
+        }
+
+        function teleprompterChunkItems(bundle, maxPreview = 72) {
+            const chunks = Array.isArray(bundle?.chunks) ? bundle.chunks : [];
+            return chunks.map((chunk, index) => ({
+                index,
+                label: `Chunk ${index + 1}`,
+                preview: shortenInline(chunk, maxPreview),
+                active: index === Number(bundle?.activeChunkIndex || 0),
+            }));
+        }
+
+        function teleprompterChunkRailHtml(bundle, options = {}) {
+            const items = teleprompterChunkItems(bundle, options.maxPreview || 72);
+            if (!items.length) {
+                return `<div class="stage-copy">No teleprompter chunks are available for this slide yet.</div>`;
+            }
+            const compactClass = options.compact ? " compact" : "";
+            return `
+                <div class="chunk-rail">
+                    ${items.map((item) => `
+                        <button class="chunk-pill${compactClass}${item.active ? " active" : ""}" onclick="jumpToTeleprompterChunk(${item.index})">
+                            <strong>${escapeHtml(item.label)}</strong>
+                            <span>${escapeHtml(item.preview || "Empty chunk")}</span>
+                        </button>
+                    `).join("")}
+                </div>
+            `;
+        }
+
+        function teleprompterPreviewCardsHtml(bundle, maxPreview = 92) {
+            const previousText = bundle?.previousChunkText
+                ? shortenInline(bundle.previousChunkText, maxPreview)
+                : "No earlier chunk on this slide.";
+            const currentText = bundle?.activeChunkText
+                ? shortenInline(bundle.activeChunkText, maxPreview)
+                : "No current chunk yet.";
+            const nextText = bundle?.nextChunkText
+                ? shortenInline(bundle.nextChunkText, maxPreview)
+                : "No later chunk on this slide.";
+            return `
+                <div class="chunk-preview-grid">
+                    <div class="chunk-preview-card">
+                        <strong>Previous Chunk</strong>
+                        <p>${escapeHtml(previousText)}</p>
+                    </div>
+                    <div class="chunk-preview-card">
+                        <strong>Current Chunk</strong>
+                        <p>${escapeHtml(currentText)}</p>
+                    </div>
+                    <div class="chunk-preview-card">
+                        <strong>Next Chunk</strong>
+                        <p>${escapeHtml(nextText)}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function nextCardFromCards(cards, activeSectionId) {
+            const safeCards = normalizeSections(cards || []);
+            const currentIndex = Math.max(0, safeCards.findIndex((item) => item.section_id === activeSectionId));
+            return currentIndex >= 0 && currentIndex + 1 < safeCards.length ? safeCards[currentIndex + 1] : null;
+        }
+
+        function defaultPresentationState(cards) {
+            const first = cards[0] || {};
+            const teleprompter = teleprompterBundleForCard(first, 0);
+            return {
+                presentation_mode: "rehearse",
+                control_source: "phone",
+                last_control_source: "phone",
+                active_section_id: first.section_id || "",
+                active_slide_index: Number(first.slide_index || 0),
+                active_chunk_index: teleprompter.activeChunkIndex,
+                active_chunk_count: teleprompter.chunkCount,
+                active_chunk_text: teleprompter.activeChunkText,
+                chunk_progress_label: teleprompter.chunkProgressLabel,
+                previous_chunk_preview: shortenInline(teleprompter.previousChunkText, 96),
+                next_chunk_preview: shortenInline(teleprompter.nextChunkText, 96),
+                chunk_jump_supported: teleprompter.chunkJumpSupported,
+                cue_view: "visible",
+                last_action: "sync",
+                last_control_at: "",
+                active_card: briefCardPayload(first),
+                next_card: briefCardPayload(cards[1] || null),
+                available_cards: normalizeSections(cards || []).map((item) => briefCardPayload(item)),
+                control_hints: defaultControlHints(),
+            };
+        }
+
+        function normalizePresentationState(raw, cards) {
+            const safeCards = normalizeSections(cards || []);
+            const base = {
+                ...defaultPresentationState(safeCards),
+                ...(raw || {}),
+            };
+            const ids = safeCards.map((item) => item.section_id);
+            const previousSectionId = String((state.presentationState || {}).active_section_id || "");
+            if (!ids.includes(base.active_section_id)) {
+                const matched = safeCards.find((item) => Number(item.slide_index || 0) === Number(base.active_slide_index || 0));
+                base.active_section_id = matched?.section_id || safeCards[0]?.section_id || "";
+            }
+            const activeCard = safeCards.find((item) => item.section_id === base.active_section_id) || safeCards[0] || null;
+            base.active_slide_index = Number(activeCard?.slide_index || 0);
+            const requestedChunkIndex = ("active_chunk_index" in base) ? Number(base.active_chunk_index || 0) : 0;
+            const teleprompter = teleprompterBundleForCard(activeCard, requestedChunkIndex);
+            if (!["edit", "rehearse", "present"].includes(String(base.presentation_mode || "").toLowerCase())) {
+                base.presentation_mode = "rehearse";
+            }
+            if (!["phone", "rokid_button"].includes(String(base.control_source || "").toLowerCase())) {
+                base.control_source = "phone";
+            }
+            if (!["phone", "rokid_button"].includes(String(base.last_control_source || "").toLowerCase())) {
+                base.last_control_source = base.control_source;
+            }
+            if (!["visible", "hidden"].includes(String(base.cue_view || "").toLowerCase())) {
+                base.cue_view = "visible";
+            }
+            if (base.active_section_id !== previousSectionId && !("active_chunk_index" in (raw || {}))) {
+                const resetTeleprompter = teleprompterBundleForCard(activeCard, 0);
+                base.active_chunk_index = resetTeleprompter.activeChunkIndex;
+                base.active_chunk_count = resetTeleprompter.chunkCount;
+                base.active_chunk_text = resetTeleprompter.activeChunkText;
+                base.chunk_progress_label = resetTeleprompter.chunkProgressLabel;
+                base.previous_chunk_preview = shortenInline(resetTeleprompter.previousChunkText, 96);
+                base.next_chunk_preview = shortenInline(resetTeleprompter.nextChunkText, 96);
+                base.chunk_jump_supported = resetTeleprompter.chunkJumpSupported;
+            } else {
+                base.active_chunk_index = teleprompter.activeChunkIndex;
+                base.active_chunk_count = teleprompter.chunkCount;
+                base.active_chunk_text = teleprompter.activeChunkText;
+                base.chunk_progress_label = teleprompter.chunkProgressLabel;
+                base.previous_chunk_preview = shortenInline(teleprompter.previousChunkText, 96);
+                base.next_chunk_preview = shortenInline(teleprompter.nextChunkText, 96);
+                base.chunk_jump_supported = teleprompter.chunkJumpSupported;
+            }
+            base.active_card = briefCardPayload(activeCard);
+            base.next_card = briefCardPayload(nextCardFromCards(safeCards, base.active_section_id));
+            base.available_cards = safeCards.map((item) => briefCardPayload(item));
+            base.control_hints = normalizeControlHints(base.control_hints);
+            return base;
+        }
+
+        function currentPresentationState() {
+            state.presentationState = normalizePresentationState(state.presentationState, state.draftSections);
+            return state.presentationState;
+        }
+
+        function currentActiveCard() {
+            const cards = normalizeSections(state.draftSections);
+            const presentationState = currentPresentationState();
+            return cards.find((item) => item.section_id === presentationState.active_section_id) || cards[0] || null;
+        }
+
+        function currentTeleprompterBundle() {
+            const presentationState = currentPresentationState();
+            return teleprompterBundleForCard(currentActiveCard(), presentationState.active_chunk_index || 0);
+        }
+
+        function currentFocusedCard() {
+            const cards = normalizeSections(state.draftSections);
+            return cards.find((item) => item.section_id === state.focusedCardId) || currentActiveCard() || cards[0] || null;
+        }
+
+        function buildPresentationStateForSave() {
+            const cards = normalizeSections(state.draftSections);
+            const active = currentActiveCard() || cards[0] || {};
+            return normalizePresentationState({
+                ...state.presentationState,
+                active_section_id: active.section_id || "",
+                active_slide_index: Number(active.slide_index || 0),
+                active_chunk_index: Number(state.presentationState?.active_chunk_index || 0),
+                control_source: document.getElementById("controller-source")?.value || state.presentationState?.control_source || "phone",
+                presentation_mode: document.getElementById("presentation-mode")?.value || state.presentationState?.presentation_mode || "rehearse",
+            }, cards);
+        }
+
+        function setMissionForm(mission = null) {
+            document.getElementById("mission-title").value = mission?.title || "";
+            document.getElementById("mission-course").value = mission?.course || "";
+            document.getElementById("mission-deadline").value = mission?.deadline || "";
+            document.getElementById("mission-deliverable").value = mission?.deliverable_type || "presentation";
+            document.getElementById("mission-duration").value = mission?.target_duration_minutes || "";
+            document.getElementById("mission-audience").value = mission?.audience || "";
+            document.getElementById("mission-requirements").value = mission?.teacher_requirements || "";
+            document.getElementById("mission-description").value = mission?.task_description || "";
+            document.getElementById("task-text").value = mission?.intake_task_text || mission?.task_description || "";
+        }
+
+        function newMissionDraft() {
+            stopLiveRehearsal();
+            state.currentMissionId = "";
+            state.currentMission = null;
+            state.currentRehearsal = null;
+            state.rehearsalList = [];
+            state.suggestedSections = [];
+            state.draftSections = buildDefaultDraftSections(Number(document.getElementById("mission-duration").value || 5));
+            state.presentationState = normalizePresentationState(null, state.draftSections);
+            state.companionSync = normalizeCompanionSync(null);
+            state.liveHud = normalizeLiveHud(null);
+            state.focusedCardId = state.draftSections[0]?.section_id || "";
+            state.recordedAudioBlob = null;
+            state.uploadedAudioFile = null;
+            state.uploadedDurationSeconds = 0;
+            state.liveDurationSeconds = 0;
+            if (state.companionHeartbeatHandle) {
+                clearInterval(state.companionHeartbeatHandle);
+                state.companionHeartbeatHandle = null;
+            }
+            setMissionForm(null);
+            setBriefStatus("New draft started. Save the mission when the brief is ready.", "status-cool");
+            setRehearsalStatus("No rehearsal run has been saved yet.", "status-cool");
+            setControllerStatus("Phone control is ready. Switch to Rokid button mode when you want to simulate the glasses-side input path.", "status-cool");
+            renderAll();
+        }
+
+        function weightedWordCount(section) {
+            const countWords = (value) => (String(value || "").match(/[A-Za-z0-9']+/g) || []).length;
+            const outline = countWords(section.outline);
+            const teleprompter = countWords(section.teleprompter_script);
+            const notes = countWords(section.speaker_notes);
+            const cues = countWords(section.cue_cards);
+            if (teleprompter > 0) {
+                return Math.round(outline * 0.2 + teleprompter + cues * 0.2);
+            }
+            return Math.round(outline * 0.45 + notes + cues * 0.7);
+        }
+
+        function estimateSectionSeconds(section) {
+            const weightedWords = weightedWordCount(section || {});
+            if (!weightedWords) return 0;
+            return Math.max(10, Math.round(weightedWords / 2.35));
+        }
+
+        function durationHint(estimatedSeconds, targetSeconds) {
+            if (!targetSeconds) {
+                return { status: "unknown", note: "Set a target time for a clearer pacing check." };
+            }
+            if (!estimatedSeconds) {
+                return { status: "empty", note: "This card still needs your own notes." };
+            }
+            const ratio = estimatedSeconds / targetSeconds;
+            if (ratio >= 1.2) {
+                return { status: "long", note: `Estimated at ${formatMmss(estimatedSeconds)}, which looks long for the target.` };
+            }
+            if (ratio <= 0.7) {
+                return { status: "short", note: `Estimated at ${formatMmss(estimatedSeconds)}, which may be too short.` };
+            }
+            return { status: "balanced", note: `Estimated at ${formatMmss(estimatedSeconds)} and roughly aligned.` };
+        }
+
+        function currentScriptSummary() {
+            const cards = normalizeSections(state.draftSections);
+            const targetTotalSeconds = cards.reduce((sum, item) => sum + Number(item.target_seconds || 0), 0) || Math.round(Number(document.getElementById("mission-duration").value || 0) * 60);
+            const estimatedTotalSeconds = cards.reduce((sum, item) => sum + estimateSectionSeconds(item), 0);
+            const completedCards = cards.filter((item) => item.outline || item.speaker_notes || item.teleprompter_script || item.cue_cards).length;
+            const interactionCards = cards.filter((item) => item.interaction_goal).length;
+            return {
+                targetTotalSeconds,
+                estimatedTotalSeconds,
+                completedCards,
+                interactionCards,
+                hint: durationHint(estimatedTotalSeconds, targetTotalSeconds),
+            };
+        }
+
+        function missionPayloadFromForm() {
+            return {
+                mission_id: state.currentMissionId || "",
+                title: document.getElementById("mission-title").value.trim(),
+                course: document.getElementById("mission-course").value.trim(),
+                deadline: document.getElementById("mission-deadline").value.trim(),
+                deliverable_type: document.getElementById("mission-deliverable").value.trim(),
+                target_duration_minutes: Number(document.getElementById("mission-duration").value || 0),
+                audience: document.getElementById("mission-audience").value.trim(),
+                teacher_requirements: document.getElementById("mission-requirements").value.trim(),
+                task_description: document.getElementById("mission-description").value.trim(),
+                intake_task_text: document.getElementById("task-text").value.trim(),
+                script_sections: normalizeSections(state.draftSections),
+                presentation_state: buildPresentationStateForSave(),
+            };
+        }
+
+        function syncControllerInputs() {
+            const presentationState = currentPresentationState();
+            const sourceSelect = document.getElementById("controller-source");
+            const modeSelect = document.getElementById("presentation-mode");
+            const missionSelect = document.getElementById("controller-mission-select");
+            if (sourceSelect) sourceSelect.value = presentationState.control_source || "phone";
+            if (modeSelect) modeSelect.value = presentationState.presentation_mode || "rehearse";
+            if (missionSelect) {
+                missionSelect.innerHTML = state.missions.length
+                    ? state.missions.map((mission) => `<option value="${escapeAttr(mission.mission_id)}">${escapeHtml(mission.title || "Untitled mission")}</option>`).join("")
+                    : `<option value="">No missions</option>`;
+                missionSelect.value = state.currentMissionId || state.missions[0]?.mission_id || "";
+            }
+
+            const jumpSelect = document.getElementById("jump-slide-select");
+            const cards = normalizeSections(state.draftSections);
+            if (jumpSelect) {
+                jumpSelect.innerHTML = cards.length
+                    ? cards.map((item) => `<option value="${escapeAttr(item.section_id)}">Slide ${item.slide_index}: ${escapeHtml(item.slide_title || item.name)}</option>`).join("")
+                    : `<option value="">No cards</option>`;
+                jumpSelect.value = presentationState.active_section_id || cards[0]?.section_id || "";
+            }
+        }
+
+        function renderControllerSummary() {
+            const host = document.getElementById("controller-summary-host");
+            if (!host) return;
+            const cards = normalizeSections(state.draftSections);
+            const presentationState = currentPresentationState();
+            const activeCard = currentActiveCard();
+            const teleprompter = currentTeleprompterBundle();
+            const nextCard = nextCardFromCards(cards, presentationState.active_section_id);
+            const hints = normalizeControlHints(presentationState.control_hints);
+            const selectedHint = hints[presentationState.control_source] || hints.phone;
+            const liveSeconds = currentRunDurationSeconds();
+            const targetSeconds = currentScriptSummary().targetTotalSeconds;
+            const lastControlAt = presentationState.last_control_at
+                ? escapeHtml(String(presentationState.last_control_at).replace("T", " "))
+                : "Not sent yet";
+            const rokidMap = Object.entries(hints.rokid_button.button_map || {})
+                .map(([key, value]) => `${key.replaceAll("_", " ")} -> ${value}`)
+                .join(" | ");
+            const chunkRail = teleprompter.chunkJumpSupported
+                ? teleprompterChunkRailHtml(teleprompter, { compact: true, maxPreview: 46 })
+                : `<div class="stage-copy">Only one chunk is available on this slide right now.</div>`;
+
+            if (!activeCard) {
+                host.innerHTML = `<div class="controller-summary-card"><strong>Controller Snapshot</strong><p>Load or create a mission first to activate the phone-side controller.</p></div>`;
+                return;
+            }
+
+            host.innerHTML = `
+                <div class="controller-summary-card">
+                    <strong>Controller Snapshot</strong>
+                    <div class="controller-guide">
+                        <div class="guide-row"><span>Active slide</span><strong>Slide ${activeCard.slide_index}: ${escapeHtml(activeCard.slide_title || activeCard.name)}</strong></div>
+                        <div class="guide-row"><span>Chunk</span><strong>${escapeHtml(teleprompter.chunkProgressLabel)} | ${escapeHtml(teleprompter.source)}</strong></div>
+                        <div class="guide-row"><span>Next slide</span><strong>${nextCard ? `Slide ${nextCard.slide_index}: ${escapeHtml(nextCard.slide_title || nextCard.name)}` : "Final card"}</strong></div>
+                        <div class="guide-row"><span>Mode</span><strong>${escapeHtml(presentationState.presentation_mode)} | cue ${escapeHtml(presentationState.cue_view)}</strong></div>
+                        <div class="guide-row"><span>Controller</span><strong>${escapeHtml(presentationState.control_source)} | last ${escapeHtml(presentationState.last_action || "sync")}</strong></div>
+                        <div class="guide-row"><span>Run clock</span><strong>${liveSeconds ? formatMmss(liveSeconds) : "--"}${targetSeconds ? ` | ${formatSignedMmss(liveSeconds - targetSeconds)}` : ""}</strong></div>
+                    </div>
+                    <p>${escapeHtml(selectedHint.note || "Phone should stay the main controller for full interaction.")} Last control at ${lastControlAt}.</p>
+                </div>
+                <div class="controller-summary-card">
+                    <strong>Input Guide</strong>
+                    <div class="controller-guide">
+                        <div class="guide-row"><span>Phone</span><strong>${escapeHtml((hints.phone.actions || []).join(" | "))}</strong></div>
+                        <div class="guide-row"><span>Rokid button</span><strong>${escapeHtml(rokidMap || "single press -> next chunk | double press -> previous chunk | long press -> next slide")}</strong></div>
+                        <div class="guide-row"><span>Keyboard</span><strong>Right / Space / K -> next step | Left / J -> previous step | Down / Up -> next or previous chunk | 1-9 -> jump chunk | C -> cue</strong></div>
+                        <div class="guide-row"><span>Active anchor</span><strong>${escapeHtml(activeCard.slide_anchor || "No slide anchor set")}</strong></div>
+                    </div>
+                    <p>Use the phone as the main controller. Keep the glasses-side button path focused on chunk navigation first, then slide changes when needed.</p>
+                </div>
+                <div class="controller-summary-card">
+                    <strong>Chunk Navigator</strong>
+                    ${teleprompterPreviewCardsHtml(teleprompter, 74)}
+                    ${chunkRail}
+                    <p>Tap any chunk to resume this slide without stepping through every paragraph again.</p>
+                </div>
+            `;
+        }
+
+        function renderCompanionSync() {
+            const host = document.getElementById("companion-sync-host");
+            if (!host) return;
+            if (!state.currentMissionId) {
+                host.innerHTML = `<div class="empty-state">Load a mission to activate the companion sync scaffold.</div>`;
+                return;
+            }
+            const sync = currentCompanionSync();
+            const pairing = currentPairingState();
+            const liveHud = normalizeLiveHud(state.liveHud);
+            const bridge = sync.bridge_state || {};
+            const formatSeen = (value) => value ? formatIsoStamp(value) : "Not seen yet";
+            const claimLabel = bridge.claimed_surface
+                ? `${bridge.claimed_surface}${bridge.claimed_device_label ? ` | ${bridge.claimed_device_label}` : ""}`
+                : "Unclaimed";
+            const pairedLabel = pairing.paired_surface
+                ? `${pairing.paired_surface}${pairing.paired_device_label ? ` | ${pairing.paired_device_label}` : ""}`
+                : "No paired surface";
+            const pairingCodeLabel = pairing.pairing_code || "------";
+            const pairingExpiryLabel = pairing.pairing_status === "waiting" && pairing.pairing_expires_in_seconds > 0
+                ? `${pairing.countdown_label || formatMmss(pairing.pairing_expires_in_seconds)} left | ${formatSeen(pairing.pairing_expires_at)}`
+                : pairing.pairing_status === "expired"
+                    ? `Expired | ${formatSeen(pairing.pairing_expires_at)}`
+                    : pairing.pairing_expires_at
+                        ? formatSeen(pairing.pairing_expires_at)
+                        : "No active pairing window";
+            const ownerLabel = liveHud.owner_surface || pairing.owner_surface || "unclaimed";
+            const thisSurface = phoneControllerMode ? "phone" : "web";
+            host.innerHTML = `
+                <div class="pairing-sheet ${escapeAttr(pairing.pairing_status || "inactive")}">
+                    <div class="pairing-sheet-head">
+                        <div>
+                            <span class="eyebrow">Paired Session Handoff</span>
+                            <strong>${escapeHtml(pairing.status_label || "Pairing inactive")}</strong>
+                            <p>${escapeHtml(pairing.next_step || "Start pairing when you are ready to connect the companion surface.")}</p>
+                        </div>
+                        <div class="pairing-badge">Owner <strong>${escapeHtml(ownerLabel)}</strong></div>
+                    </div>
+                    <div class="pairing-sheet-grid">
+                        <div class="pairing-code-card">
+                            <span>Join Code</span>
+                            <div class="pairing-code-value">${escapeHtml(pairingCodeLabel)}</div>
+                            <div class="pairing-code-meta">${escapeHtml(pairingExpiryLabel)}</div>
+                        </div>
+                        <div class="pairing-status-card">
+                            <span>Join State</span>
+                            <strong>${escapeHtml(pairedLabel)}</strong>
+                            <p>${escapeHtml(
+                                pairing.pairing_status === "paired"
+                                    ? "The companion surface is connected. Keep the phone as the main controller."
+                                    : pairing.pairing_status === "waiting"
+                                        ? "Read the code from the phone and enter it on the companion surface."
+                                        : pairing.pairing_status === "expired"
+                                            ? "The last code has expired. Start a new window before the next join attempt."
+                                            : "No device is paired yet. Open a pairing window when you want the companion surface to join."
+                            )}</p>
+                        </div>
+                    </div>
+                    <div class="pairing-steps">
+                        <div class="pairing-step"><strong>1.</strong> Start pairing on the phone controller to open a short join window.</div>
+                        <div class="pairing-step"><strong>2.</strong> Enter the code on the Rokid or companion surface and wait for confirmation here.</div>
+                        <div class="pairing-step"><strong>3.</strong> Keep the phone as the main controller. Use the paired surface only for lightweight HUD prompts.</div>
+                    </div>
+                </div>
+                <div class="sync-grid">
+                    <div class="sync-chip">
+                        <span>Session</span>
+                        <strong>${escapeHtml(sync.sync_status)} | rev ${escapeHtml(sync.sync_revision)}</strong>
+                    </div>
+                    <div class="sync-chip">
+                        <span>Phone Surface</span>
+                        <strong>${escapeHtml(sync.surface_status.phone.status)} | ${escapeHtml(formatSeen(sync.surface_status.phone.last_seen_at))}</strong>
+                    </div>
+                    <div class="sync-chip">
+                        <span>Rokid HUD</span>
+                        <strong>${escapeHtml(sync.surface_status.rokid_hud.status)} | ${escapeHtml(formatSeen(sync.surface_status.rokid_hud.last_seen_at))}</strong>
+                    </div>
+                </div>
+                <div class="sync-grid" style="margin-top: 10px;">
+                    <div class="sync-chip">
+                        <span>Pairing Window</span>
+                        <strong>${escapeHtml(pairing.pairing_status)} | ${escapeHtml(pairingCodeLabel)}</strong>
+                    </div>
+                    <div class="sync-chip">
+                        <span>Joined Surface</span>
+                        <strong>${escapeHtml(pairedLabel)}</strong>
+                    </div>
+                    <div class="sync-chip">
+                        <span>Pairing Expiry</span>
+                        <strong>${escapeHtml(pairingExpiryLabel)}</strong>
+                    </div>
+                </div>
+                <div class="sync-grid" style="margin-top: 10px;">
+                    <div class="sync-chip">
+                        <span>Bridge PIN</span>
+                        <strong>${escapeHtml(bridge.bridge_pin || "------")} | ${escapeHtml(bridge.bridge_key || "PC-SYNC")}</strong>
+                    </div>
+                    <div class="sync-chip">
+                        <span>Bridge Claim</span>
+                        <strong>${escapeHtml(bridge.bridge_status || "waiting")} | ${escapeHtml(claimLabel)}</strong>
+                    </div>
+                    <div class="sync-chip">
+                        <span>Claim Revision</span>
+                        <strong>${escapeHtml(bridge.claim_revision || 0)} | ${escapeHtml(formatSeen(bridge.claimed_at || bridge.last_release_at || ""))}</strong>
+                    </div>
+                </div>
+                <div class="section-metrics">
+                    <div class="metric-chip"><strong>Live HUD</strong> ${escapeHtml(liveHud.status_line || "Current slide ready")}</div>
+                    <div class="metric-chip"><strong>Active</strong> Slide ${escapeHtml(liveHud.active_slide_index || "--")} ${escapeHtml(liveHud.active_slide_title || "")}</div>
+                    <div class="metric-chip"><strong>Chunk</strong> ${escapeHtml(liveHud.chunk_progress_label || "0/0")}</div>
+                    <div class="metric-chip"><strong>Next</strong> ${liveHud.next_slide_index ? `Slide ${escapeHtml(liveHud.next_slide_index)} ${escapeHtml(liveHud.next_slide_title || "")}` : "Final card"}</div>
+                    <div class="metric-chip"><strong>Next Chunk</strong> ${escapeHtml(liveHud.next_chunk_preview || "No later chunk")}</div>
+                    <div class="metric-chip"><strong>Owner</strong> ${escapeHtml(ownerLabel)}</div>
+                    <div class="metric-chip"><strong>Last event</strong> ${escapeHtml(sync.last_event || "initialized")}</div>
+                </div>
+                <div class="link-stack">
+                    <div class="link-chip"><strong>Phone controller</strong><br>${escapeHtml(sync.controller_path || `/presentation/controller?mission_id=${state.currentMissionId}`)}</div>
+                    <div class="link-chip"><strong>Workspace</strong><br>${escapeHtml(sync.workspace_path || `/presentation?mission_id=${state.currentMissionId}`)}</div>
+                    <div class="link-chip"><strong>Live HUD API</strong><br>${escapeHtml(sync.live_hud_api_path || `/api/presentation_missions/${state.currentMissionId}/live_hud`)}</div>
+                    <div class="link-chip"><strong>Pairing State API</strong><br>${escapeHtml(sync.pairing_state_api_path || `/api/presentation_missions/${state.currentMissionId}/pairing_state`)}</div>
+                    <div class="link-chip"><strong>Pairing Start API</strong><br>${escapeHtml(sync.pairing_start_api_path || `/api/presentation_missions/${state.currentMissionId}/pairing_start`)}</div>
+                    <div class="link-chip"><strong>Pairing Join API</strong><br>${escapeHtml(sync.pairing_join_api_path || `/api/presentation_missions/${state.currentMissionId}/pairing_join`)}</div>
+                    <div class="link-chip"><strong>Pairing End API</strong><br>${escapeHtml(sync.pairing_end_api_path || `/api/presentation_missions/${state.currentMissionId}/pairing_end`)}</div>
+                    <div class="link-chip"><strong>Bridge State API</strong><br>${escapeHtml(sync.bridge_state_api_path || `/api/presentation_missions/${state.currentMissionId}/bridge_state`)}</div>
+                    <div class="link-chip"><strong>Rokid Event API</strong><br>${escapeHtml(sync.rokid_event_api_path || `/api/presentation_missions/${state.currentMissionId}/rokid_event`)}</div>
+                    <div class="link-chip"><strong>Bridge Claim API</strong><br>${escapeHtml(sync.bridge_claim_api_path || `/api/presentation_missions/${state.currentMissionId}/bridge_claim`)}</div>
+                    <div class="link-chip"><strong>Bridge Release API</strong><br>${escapeHtml(sync.bridge_release_api_path || `/api/presentation_missions/${state.currentMissionId}/bridge_release`)}</div>
+                </div>
+                <div class="field-grid" style="margin-top: 12px;">
+                    <div class="field">
+                        <label for="pairing-window-seconds">Pairing Window Seconds</label>
+                        <input id="pairing-window-seconds" type="number" min="1" max="900" step="5" value="${escapeAttr(pairing.pairing_window_seconds || 180)}">
+                    </div>
+                    <div class="field">
+                        <label for="pairing-join-surface">Join Surface</label>
+                        <select id="pairing-join-surface">
+                            <option value="rokid_hud" ${pairing.paired_surface === "rokid_hud" || !pairing.paired_surface ? "selected" : ""}>rokid_hud</option>
+                            <option value="phone" ${pairing.paired_surface === "phone" ? "selected" : ""}>phone</option>
+                            <option value="web" ${pairing.paired_surface === "web" ? "selected" : ""}>web</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="pairing-device-label">Device Label</label>
+                        <input id="pairing-device-label" value="${escapeAttr(pairing.paired_device_label || "rokid_companion")}" placeholder="rokid_companion">
+                    </div>
+                    <div class="field">
+                        <label for="pairing-code-input">Join Code</label>
+                        <input id="pairing-code-input" value="${escapeAttr(pairing.pairing_code || "")}" placeholder="Enter the short code">
+                    </div>
+                </div>
+                <div class="status-row">
+                    <button class="ghost-btn" onclick="openCompanionSurface('${phoneControllerMode ? "workspace" : "controller"}')">${phoneControllerMode ? "Open Workspace" : "Open Phone Controller"}</button>
+                    <button class="ghost-btn" onclick="touchCompanionSync('manual_refresh')">Refresh Sync</button>
+                    <button class="ghost-btn" onclick="startPairingWindow()">Start Pairing</button>
+                    <button class="ghost-btn" onclick="joinPairingSession()">Join with Code</button>
+                    <button class="ghost-btn" onclick="endPairingSession()">End Pairing</button>
+                    <button class="ghost-btn" onclick="claimBridge('${thisSurface}')">${phoneControllerMode ? "Claim Phone Control" : "Claim Workspace Control"}</button>
+                    <button class="ghost-btn" onclick="releaseBridgeClaim('${thisSurface}')">Release Claim</button>
+                    <button class="ghost-btn" onclick="simulateRokidButton('single_press')">Simulate single_press</button>
+                    <button class="ghost-btn" onclick="simulateRokidButton('double_press')">Simulate double_press</button>
+                    <button class="ghost-btn" onclick="simulateRokidButton('long_press')">Simulate long_press</button>
+                </div>
+            `;
+        }
+
+        function renderHero() {
+            const mission = state.currentMission;
+            const summary = currentScriptSummary();
+            const activeCard = currentActiveCard();
+            document.getElementById("hero-mission-title").innerText = mission?.title || "No mission selected";
+            document.getElementById("hero-mission-meta").innerText = mission
+                ? `${mission.course || "Course not set"} | ${mission.deliverable_type || "presentation"} | ${mission.target_duration_minutes || "--"} min target`
+                : "Create a mission, then fill your own structure before rehearsal.";
+            document.getElementById("hero-script-fit").innerText = summary.estimatedTotalSeconds
+                ? `${formatMmss(summary.estimatedTotalSeconds)} / ${formatMmss(summary.targetTotalSeconds)}`
+                : "--";
+            document.getElementById("hero-script-note").innerText = activeCard
+                ? `${summary.hint.note} Active slide card: Slide ${activeCard.slide_index} | ${activeCard.slide_title || activeCard.name}.`
+                : summary.hint.note || "Duration hints will appear after you add cards and notes.";
+            const hud = state.currentRehearsal?.analysis?.hud_summary;
+            document.getElementById("hero-hud-status").innerText = hud?.current_or_final_status || "Waiting";
+            document.getElementById("hero-hud-note").innerText = hud
+                ? `Slide ${hud.active_slide_index || "--"} | ${hud.issue || "No issue reported yet."} Next: ${hud.next_action || "Analyze the next run."}`
+                : "Analyze a rehearsal run to produce the lightweight Rokid summary payload.";
+        }
+
+        function renderMissionList() {
+            const host = document.getElementById("mission-list");
+            if (!state.missions.length) {
+                host.innerHTML = `<div class="empty-state">No presentation mission has been saved yet. Start with the brief tab and save the first mission.</div>`;
+                return;
+            }
+            host.innerHTML = state.missions.map((mission) => {
+                const activeSlide = mission.presentation_state?.active_slide_index ? ` | active slide ${mission.presentation_state.active_slide_index}` : "";
+                return `
+                    <button class="mission-link ${mission.mission_id === state.currentMissionId ? "active" : ""}" onclick="loadMission('${escapeAttr(mission.mission_id)}')">
+                        <strong>${escapeHtml(mission.title || "Untitled mission")}</strong>
+                        <span>${escapeHtml(mission.course || "Course not set")}</span>
+                        <span>${escapeHtml(mission.deliverable_type || "presentation")} | ${mission.target_duration_minutes || "--"} min | ${mission.script_summary?.slide_card_count || mission.script_summary?.section_count || 0} cards${activeSlide}</span>
+                    </button>
+                `;
+            }).join("");
+        }
+
+        function renderScriptSummary() {
+            const summary = currentScriptSummary();
+            const activeCard = currentActiveCard();
+            document.getElementById("script-summary-target").innerText = summary.targetTotalSeconds ? formatMmss(summary.targetTotalSeconds) : "--";
+            document.getElementById("script-summary-estimate").innerText = summary.estimatedTotalSeconds ? formatMmss(summary.estimatedTotalSeconds) : "--";
+            document.getElementById("script-summary-hint").innerText = activeCard ? `S${activeCard.slide_index}` : summary.hint.status.toUpperCase();
+            document.getElementById("script-summary-note").innerText =
+                `${summary.hint.note} Completed cards: ${summary.completedCards}/${state.draftSections.length}. Interaction cues: ${summary.interactionCards}/${state.draftSections.length}.`;
+        }
+
+        function renderScriptCardSwitcher() {
+            const host = document.getElementById("script-card-switcher-host");
+            const cards = normalizeSections(state.draftSections);
+            if (!cards.length) {
+                host.innerHTML = `<div class="empty-state">No slide cards yet. Save a mission or load a suggested card scaffold from the brief tab.</div>`;
+                return;
+            }
+            host.innerHTML = cards.map((card) => `
+                <button class="card-chip ${card.section_id === state.focusedCardId ? "active" : ""}" onclick="setFocusedCard('${escapeAttr(card.section_id)}', true)">
+                    <span class="mini-label">Slide ${card.slide_index}</span>
+                    <strong>${escapeHtml(card.slide_title || card.name)}</strong>
+                    <span>${escapeHtml(card.slide_anchor || "No anchor set")}</span>
+                </button>
+            `).join("");
+        }
+
+        function renderFocusedCard() {
+            const host = document.getElementById("focused-card-host");
+            const card = currentFocusedCard();
+            if (!card) {
+                host.innerHTML = `<div class="empty-state">No focused slide card yet.</div>`;
+                return;
+            }
+            const estimatedSeconds = estimateSectionSeconds(card);
+            const hint = durationHint(estimatedSeconds, Number(card.target_seconds || 0));
+            host.innerHTML = `
+                <header>
+                    <div>
+                        <strong>Focused Slide Card</strong>
+                        <div class="meta-line">This editor is centered on one PPT-linked card so the script can follow the actual deck page by page.</div>
+                    </div>
+                    <div class="action-row">
+                        <button class="ghost-btn" onclick="focusAdjacentCard(-1)">Previous Card</button>
+                        <button class="ghost-btn" onclick="focusAdjacentCard(1)">Next Card</button>
+                        <button class="ghost-btn" onclick="duplicateFocusedCard()">Duplicate</button>
+                        <button class="ghost-btn" onclick="removeFocusedCard()">Remove</button>
+                    </div>
+                </header>
+
+                <div class="field-grid">
+                    <div class="field">
+                        <label>Card Name</label>
+                        <input value="${escapeAttr(card.name || "")}" oninput="updateFocusedCardField('name', this.value)">
+                    </div>
+                    <div class="field">
+                        <label>Slide Number</label>
+                        <input type="number" min="1" step="1" value="${escapeAttr(card.slide_index || 1)}" oninput="updateFocusedCardField('slide_index', this.value)">
+                    </div>
+                    <div class="field">
+                        <label>Slide Title</label>
+                        <input value="${escapeAttr(card.slide_title || "")}" oninput="updateFocusedCardField('slide_title', this.value)">
+                    </div>
+                    <div class="field">
+                        <label>Slide Anchor</label>
+                        <input value="${escapeAttr(card.slide_anchor || "")}" oninput="updateFocusedCardField('slide_anchor', this.value)" placeholder="Slide 3 | Method Chart">
+                    </div>
+                    <div class="field">
+                        <label>Target Seconds</label>
+                        <input type="number" min="10" step="5" value="${escapeAttr(card.target_seconds || 45)}" oninput="updateFocusedCardField('target_seconds', this.value)">
+                    </div>
+                    <div class="field wide">
+                        <label>Interaction Goal</label>
+                        <input value="${escapeAttr(card.interaction_goal || "")}" oninput="updateFocusedCardField('interaction_goal', this.value)" placeholder="Pause for eye contact before the example.">
+                    </div>
+                    <div class="field">
+                        <label>Outline</label>
+                        <textarea oninput="updateFocusedCardField('outline', this.value)" placeholder="Short bullet structure only.">${escapeHtml(card.outline || "")}</textarea>
+                    </div>
+                    <div class="field">
+                        <label>Speaker Notes</label>
+                        <textarea oninput="updateFocusedCardField('speaker_notes', this.value)" placeholder="What you want to say in your own words.">${escapeHtml(card.speaker_notes || "")}</textarea>
+                    </div>
+                    <div class="field">
+                        <label>Teleprompter Script</label>
+                        <textarea oninput="updateFocusedCardField('teleprompter_script', this.value)" placeholder="Optional long-form script for this slide when you need teleprompter-style chunk navigation.">${escapeHtml(card.teleprompter_script || "")}</textarea>
+                    </div>
+                    <div class="field">
+                        <label>Cue Cards</label>
+                        <textarea oninput="updateFocusedCardField('cue_cards', this.value)" placeholder="Short prompts, pauses, and transitions.">${escapeHtml(card.cue_cards || "")}</textarea>
+                    </div>
+                </div>
+
+                <div class="section-metrics">
+                    <div class="metric-chip"><strong>Slide ${card.slide_index}</strong> ${escapeHtml(card.slide_title || card.name)}</div>
+                    <div class="metric-chip"><strong>${formatMmss(Number(card.target_seconds || 0))}</strong> target</div>
+                    <div class="metric-chip"><strong>${estimatedSeconds ? formatMmss(estimatedSeconds) : "--"}</strong> estimated</div>
+                    <div class="metric-chip"><strong>${hint.status}</strong> ${escapeHtml(hint.note)}</div>
+                </div>
+            `;
+        }
+
+        function renderSectionTimings() {
+            const host = document.getElementById("section-timing-host");
+            const cards = normalizeSections(state.draftSections);
+            if (!cards.length) {
+                host.innerHTML = `<div class="empty-state">Section timings will appear after the mission script has cards.</div>`;
+                return;
+            }
+            const currentMap = new Map((state.currentRehearsal?.section_timings || []).map((item) => [item.section_id, item]));
+            host.innerHTML = cards.map((card) => {
+                const current = currentMap.get(card.section_id) || {};
+                const actual = Number(current.actual_seconds || card.target_seconds || 45);
+                return `
+                    <div class="timing-card">
+                        <header>
+                            <div>
+                                <strong>Slide ${card.slide_index}: ${escapeHtml(card.slide_title || card.name)}</strong>
+                                <div class="meta-line">${escapeHtml(card.slide_anchor || "No visual anchor set")} | ${escapeHtml(card.interaction_goal || "No interaction goal set")}</div>
+                            </div>
+                        </header>
+                        <div class="two-col">
+                            <div class="key-value">
+                                <span>Target</span>
+                                <strong>${formatMmss(Number(card.target_seconds || 0))}</strong>
+                            </div>
+                            <div class="field">
+                                <label>Actual Seconds</label>
+                                <input type="number" min="0" step="1" value="${escapeAttr(actual)}" data-section-id="${escapeAttr(card.section_id)}" class="actual-section-seconds">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        function collectSectionTimings() {
+            const inputs = Array.from(document.querySelectorAll(".actual-section-seconds"));
+            const map = new Map(inputs.map((input) => [input.dataset.sectionId, Number(input.value || 0)]));
+            return normalizeSections(state.draftSections).map((card) => ({
+                section_id: card.section_id,
+                name: card.name,
+                slide_index: card.slide_index,
+                slide_title: card.slide_title,
+                target_seconds: Number(card.target_seconds || 0),
+                actual_seconds: Number(map.get(card.section_id) || card.target_seconds || 0),
+            }));
+        }
+
+        function renderPresentationStage() {
+            const host = document.getElementById("presentation-stage-host");
+            const card = currentActiveCard();
+            const presentationState = currentPresentationState();
+            if (!card) {
+                host.innerHTML = `<div class="empty-state">Load a mission to activate the current slide stage.</div>`;
+                return;
+            }
+            const teleprompter = currentTeleprompterBundle();
+            const estimatedSeconds = estimateSectionSeconds(card);
+            const hint = durationHint(estimatedSeconds, Number(card.target_seconds || 0));
+            const compactMode = presentationState.presentation_mode === "present";
+            const cueVisible = presentationState.cue_view === "visible";
+            const nextCard = nextCardFromCards(state.draftSections, presentationState.active_section_id);
+            const totalTargetSeconds = currentScriptSummary().targetTotalSeconds;
+            const liveSeconds = currentRunDurationSeconds();
+            const liveClock = liveSeconds > 0 ? formatMmss(liveSeconds) : "--";
+            const liveDelta = liveSeconds > 0 && totalTargetSeconds ? formatSignedMmss(liveSeconds - totalTargetSeconds) : "--";
+            const promptText = cueVisible
+                ? (card.cue_cards || card.outline || card.slide_anchor || "Write short cue lines for this slide.")
+                : "Cue cards are hidden for the current presentation view.";
+            const interactionMove = card.interaction_goal || "No interaction move has been written for this slide yet.";
+            const teleprompterText = teleprompter.activeChunkText || teleprompter.text || card.speaker_notes || card.outline || "Write a teleprompter script or longer speaker notes for this slide.";
+            const teleprompterSourceLabel = teleprompter.source.replaceAll("_", " ");
+            const chunkRail = teleprompter.chunkJumpSupported
+                ? teleprompterChunkRailHtml(teleprompter, { compact: compactMode, maxPreview: compactMode ? 54 : 72 })
+                : `<div class="stage-copy">Only one chunk is available for this slide right now.</div>`;
+            const previewCards = teleprompterPreviewCardsHtml(teleprompter, compactMode ? 92 : 104);
+
+            if (compactMode) {
+                host.innerHTML = `
+                    <div class="stage-card present-stage" data-teleprompter-surface="true">
+                        <div class="stage-meta">
+                            <span class="stage-label">Present mode</span>
+                            <span class="stage-label">Source ${escapeHtml(presentationState.control_source)}</span>
+                            <span class="stage-label">Slide ${card.slide_index}</span>
+                            <span class="stage-label">Chunk ${escapeHtml(teleprompter.chunkProgressLabel)}</span>
+                            <span class="stage-label">Cue ${cueVisible ? "visible" : "hidden"}</span>
+                        </div>
+                        <h3>Slide ${card.slide_index}: ${escapeHtml(card.slide_title || card.name)}</h3>
+                        <p class="stage-copy">${escapeHtml(card.slide_anchor || "No slide anchor set yet.")}</p>
+                        <div class="stage-kpi-grid">
+                            <div class="stage-kpi">
+                                <span>Card Target</span>
+                                <strong>${formatMmss(card.target_seconds)}</strong>
+                            </div>
+                            <div class="stage-kpi">
+                                <span>Run Clock</span>
+                                <strong>${liveClock}</strong>
+                            </div>
+                            <div class="stage-kpi">
+                                <span>Vs Total Target</span>
+                                <strong>${liveDelta}</strong>
+                            </div>
+                        </div>
+                        <div class="stage-prompt">
+                            <strong>Teleprompter Chunk</strong>
+                            <div class="stage-copy">${escapeHtml(teleprompterText)}</div>
+                        </div>
+                        ${previewCards}
+                        <div class="stage-block">
+                            <strong>Chunk Navigation</strong>
+                            <div class="stage-copy">${escapeHtml(`Chunk ${teleprompter.chunkProgressLabel} from ${teleprompterSourceLabel}. Swipe up or down for chunk navigation, or use the controller buttons.`)}</div>
+                        </div>
+                        <div class="action-row" style="margin-top: 12px;">
+                            <button class="ghost-btn" onclick="applyPresentationControl('previous_chunk')">Previous Chunk</button>
+                            <button class="ghost-btn" onclick="applyPresentationControl('next_chunk')">Next Chunk</button>
+                            <button class="ghost-btn" onclick="applyPresentationControl('previous_slide')">Previous Slide</button>
+                            <button class="ghost-btn" onclick="applyPresentationControl('next_slide')">Next Slide</button>
+                        </div>
+                        <div class="stage-block">
+                            <strong>Jump to Chunk</strong>
+                            ${chunkRail}
+                        </div>
+                        <div class="stage-block">
+                            <strong>Next Slide</strong>
+                            <div class="stage-copy">${nextCard ? `Slide ${nextCard.slide_index}: ${escapeHtml(nextCard.slide_title || nextCard.name)} | ${escapeHtml(nextCard.slide_anchor || "No anchor set")}` : "This is the final slide card. Use the ending pause and land the takeaway."}</div>
+                        </div>
+                        <div class="stage-block">
+                            <strong>${cueVisible ? "Cue Support" : "Cue Support Hidden"}</strong>
+                            <div class="stage-copy">${cueVisible ? escapeHtml(promptText) : "Cue support is hidden for the current view."}</div>
+                        </div>
+                        <div class="stage-block">
+                            <strong>Audience Move</strong>
+                            <div class="stage-copy">${escapeHtml(interactionMove)}</div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            host.innerHTML = `
+                <div class="stage-card" data-teleprompter-surface="true">
+                    <div class="stage-meta">
+                        <span class="stage-label">Mode: ${escapeHtml(presentationState.presentation_mode)}</span>
+                        <span class="stage-label">Source: ${escapeHtml(presentationState.control_source)}</span>
+                        <span class="stage-label">Slide ${card.slide_index}</span>
+                        <span class="stage-label">Chunk ${escapeHtml(teleprompter.chunkProgressLabel)}</span>
+                        <span class="stage-label">Target ${formatMmss(card.target_seconds)}</span>
+                        <span class="stage-label">Cue ${cueVisible ? "visible" : "hidden"}</span>
+                    </div>
+                    <h3>Slide ${card.slide_index}: ${escapeHtml(card.slide_title || card.name)}</h3>
+                    <p class="stage-copy">${escapeHtml(card.slide_anchor || "No slide anchor set yet.")}</p>
+                    <div class="stage-block">
+                        <strong>Teleprompter Script</strong>
+                        <div class="stage-copy">${escapeHtml(teleprompter.text || "No teleprompter script or longer notes yet.")}</div>
+                    </div>
+                    <div class="stage-block">
+                        <strong>Current Chunk</strong>
+                        <div class="stage-copy">${escapeHtml(teleprompterText)}</div>
+                    </div>
+                    ${previewCards}
+                    <div class="action-row" style="margin-top: 12px;">
+                        <button class="ghost-btn" onclick="applyPresentationControl('previous')">Previous Step</button>
+                        <button class="ghost-btn" onclick="applyPresentationControl('next')">Next Step</button>
+                        <button class="ghost-btn" onclick="applyPresentationControl('previous_chunk')">Previous Chunk</button>
+                        <button class="ghost-btn" onclick="applyPresentationControl('next_chunk')">Next Chunk</button>
+                        <button class="ghost-btn" onclick="applyPresentationControl('previous_slide')">Previous Slide</button>
+                        <button class="ghost-btn" onclick="applyPresentationControl('next_slide')">Next Slide</button>
+                    </div>
+                    <div class="stage-block">
+                        <strong>Jump to Chunk</strong>
+                        ${chunkRail}
+                    </div>
+                    <div class="stage-block">
+                        <strong>Interaction Goal</strong>
+                        <div class="stage-copy">${escapeHtml(interactionMove)}</div>
+                    </div>
+                    <div class="stage-block">
+                        <strong>Outline</strong>
+                        <div class="stage-copy">${escapeHtml(card.outline || "No outline yet.")}</div>
+                    </div>
+                    <div class="stage-block">
+                        <strong>Speaker Notes</strong>
+                        <div class="stage-copy">${escapeHtml(card.speaker_notes || "No speaker notes yet.")}</div>
+                    </div>
+                    <div class="stage-block">
+                        <strong>Teleprompter Source</strong>
+                        <div class="stage-copy">${escapeHtml(teleprompterSourceLabel)} | ${escapeHtml(`chunk ${teleprompter.chunkProgressLabel}`)}</div>
+                    </div>
+                    <div class="stage-block">
+                        <strong>${cueVisible ? "Cue Cards" : "Cue Cards Hidden"}</strong>
+                        <div class="stage-copy">${cueVisible ? escapeHtml(card.cue_cards || "No cue cards yet.") : "Cue cards are hidden for the current view."}</div>
+                    </div>
+                    <div class="stage-block">
+                        <strong>Timing Check</strong>
+                        <div class="stage-copy">Estimated ${estimatedSeconds ? formatMmss(estimatedSeconds) : "--"} against a target of ${formatMmss(card.target_seconds)}. ${escapeHtml(hint.note)}</div>
+                    </div>
+                    <div class="stage-block">
+                        <strong>Next Slide</strong>
+                        <div class="stage-copy">${nextCard ? `Slide ${nextCard.slide_index}: ${escapeHtml(nextCard.slide_title || nextCard.name)} | ${escapeHtml(nextCard.slide_anchor || "No anchor set")}` : "This is the final slide card."}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderRecentRehearsals() {
+            const host = document.getElementById("recent-rehearsals-host");
+            if (!state.rehearsalList.length) {
+                host.innerHTML = `<div class="empty-state">Saved rehearsal runs for the current mission will appear here.</div>`;
+                return;
+            }
+            host.innerHTML = state.rehearsalList.map((run) => `
+                <article class="recent-card">
+                    <header>
+                        <div>
+                            <strong>${escapeHtml(run.total_duration_label || "--")}</strong>
+                            <div class="meta-line">${escapeHtml(run.audio_source || "browser_mic")} | transcript ${escapeHtml(run.transcript_status || "missing")} | ${escapeHtml(run.created_at || "")}</div>
+                        </div>
+                        <div class="action-row">
+                            <button class="ghost-btn" onclick="loadRehearsal('${escapeAttr(run.rehearsal_id)}')">Load</button>
+                        </div>
+                    </header>
+                    <div class="tiny">${escapeHtml(run.notes || "No run note saved.")}</div>
+                </article>
+            `).join("");
+        }
+
+        function renderFeedback() {
+            const analysis = state.currentRehearsal?.analysis;
+            const host = document.getElementById("feedback-host");
+            const transcriptView = document.getElementById("transcript-view");
+            const hudView = document.getElementById("hud-summary-view");
+
+            if (!analysis?.feedback) {
+                host.innerHTML = `<div class="empty-state">Analyze a saved run to see pacing, slide-card balance, and next-step feedback.</div>`;
+                transcriptView.innerText = state.currentRehearsal?.transcript_text || "No transcript available yet.";
+                hudView.innerText = "No HUD summary yet.";
+                return;
+            }
+
+            const feedback = analysis.feedback;
+            const suggestions = feedback.section_suggestions || [];
+            host.innerHTML = `
+                <div class="result-card">
+                    <header><strong>Overall Pacing</strong></header>
+                    <div class="tiny">${escapeHtml(feedback.overall_pacing || "--")}</div>
+                </div>
+                <div class="two-col">
+                    <div class="result-card">
+                        <header><strong>Strongest Card</strong></header>
+                        <div class="tiny"><strong>${escapeHtml(feedback.strongest_section || "--")}</strong><br>${escapeHtml(feedback.strongest_section_note || "")}</div>
+                    </div>
+                    <div class="result-card">
+                        <header><strong>Weakest Card</strong></header>
+                        <div class="tiny"><strong>${escapeHtml(feedback.weakest_section || "--")}</strong><br>${escapeHtml(feedback.weakest_section_note || "")}</div>
+                    </div>
+                </div>
+                <div class="result-card">
+                    <header><strong>Main Issue</strong></header>
+                    <div class="tiny">${escapeHtml(feedback.one_main_issue || "--")}</div>
+                </div>
+                <div class="result-card">
+                    <header><strong>Main Strength</strong></header>
+                    <div class="tiny">${escapeHtml(feedback.one_main_strength || "--")}</div>
+                </div>
+                <div class="result-card">
+                    <header><strong>Next Action</strong></header>
+                    <div class="tiny">${escapeHtml(feedback.one_next_action || "--")}</div>
+                </div>
+                <div class="result-card">
+                    <header><strong>Card Suggestions</strong></header>
+                    ${
+                        suggestions.length
+                            ? `<div class="stack">${suggestions.map((item) => `<div class="tiny"><strong>${escapeHtml(item.section_name || "Card")}</strong>: ${escapeHtml(item.suggestion || "")}</div>`).join("")}</div>`
+                            : `<div class="tiny">No extra card suggestions were generated.</div>`
+                    }
+                </div>
+                <div class="result-card">
+                    <header><strong>Generation Note</strong></header>
+                    <div class="tiny">${escapeHtml(analysis.generation?.note || "No generation note was returned.")}</div>
+                </div>
+            `;
+
+            const transcript = analysis.transcript || {};
+            transcriptView.innerText = transcript.text || transcript.note || "No transcript available yet.";
+            hudView.innerText = JSON.stringify(analysis.hud_summary || {}, null, 2);
+        }
+
+        function renderAll() {
+            syncControllerInputs();
+            renderHero();
+            renderMissionList();
+            renderScriptSummary();
+            renderScriptCardSwitcher();
+            renderFocusedCard();
+            renderSectionTimings();
+            renderControllerSummary();
+            renderCompanionSync();
+            renderPresentationStage();
+            renderRecentRehearsals();
+            renderFeedback();
+        }
+
+        function setBriefStatus(message, className = "status-cool") {
+            const host = document.getElementById("brief-save-status");
+            host.innerText = message;
+            host.className = `status-note ${className}`;
+        }
+
+        function setIntakeStatus(message, className = "status-cool") {
+            const host = document.getElementById("intake-status");
+            host.innerText = message;
+            host.className = `status-note ${className}`;
+        }
+
+        function setRehearsalStatus(message, className = "status-cool") {
+            const host = document.getElementById("rehearsal-save-status");
+            host.innerText = message;
+            host.className = `status-note ${className}`;
+        }
+
+        function setLiveStatus(message, className = "status-cool") {
+            const host = document.getElementById("live-status");
+            host.innerText = message;
+            host.className = `status-note ${className}`;
+        }
+
+        function setControllerStatus(message, className = "status-cool") {
+            const host = document.getElementById("controller-status");
+            host.innerText = message;
+            host.className = `status-note ${className}`;
+        }
+
+        function setFocusedCard(sectionId, syncPresentation = false) {
+            const cards = normalizeSections(state.draftSections);
+            const fallback = cards[0]?.section_id || "";
+            state.focusedCardId = cards.some((item) => item.section_id === sectionId) ? sectionId : fallback;
+            if (syncPresentation) {
+                state.presentationState = normalizePresentationState({
+                    ...state.presentationState,
+                    active_section_id: state.focusedCardId,
+                }, cards);
+            }
+            renderAll();
+        }
+
+        function focusAdjacentCard(offset) {
+            const cards = normalizeSections(state.draftSections);
+            if (!cards.length) return;
+            const currentId = state.focusedCardId || cards[0].section_id;
+            const currentIndex = Math.max(0, cards.findIndex((item) => item.section_id === currentId));
+            const nextIndex = Math.min(cards.length - 1, Math.max(0, currentIndex + offset));
+            setFocusedCard(cards[nextIndex].section_id, true);
+        }
+
+        function updateFocusedCardField(key, value) {
+            const cards = normalizeSections(state.draftSections);
+            const nextCards = cards.map((card) => {
+                if (card.section_id !== state.focusedCardId) return card;
+                return normalizeSection({
+                    ...card,
+                    [key]: key === "slide_index" || key === "target_seconds" ? Number(value || 0) : value,
+                }, card.slide_index || 1);
+            });
+            state.draftSections = nextCards;
+            state.presentationState = normalizePresentationState(state.presentationState, nextCards);
+            renderAll();
+        }
+
+        function addSection() {
+            const cards = normalizeSections(state.draftSections);
+            const nextSlideIndex = cards.length ? Math.max(...cards.map((item) => Number(item.slide_index || 0))) + 1 : 1;
+            const nextCard = normalizeSection({
+                section_id: `draft-${Date.now()}-${nextSlideIndex}`,
+                name: `Card ${nextSlideIndex}`,
+                slide_index: nextSlideIndex,
+                slide_title: `Slide ${nextSlideIndex}`,
+                slide_anchor: `Slide ${nextSlideIndex}`,
+                interaction_goal: "",
+                target_seconds: 45,
+                outline: "",
+                speaker_notes: "",
+                teleprompter_script: "",
+                cue_cards: "",
+            }, nextSlideIndex);
+            state.draftSections = [...cards, nextCard];
+            state.focusedCardId = nextCard.section_id;
+            state.presentationState = normalizePresentationState({
+                ...state.presentationState,
+                active_section_id: nextCard.section_id,
+            }, state.draftSections);
+            renderAll();
+        }
+
+        function duplicateFocusedCard() {
+            const card = currentFocusedCard();
+            if (!card) return;
+            const cards = normalizeSections(state.draftSections);
+            const nextSlideIndex = Math.max(...cards.map((item) => Number(item.slide_index || 0))) + 1;
+            const clone = normalizeSection({
+                ...card,
+                section_id: `draft-${Date.now()}-${nextSlideIndex}`,
+                name: `${card.name} Copy`,
+                slide_index: nextSlideIndex,
+                slide_title: `${card.slide_title || card.name} Copy`,
+            }, nextSlideIndex);
+            state.draftSections = [...cards, clone];
+            state.focusedCardId = clone.section_id;
+            state.presentationState = normalizePresentationState({
+                ...state.presentationState,
+                active_section_id: clone.section_id,
+            }, state.draftSections);
+            renderAll();
+        }
+
+        function removeFocusedCard() {
+            const cards = normalizeSections(state.draftSections);
+            if (cards.length <= 1) {
+                setBriefStatus("Keep at least one slide card in the script workspace.", "status-warn");
+                return;
+            }
+            const nextCards = cards.filter((item) => item.section_id !== state.focusedCardId);
+            state.draftSections = nextCards;
+            state.focusedCardId = nextCards[0]?.section_id || "";
+            state.presentationState = normalizePresentationState({
+                ...state.presentationState,
+                active_section_id: state.focusedCardId,
+            }, nextCards);
+            renderAll();
+        }
+
+        function applyCompanionBundle(result, statusMessage = "") {
+            const previousPairing = currentPairingState();
+            if (!result) return;
+            if (result.presentation_state) {
+                state.presentationState = normalizePresentationState(result.presentation_state, state.draftSections);
+                state.focusedCardId = state.presentationState.active_section_id || state.focusedCardId;
+                if (state.currentMission) {
+                    state.currentMission.presentation_state = state.presentationState;
+                }
+            }
+            if (result.companion_sync) {
+                state.companionSync = normalizeCompanionSync(result.companion_sync);
+                if (state.currentMission) {
+                    state.currentMission.companion_sync = state.companionSync;
+                }
+            }
+            if (result.live_hud) {
+                state.liveHud = normalizeLiveHud(result.live_hud);
+            }
+            if (statusMessage) {
+                setControllerStatus(statusMessage, "status-good");
+            } else {
+                const nextPairing = currentPairingState();
+                if (previousPairing.pairing_status !== nextPairing.pairing_status) {
+                    if (nextPairing.pairing_status === "paired") {
+                        setControllerStatus(`${nextPairing.paired_surface || "Companion surface"} joined the presentation session.`, "status-good");
+                    } else if (nextPairing.pairing_status === "expired") {
+                        setControllerStatus("The pairing window expired. Start a fresh code when you are ready.", "status-warn");
+                    } else if (nextPairing.pairing_status === "inactive" && previousPairing.pairing_status === "paired") {
+                        setControllerStatus("The pairing session ended. The phone controller remains active.", "status-cool");
+                    }
+                }
+            }
+            restartPairingMonitor();
+            renderAll();
+        }
+
+        async function touchCompanionSync(eventName = "heartbeat", extra = {}) {
+            if (!state.currentMissionId) return;
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/companion_sync`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    surface: phoneControllerMode ? "phone" : "web",
+                    sync_status: currentPresentationState().presentation_mode === "present" ? "live" : "ready",
+                    event: eventName,
+                    ...extra,
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not refresh the companion sync state.", "status-high");
+                return;
+            }
+            applyCompanionBundle(result, eventName === "manual_refresh" ? "Companion sync refreshed." : "");
+        }
+
+        async function refreshCompanionBundle() {
+            if (!state.currentMissionId) return;
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/companion_sync`);
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not load the companion sync state.", "status-high");
+                return;
+            }
+            applyCompanionBundle(result);
+        }
+
+        async function refreshPairingState(silent = true) {
+            if (!state.currentMissionId) return;
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/pairing_state`);
+            const result = await response.json();
+            if (!response.ok) {
+                if (!silent) {
+                    setControllerStatus(result.message || "Could not refresh the pairing state.", "status-high");
+                }
+                return;
+            }
+            applyCompanionBundle(result, silent ? "" : "Pairing state refreshed.");
+        }
+
+        async function startPairingWindow() {
+            if (!state.currentMissionId) return;
+            const windowSeconds = Number(document.getElementById("pairing-window-seconds")?.value || 180);
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/pairing_start`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    surface: phoneControllerMode ? "phone" : "web",
+                    window_seconds: windowSeconds,
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not open a pairing window.", "status-high");
+                return;
+            }
+            applyCompanionBundle(result, "Pairing window started.");
+        }
+
+        async function joinPairingSession() {
+            if (!state.currentMissionId) return;
+            const pairing = currentPairingState();
+            const joinSurface = document.getElementById("pairing-join-surface")?.value || "rokid_hud";
+            const deviceLabel = (document.getElementById("pairing-device-label")?.value || joinSurface).trim();
+            const pairingCode = (document.getElementById("pairing-code-input")?.value || pairing.pairing_code || "").trim().toUpperCase();
+            if (!pairingCode) {
+                setControllerStatus("Start pairing first or paste a valid join code.", "status-high");
+                return;
+            }
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/pairing_join`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    pairing_code: pairingCode,
+                    surface: joinSurface,
+                    device_label: deviceLabel || joinSurface,
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not join the pairing session.", "status-high");
+                return;
+            }
+            applyCompanionBundle(result, `${joinSurface} joined the presentation session.`);
+        }
+
+        async function endPairingSession() {
+            if (!state.currentMissionId) return;
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/pairing_end`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    surface: phoneControllerMode ? "phone" : "web",
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not end the pairing session.", "status-high");
+                return;
+            }
+            applyCompanionBundle(result, "Pairing session ended.");
+        }
+
+        async function claimBridge(surface) {
+            if (!state.currentMissionId) return;
+            const sync = currentCompanionSync();
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/bridge_claim`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    surface,
+                    bridge_pin: sync.bridge_state?.bridge_pin || "",
+                    device_label: phoneControllerMode ? "phone_controller_surface" : "workspace_surface",
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not claim the bridge session.", "status-high");
+                return;
+            }
+            applyCompanionBundle(result, `${surface} bridge claim is active.`);
+        }
+
+        async function releaseBridgeClaim(surface) {
+            if (!state.currentMissionId) return;
+            const sync = currentCompanionSync();
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/bridge_release`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    surface,
+                    bridge_pin: sync.bridge_state?.bridge_pin || "",
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not release the bridge session.", "status-high");
+                return;
+            }
+            applyCompanionBundle(result, `${surface} bridge claim released.`);
+        }
+
+        async function ensurePhoneBridgeClaim() {
+            if (!phoneControllerMode || !state.currentMissionId) return;
+            if (state.bridgeAutoClaimedMissionId === state.currentMissionId) return;
+            const bridge = currentCompanionSync().bridge_state || {};
+            if (bridge.claimed_surface === "phone" && bridge.bridge_status === "paired") {
+                state.bridgeAutoClaimedMissionId = state.currentMissionId;
+                return;
+            }
+            state.bridgeAutoClaimedMissionId = state.currentMissionId;
+            await claimBridge("phone");
+        }
+
+        async function simulateRokidButton(buttonEvent) {
+            if (!state.currentMissionId) {
+                setControllerStatus("Save or load a mission first before simulating Rokid button input.", "status-high");
+                return;
+            }
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/rokid_event`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    button_event: buttonEvent,
+                    presentation_mode: currentPresentationState().presentation_mode,
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not apply the simulated Rokid button event.", "status-high");
+                return;
+            }
+            applyCompanionBundle(result, `Rokid event ${buttonEvent} applied as ${result.rokid_event?.mapped_action || "control"}.`);
+        }
+
+        function restartPairingMonitor() {
+            if (state.pairingMonitorHandle) {
+                clearInterval(state.pairingMonitorHandle);
+                state.pairingMonitorHandle = null;
+            }
+            if (!state.currentMissionId) return;
+            const pairing = currentPairingState();
+            if (!["waiting", "paired", "expired"].includes(pairing.pairing_status)) return;
+            const intervalMs = pairing.pairing_status === "waiting" ? 2500 : 5000;
+            state.pairingMonitorHandle = setInterval(() => {
+                refreshPairingState(true);
+            }, intervalMs);
+        }
+
+        function restartCompanionHeartbeat() {
+            if (state.companionHeartbeatHandle) {
+                clearInterval(state.companionHeartbeatHandle);
+                state.companionHeartbeatHandle = null;
+            }
+            if (!state.currentMissionId) return;
+            state.companionHeartbeatHandle = setInterval(() => {
+                touchCompanionSync("heartbeat");
+            }, phoneControllerMode ? 12000 : 30000);
+        }
+
+        function openCompanionSurface(target) {
+            const missionId = state.currentMissionId || requestedMissionId || "";
+            if (target === "controller") {
+                window.location.href = missionId
+                    ? `/presentation/controller?mission_id=${encodeURIComponent(missionId)}`
+                    : "/presentation/controller";
+                return;
+            }
+            window.location.href = missionId
+                ? `/presentation?mission_id=${encodeURIComponent(missionId)}`
+                : "/presentation";
+        }
+
+        async function loadMissions(selectFirst = true) {
+            const response = await fetch("/api/presentation_missions");
+            const result = await response.json();
+            state.missions = result.missions || [];
+            if (requestedMissionId && state.missions.some((mission) => mission.mission_id === requestedMissionId) && state.currentMissionId !== requestedMissionId) {
+                await loadMission(requestedMissionId);
+                return;
+            }
+            if (selectFirst && !state.currentMissionId && state.missions.length) {
+                await loadMission(state.missions[0].mission_id);
+                return;
+            }
+            renderMissionList();
+        }
+
+        async function loadMission(missionId) {
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(missionId)}`);
+            const result = await response.json();
+            if (!response.ok) {
+                setBriefStatus(result.message || "Could not load the mission.", "status-high");
+                return;
+            }
+            state.currentMissionId = result.mission.mission_id;
+            state.currentMission = result.mission;
+            state.draftSections = normalizeSections(result.mission.script_sections || []);
+            state.presentationState = normalizePresentationState(result.mission.presentation_state, state.draftSections);
+            state.companionSync = normalizeCompanionSync(result.mission.companion_sync);
+            state.liveHud = normalizeLiveHud(result.mission.live_hud || null);
+            state.focusedCardId = state.presentationState.active_section_id || state.draftSections[0]?.section_id || "";
+            state.rehearsalList = result.rehearsals || [];
+            state.currentRehearsal = null;
+            state.suggestedSections = [];
+            setMissionForm(result.mission);
+            setBriefStatus("Mission loaded. You can keep editing and save again at any time.", "status-cool");
+            setRehearsalStatus("Select or save a rehearsal run for analysis.", "status-cool");
+            setControllerStatus(`Controller synced. Active slide is ${state.presentationState.active_slide_index || "--"} via ${state.presentationState.control_source || "phone"}.`, "status-cool");
+            restartCompanionHeartbeat();
+            restartPairingMonitor();
+            await touchCompanionSync(phoneControllerMode ? "phone_open" : "workspace_open");
+            await ensurePhoneBridgeClaim();
+            renderAll();
+        }
+
+        async function extractIntake() {
+            const taskText = document.getElementById("task-text").value.trim();
+            if (!taskText) {
+                setIntakeStatus("Paste the assignment text first.", "status-high");
+                return;
+            }
+            setIntakeStatus("Extracting brief fields...", "status-cool");
+            const response = await fetch("/api/presentation_missions/intake_extract", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    task_text: taskText,
+                    use_llm: document.getElementById("use-intake-ai").checked,
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setIntakeStatus(result.message || "Brief extraction failed.", "status-high");
+                return;
+            }
+            const candidates = result.candidates || {};
+            document.getElementById("mission-title").value = candidates.title || document.getElementById("mission-title").value;
+            document.getElementById("mission-course").value = candidates.course || document.getElementById("mission-course").value;
+            document.getElementById("mission-deadline").value = candidates.deadline || document.getElementById("mission-deadline").value;
+            document.getElementById("mission-deliverable").value = candidates.deliverable_type || document.getElementById("mission-deliverable").value;
+            document.getElementById("mission-duration").value = candidates.target_duration_minutes || document.getElementById("mission-duration").value;
+            document.getElementById("mission-audience").value = candidates.audience || document.getElementById("mission-audience").value;
+            document.getElementById("mission-requirements").value = candidates.teacher_requirements || document.getElementById("mission-requirements").value;
+            document.getElementById("mission-description").value = candidates.task_description || document.getElementById("mission-description").value;
+            state.suggestedSections = normalizeSections(result.suggested_sections || []);
+            if (!state.currentMissionId && state.suggestedSections.length) {
+                state.draftSections = state.suggestedSections.map((item) => ({ ...item }));
+                state.presentationState = normalizePresentationState(null, state.draftSections);
+                state.focusedCardId = state.draftSections[0]?.section_id || "";
+            }
+            setIntakeStatus(result.generation?.note || "Suggested values were loaded into the editable form.", "status-cool");
+            renderAll();
+        }
+
+        function loadSuggestedSectionsIntoScript() {
+            if (state.suggestedSections.length) {
+                state.draftSections = state.suggestedSections.map((item) => ({ ...item }));
+                state.presentationState = normalizePresentationState(state.presentationState, state.draftSections);
+                state.focusedCardId = state.draftSections[0]?.section_id || "";
+                setBriefStatus("Suggested slide-card scaffold loaded into the script workspace.", "status-cool");
+            } else if (!state.draftSections.length) {
+                state.draftSections = buildDefaultDraftSections(Number(document.getElementById("mission-duration").value || 5));
+                state.presentationState = normalizePresentationState(null, state.draftSections);
+                state.focusedCardId = state.draftSections[0]?.section_id || "";
+                setBriefStatus("A default slide-card scaffold was created from the current target duration.", "status-cool");
+            } else {
+                setBriefStatus("The current slide cards are already available in the script workspace.", "status-cool");
+            }
+            renderAll();
+            switchTab("script");
+        }
+
+        async function saveMission() {
+            const payload = missionPayloadFromForm();
+            if (!payload.title) {
+                setBriefStatus("Add a mission title before saving.", "status-high");
+                return;
+            }
+            const response = await fetch("/api/presentation_missions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setBriefStatus(result.message || "Mission save failed.", "status-high");
+                return;
+            }
+            state.currentMissionId = result.mission.mission_id;
+            state.currentMission = result.mission;
+            state.draftSections = normalizeSections(result.mission.script_sections || []);
+            state.presentationState = normalizePresentationState(result.mission.presentation_state, state.draftSections);
+            state.companionSync = normalizeCompanionSync(result.mission.companion_sync);
+            state.focusedCardId = state.presentationState.active_section_id || state.draftSections[0]?.section_id || "";
+            state.rehearsalList = result.rehearsals || state.rehearsalList;
+            setMissionForm(result.mission);
+            setBriefStatus("Mission saved. You can now refine the slide cards or start a rehearsal.", "status-good");
+            await loadMissions(false);
+            restartCompanionHeartbeat();
+            restartPairingMonitor();
+            await touchCompanionSync("mission_saved");
+            renderAll();
+        }
+
+        async function saveScript() {
+            if (!state.currentMissionId) {
+                setBriefStatus("Save the mission first, then save the slide cards.", "status-high");
+                switchTab("brief");
+                return;
+            }
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/script`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    script_sections: normalizeSections(state.draftSections),
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setBriefStatus(result.message || "Slide-card save failed.", "status-high");
+                return;
+            }
+            state.currentMission = result.mission;
+            state.draftSections = normalizeSections(result.mission.script_sections || []);
+            state.presentationState = normalizePresentationState(result.mission.presentation_state, state.draftSections);
+            state.companionSync = normalizeCompanionSync(result.mission.companion_sync);
+            state.focusedCardId = state.presentationState.active_section_id || state.draftSections[0]?.section_id || "";
+            setBriefStatus("Slide cards saved.", "status-good");
+            await loadMissions(false);
+            await touchCompanionSync("script_saved");
+            renderAll();
+        }
+
+        async function syncPresentationStateFromUi() {
+            state.presentationState = normalizePresentationState({
+                ...state.presentationState,
+                control_source: document.getElementById("controller-source").value,
+            }, state.draftSections);
+            state.liveHud = normalizeLiveHud({
+                ...state.liveHud,
+                control_source: state.presentationState.control_source,
+            });
+            renderAll();
+        }
+
+        async function updatePresentationMode() {
+            const nextMode = document.getElementById("presentation-mode").value;
+            if (!state.currentMissionId) {
+                state.presentationState = normalizePresentationState({
+                    ...state.presentationState,
+                    presentation_mode: nextMode,
+                }, state.draftSections);
+                renderAll();
+                return;
+            }
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/presentation_state`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    presentation_mode: nextMode,
+                    control_source: document.getElementById("controller-source").value || "phone",
+                    active_section_id: currentActiveCard()?.section_id || "",
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not update the presentation mode.", "status-high");
+                return;
+            }
+            applyCompanionBundle(result, "Presentation mode updated.");
+        }
+
+        async function jumpToSelectedSlide() {
+            const sectionId = document.getElementById("jump-slide-select").value;
+            if (!sectionId) return;
+            if (!state.currentMissionId) {
+                state.presentationState = normalizePresentationState({
+                    ...state.presentationState,
+                    active_section_id: sectionId,
+                    active_chunk_index: 0,
+                }, state.draftSections);
+                state.focusedCardId = sectionId;
+                renderAll();
+                return;
+            }
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/presentation_control`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "jump",
+                    section_id: sectionId,
+                    control_source: document.getElementById("controller-source").value || "phone",
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not jump to the selected slide.", "status-high");
+                return;
+            }
+            applyCompanionBundle(result, "Jumped to the selected slide card.");
+        }
+
+        async function jumpToTeleprompterChunk(chunkIndex) {
+            const safeChunkIndex = Math.max(0, Number(chunkIndex || 0));
+            await applyPresentationControl("jump_chunk", {
+                chunk_index: safeChunkIndex,
+                section_id: currentPresentationState().active_section_id || "",
+            });
+        }
+
+        function applyPresentationStateResult(presentationState, message) {
+            state.presentationState = normalizePresentationState(presentationState, state.draftSections);
+            state.focusedCardId = state.presentationState.active_section_id || state.focusedCardId;
+            if (state.currentMission) {
+                state.currentMission.presentation_state = state.presentationState;
+            }
+            setControllerStatus(message || `Controller synced through ${state.presentationState.last_control_source || state.presentationState.control_source}.`, "status-good");
+            renderAll();
+        }
+
+        async function applyPresentationControl(action, extraPayload = {}) {
+            const payload = {
+                action,
+                control_source: document.getElementById("controller-source").value || "phone",
+                presentation_mode: document.getElementById("presentation-mode").value || currentPresentationState().presentation_mode,
+                ...extraPayload,
+            };
+            if (!state.currentMissionId) {
+                const cards = normalizeSections(state.draftSections);
+                const current = currentPresentationState();
+                const ids = cards.map((item) => item.section_id);
+                let nextIndex = Math.max(0, ids.indexOf(current.active_section_id));
+                const currentCard = cards[nextIndex] || cards[0] || null;
+                const teleprompter = teleprompterBundleForCard(currentCard, current.active_chunk_index || 0);
+                let nextChunkIndex = teleprompter.activeChunkIndex;
+                if (action === "next") {
+                    if (teleprompter.hasNextChunk) {
+                        nextChunkIndex = teleprompter.activeChunkIndex + 1;
+                    } else {
+                        nextIndex = Math.min(cards.length - 1, nextIndex + 1);
+                        nextChunkIndex = 0;
+                    }
+                }
+                if (action === "previous") {
+                    if (teleprompter.hasPreviousChunk) {
+                        nextChunkIndex = Math.max(0, teleprompter.activeChunkIndex - 1);
+                    } else {
+                        nextIndex = Math.max(0, nextIndex - 1);
+                        const previousTeleprompter = teleprompterBundleForCard(cards[nextIndex] || null, 9999);
+                        nextChunkIndex = previousTeleprompter.activeChunkIndex;
+                    }
+                }
+                if (action === "next_chunk") {
+                    if (teleprompter.hasNextChunk) {
+                        nextChunkIndex = teleprompter.activeChunkIndex + 1;
+                    } else {
+                        nextIndex = Math.min(cards.length - 1, nextIndex + 1);
+                        nextChunkIndex = 0;
+                    }
+                }
+                if (action === "previous_chunk") {
+                    if (teleprompter.hasPreviousChunk) {
+                        nextChunkIndex = Math.max(0, teleprompter.activeChunkIndex - 1);
+                    } else {
+                        nextIndex = Math.max(0, nextIndex - 1);
+                        const previousTeleprompter = teleprompterBundleForCard(cards[nextIndex] || null, 9999);
+                        nextChunkIndex = previousTeleprompter.activeChunkIndex;
+                    }
+                }
+                if (action === "next_slide") {
+                    nextIndex = Math.min(cards.length - 1, nextIndex + 1);
+                    nextChunkIndex = 0;
+                }
+                if (action === "previous_slide") {
+                    nextIndex = Math.max(0, nextIndex - 1);
+                    nextChunkIndex = 0;
+                }
+                if (action === "jump_chunk") {
+                    const requestedSectionId = String(extraPayload.section_id || "");
+                    const requestedSlideIndex = Number(extraPayload.slide_index || 0);
+                    if (requestedSectionId && ids.includes(requestedSectionId)) {
+                        nextIndex = ids.indexOf(requestedSectionId);
+                    } else if (requestedSlideIndex > 0) {
+                        const matchedIndex = cards.findIndex((item) => Number(item.slide_index || 0) === requestedSlideIndex);
+                        if (matchedIndex >= 0) {
+                            nextIndex = matchedIndex;
+                        }
+                    }
+                    const targetCard = cards[nextIndex] || cards[0] || null;
+                    const targetTeleprompter = teleprompterBundleForCard(targetCard, Number(extraPayload.chunk_index || 0));
+                    nextChunkIndex = targetTeleprompter.activeChunkIndex;
+                }
+                const nextCard = cards[nextIndex] || cards[0] || null;
+                state.presentationState = normalizePresentationState({
+                    ...current,
+                    active_section_id: nextCard?.section_id || current.active_section_id,
+                    active_chunk_index: nextChunkIndex,
+                    control_source: payload.control_source,
+                    last_control_source: payload.control_source,
+                    last_action: action,
+                    presentation_mode: payload.presentation_mode,
+                    cue_view: action === "toggle_cue" ? (current.cue_view === "visible" ? "hidden" : "visible") : current.cue_view,
+                }, cards);
+                state.focusedCardId = state.presentationState.active_section_id || state.focusedCardId;
+                renderAll();
+                return;
+            }
+            const response = await fetch(`/api/presentation_missions/${encodeURIComponent(state.currentMissionId)}/presentation_control`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setControllerStatus(result.message || "Could not apply the presentation control.", "status-high");
+                return;
+            }
+            applyCompanionBundle(result, `${payload.control_source} applied ${action}.`);
+        }
+
+        function currentRunDurationSeconds() {
+            if (state.liveDurationSeconds > 0) return state.liveDurationSeconds;
+            if (state.uploadedDurationSeconds > 0) return state.uploadedDurationSeconds;
+            return collectSectionTimings().reduce((sum, item) => sum + Number(item.actual_seconds || 0), 0);
+        }
+
+        async function startLiveRehearsal() {
+            if (state.liveTimerHandle) return;
+            state.liveStartedAt = Date.now();
+            state.liveDurationSeconds = 0;
+            state.recordedAudioBlob = null;
+            state.recordedChunks = [];
+            tickLiveTimer();
+            state.liveTimerHandle = setInterval(tickLiveTimer, 250);
+            setLiveStatus("Live rehearsal is running.", "status-good");
+            document.getElementById("audio-source").value = "browser_mic";
+
+            if (document.getElementById("use-browser-speech").checked) {
+                startSpeechRecognition();
+            }
+
+            if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+                setLiveStatus("Live timer started, but browser mic recording is unavailable here. You can still upload audio afterward.", "status-warn");
+                return;
+            }
+
+            try {
+                state.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                state.mediaRecorder = new MediaRecorder(state.mediaStream);
+                state.mediaRecorder.ondataavailable = (event) => {
+                    if (event.data && event.data.size > 0) {
+                        state.recordedChunks.push(event.data);
+                    }
+                };
+                state.mediaRecorder.onstop = () => {
+                    if (state.recordedChunks.length) {
+                        state.recordedAudioBlob = new Blob(state.recordedChunks, { type: state.mediaRecorder.mimeType || "audio/webm" });
+                        document.getElementById("audio-meta").innerText = `Recorded browser audio is ready (${Math.round(state.recordedAudioBlob.size / 1024)} KB).`;
+                    }
+                    if (state.mediaStream) {
+                        state.mediaStream.getTracks().forEach((track) => track.stop());
+                    }
+                    state.mediaStream = null;
+                    state.mediaRecorder = null;
+                };
+                state.mediaRecorder.start();
+            } catch (error) {
+                setLiveStatus(`Live timer started, but mic recording failed: ${error.message}`, "status-warn");
+            }
+        }
+
+        function tickLiveTimer() {
+            const elapsed = Math.max(0, (Date.now() - state.liveStartedAt) / 1000);
+            state.liveDurationSeconds = elapsed;
+            document.getElementById("live-timer").innerText = formatMmss(elapsed);
+        }
+
+        function stopSpeechRecognition() {
+            if (state.speechRecognition) {
+                try {
+                    state.speechRecognition.stop();
+                } catch (error) {}
+                state.speechRecognition = null;
+            }
+        }
+
+        function startSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                setLiveStatus("Browser speech transcript is not supported here. You can paste a transcript manually after the run.", "status-warn");
+                return;
+            }
+            stopSpeechRecognition();
+            const transcriptField = document.getElementById("run-transcript");
+            state.speechRecognition = new SpeechRecognition();
+            state.speechRecognition.continuous = true;
+            state.speechRecognition.interimResults = false;
+            state.speechRecognition.lang = "en-US";
+            state.speechRecognition.onresult = (event) => {
+                let nextText = transcriptField.value.trim();
+                for (let i = event.resultIndex; i < event.results.length; i += 1) {
+                    const piece = event.results[i][0]?.transcript?.trim();
+                    if (piece && event.results[i].isFinal) {
+                        nextText = `${nextText} ${piece}`.trim();
+                    }
+                }
+                transcriptField.value = nextText;
+            };
+            state.speechRecognition.onerror = () => {
+                setLiveStatus("Live rehearsal is still running. Browser speech transcript stopped and can be replaced with manual text.", "status-warn");
+            };
+            try {
+                state.speechRecognition.start();
+            } catch (error) {}
+        }
+
+        function stopLiveRehearsal() {
+            if (state.liveTimerHandle) {
+                clearInterval(state.liveTimerHandle);
+                state.liveTimerHandle = null;
+                tickLiveTimer();
+                setLiveStatus(`Live rehearsal stopped at ${formatMmss(state.liveDurationSeconds)}. Save the run when ready.`, "status-cool");
+            }
+            stopSpeechRecognition();
+            if (state.mediaRecorder && state.mediaRecorder.state !== "inactive") {
+                try {
+                    state.mediaRecorder.stop();
+                } catch (error) {}
+            }
+        }
+
+        async function handleAudioUpload(event) {
+            const file = event.target.files?.[0];
+            state.uploadedAudioFile = file || null;
+            state.uploadedDurationSeconds = 0;
+            if (!file) {
+                document.getElementById("audio-meta").innerText = "No audio file selected yet.";
+                return;
+            }
+            try {
+                const duration = await readAudioDuration(file);
+                state.uploadedDurationSeconds = duration;
+                document.getElementById("audio-meta").innerText = `${file.name} loaded | ${formatMmss(duration)} | ${(file.size / 1024).toFixed(1)} KB`;
+            } catch (error) {
+                document.getElementById("audio-meta").innerText = `${file.name} loaded | duration could not be read in the browser`;
+            }
+        }
+
+        function readAudioDuration(file) {
+            return new Promise((resolve, reject) => {
+                const url = URL.createObjectURL(file);
+                const audio = document.createElement("audio");
+                audio.preload = "metadata";
+                audio.onloadedmetadata = () => {
+                    URL.revokeObjectURL(url);
+                    resolve(audio.duration || 0);
+                };
+                audio.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    reject(new Error("Audio metadata could not be read."));
+                };
+                audio.src = url;
+            });
+        }
+
+        async function saveRehearsal() {
+            if (!state.currentMissionId) {
+                setRehearsalStatus("Save the mission first, then create a rehearsal run.", "status-high");
+                switchTab("brief");
+                return;
+            }
+            const transcriptText = document.getElementById("run-transcript").value.trim();
+            const payload = {
+                mission_id: state.currentMissionId,
+                audio_source: document.getElementById("audio-source").value,
+                total_duration_seconds: currentRunDurationSeconds(),
+                section_timings: collectSectionTimings(),
+                transcript_text: transcriptText,
+                transcript_source: transcriptText ? (document.getElementById("use-browser-speech").checked ? "browser_speech" : "manual") : "",
+                self_rating: Number(document.getElementById("self-rating").value || 0),
+                notes: document.getElementById("run-notes").value.trim(),
+            };
+            let response;
+            if (state.recordedAudioBlob || state.uploadedAudioFile) {
+                const form = new FormData();
+                form.append("payload", JSON.stringify(payload));
+                form.append("audio", state.recordedAudioBlob || state.uploadedAudioFile);
+                response = await fetch("/api/presentation_rehearsals", {
+                    method: "POST",
+                    body: form,
+                });
+            } else {
+                response = await fetch("/api/presentation_rehearsals", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                });
+            }
+            const result = await response.json();
+            if (!response.ok) {
+                setRehearsalStatus(result.message || "Rehearsal save failed.", "status-high");
+                return;
+            }
+            state.currentRehearsal = result.rehearsal;
+            upsertRecentRehearsal(result.rehearsal);
+            setRehearsalStatus("Rehearsal run saved. You can analyze it now.", "status-good");
+            await refreshCompanionBundle();
+            renderAll();
+        }
+
+        function upsertRecentRehearsal(rehearsal) {
+            const summary = {
+                ...rehearsal,
+                transcript_status: rehearsal.analysis?.transcript?.status || rehearsal.transcript_status || "missing",
+            };
+            state.rehearsalList = [summary, ...state.rehearsalList.filter((item) => item.rehearsal_id !== rehearsal.rehearsal_id)];
+        }
+
+        async function analyzeCurrentRehearsal() {
+            if (!state.currentRehearsal?.rehearsal_id) {
+                setRehearsalStatus("Save a rehearsal run before analysis.", "status-high");
+                return;
+            }
+            setRehearsalStatus("Analyzing rehearsal run...", "status-cool");
+            const response = await fetch(`/api/presentation_rehearsals/${encodeURIComponent(state.currentRehearsal.rehearsal_id)}/analyze`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    total_duration_seconds: currentRunDurationSeconds(),
+                    section_timings: collectSectionTimings(),
+                    transcript_text: document.getElementById("run-transcript").value.trim(),
+                    transcript_source: document.getElementById("run-transcript").value.trim()
+                        ? (document.getElementById("use-browser-speech").checked ? "browser_speech" : "manual")
+                        : "",
+                    self_rating: Number(document.getElementById("self-rating").value || 0),
+                    notes: document.getElementById("run-notes").value.trim(),
+                    use_llm: document.getElementById("use-analysis-ai").checked,
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                setRehearsalStatus(result.message || "Rehearsal analysis failed.", "status-high");
+                return;
+            }
+            state.currentRehearsal = result.rehearsal;
+            upsertRecentRehearsal(result.rehearsal);
+            setRehearsalStatus(result.rehearsal.analysis?.generation?.note || "Rehearsal analysis completed.", "status-good");
+            await refreshCompanionBundle();
+            renderAll();
+        }
+
+        async function loadRehearsal(rehearsalId) {
+            const response = await fetch(`/api/presentation_rehearsals/${encodeURIComponent(rehearsalId)}`);
+            const result = await response.json();
+            if (!response.ok) {
+                setRehearsalStatus(result.message || "Could not load the rehearsal run.", "status-high");
+                return;
+            }
+            state.currentRehearsal = result.rehearsal;
+            document.getElementById("audio-source").value = result.rehearsal.audio_source || "browser_mic";
+            document.getElementById("run-transcript").value = result.rehearsal.transcript_text || "";
+            document.getElementById("run-notes").value = result.rehearsal.notes || "";
+            document.getElementById("self-rating").value = result.rehearsal.self_rating || 0;
+            state.liveDurationSeconds = Number(result.rehearsal.total_duration_seconds || 0);
+            document.getElementById("live-timer").innerText = formatMmss(state.liveDurationSeconds);
+            await refreshCompanionBundle();
+            renderAll();
+            setRehearsalStatus("Rehearsal run loaded.", "status-cool");
+        }
+
+        function shouldIgnoreShortcutTarget(target) {
+            if (!target) return false;
+            const tag = String(target.tagName || "").toLowerCase();
+            return tag === "input" || tag === "textarea" || tag === "select" || target.isContentEditable;
+        }
+
+        let presentationStageTouch = null;
+
+        function bindPresentationStageGestures() {
+            const host = document.getElementById("presentation-stage-host");
+            if (!host || host.dataset.gesturesBound === "true") return;
+            host.dataset.gesturesBound = "true";
+            host.addEventListener("touchstart", (event) => {
+                if (event.target && event.target.closest("button, input, textarea, select")) return;
+                const touch = event.changedTouches && event.changedTouches[0];
+                if (!touch) return;
+                presentationStageTouch = {
+                    x: touch.clientX,
+                    y: touch.clientY,
+                    startedAt: Date.now(),
+                };
+            }, { passive: true });
+            host.addEventListener("touchend", async (event) => {
+                if (!presentationStageTouch) return;
+                if (event.target && event.target.closest("button, input, textarea, select")) {
+                    presentationStageTouch = null;
+                    return;
+                }
+                const touch = event.changedTouches && event.changedTouches[0];
+                if (!touch) {
+                    presentationStageTouch = null;
+                    return;
+                }
+                const deltaX = touch.clientX - presentationStageTouch.x;
+                const deltaY = touch.clientY - presentationStageTouch.y;
+                const elapsed = Date.now() - presentationStageTouch.startedAt;
+                presentationStageTouch = null;
+                if (elapsed > 1200) return;
+                if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) >= 42) {
+                    await applyPresentationControl(deltaY < 0 ? "next_chunk" : "previous_chunk");
+                    return;
+                }
+                if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) >= 54) {
+                    await applyPresentationControl(deltaX < 0 ? "next_slide" : "previous_slide");
+                }
+            }, { passive: true });
+        }
+
+        document.addEventListener("keydown", async (event) => {
+            if (shouldIgnoreShortcutTarget(event.target) || document.getElementById("tab-rehearse").classList.contains("hidden")) {
+                return;
+            }
+            const digitMatch = String(event.code || "").match(/^(Digit|Numpad)([1-9])$/);
+            if (digitMatch) {
+                const targetChunkIndex = Number(digitMatch[2]) - 1;
+                const teleprompter = currentTeleprompterBundle();
+                if (targetChunkIndex < teleprompter.chunkCount) {
+                    event.preventDefault();
+                    await jumpToTeleprompterChunk(targetChunkIndex);
+                }
+            } else if (event.code === "ArrowRight" || event.code === "Space" || event.code === "KeyK") {
+                event.preventDefault();
+                await applyPresentationControl("next");
+            } else if (event.code === "ArrowLeft" || event.code === "KeyJ") {
+                event.preventDefault();
+                await applyPresentationControl("previous");
+            } else if (event.code === "ArrowDown") {
+                event.preventDefault();
+                await applyPresentationControl("next_chunk");
+            } else if (event.code === "ArrowUp") {
+                event.preventDefault();
+                await applyPresentationControl("previous_chunk");
+            } else if (event.code === "KeyC") {
+                event.preventDefault();
+                await applyPresentationControl("toggle_cue");
+            }
+        });
+
+        async function bootPresentationPage() {
+            document.body.classList.toggle("phone-controller-mode", phoneControllerMode);
+            state.draftSections = buildDefaultDraftSections(5);
+            state.presentationState = normalizePresentationState(null, state.draftSections);
+            state.companionSync = normalizeCompanionSync(null);
+            state.liveHud = normalizeLiveHud(null);
+            state.bridgeAutoClaimedMissionId = "";
+            state.focusedCardId = state.draftSections[0]?.section_id || "";
+            bindPresentationStageGestures();
+            if (phoneControllerMode) {
+                switchTab("rehearse");
+            }
+            renderAll();
+            await loadMissions(true);
+            renderAll();
+        }
+
+        window.addEventListener("beforeunload", () => {
+            if (state.companionHeartbeatHandle) {
+                clearInterval(state.companionHeartbeatHandle);
+            }
+            if (state.pairingMonitorHandle) {
+                clearInterval(state.pairingMonitorHandle);
+            }
+        });
+
+        bootPresentationPage();
+    </script>
+</body>
+</html>

@@ -11,7 +11,8 @@ For the full project overview, setup steps, and current scope, read `README.md` 
 5. Run `Run Motion Simulator`.
 6. Open `http://127.0.0.1:5000`.
 
-`Run Focus Project` and `.\start_windows.ps1` now use **serve-only mode** by default, so the Flask HUD stays alive until you stop it with `Ctrl+C`.
+`Run Focus Project` and `.\scripts\legacy\start_windows.ps1` now use **serve-only mode** by default, so the Flask HUD stays alive until you stop it with `Ctrl+C`.
+They also launch the backend through an import-based bootstrap path, which avoids the stale `app.py` process issue seen with direct script execution on this machine.
 If you still want the old console menu, use the `Run Focus Project Console` launch config or run `python run.py` manually.
 
 ## Validation module
@@ -19,7 +20,7 @@ If you still want the old console menu, use the `Run Focus Project Console` laun
 Run this to generate the current learning-state validation summary:
 
 ```powershell
-.\generate_validation_report.ps1
+.\scripts\legacy\generate_validation_report.ps1
 ```
 
 Outputs:
@@ -27,19 +28,45 @@ Outputs:
 - `exports\validation_summary.md`
 - `exports\validation_summary.json`
 
+## Reflection smoke checks
+
+Run this to validate the reflection-coach flow end to end:
+
+```powershell
+.\scripts\legacy\generate_reflection_smoke_report.ps1
+```
+
+Outputs:
+
+- `exports\reflection_smoke_summary.md`
+- `exports\reflection_smoke_summary.json`
+
+This smoke validator boots a temporary backend through the same import-based launcher family used by `.\scripts\legacy\start_windows.ps1`, then checks:
+
+- `/review -> /reflection` event linking
+- `/api/reflection_coach`
+- `/api/reflection_compare`
+- `/api/reflection_snapshot`
+- evidence-anchor export behavior
+- presentation-ready HTML reflection cards
+
+If the `/reflection` page shows a snapshot success message but does not expose an `Open Reflection Card` or `Open Compare Card` link, restart the Flask backend. On this machine, templates can refresh before an older long-running Python process picks up the newer snapshot exporter code.
+The provider strip now includes backend runtime and snapshot-exporter version hints, so you can tell whether the currently running Flask process is new enough before saving a snapshot.
+The top bar now also mirrors that status in a compact runtime badge, which is useful during demos because it is visible before you scroll.
+
 ## Rokid frame stream test
 
 When you want to simulate a Rokid-like continuous frame input path instead of the posture-only simulator:
 
 ```powershell
-.\start_rokid_frame_stream.ps1 -Source image -ImagePath .\images\demo.jpg -MaxFrames 12
+.\scripts\legacy\start_rokid_frame_stream.ps1 -Source image -ImagePath .\images\demo.jpg -MaxFrames 12
 ```
 
 Useful variants:
 
 ```powershell
-.\start_rokid_frame_stream.ps1 -Source camera -TaskMode reading
-.\start_rokid_frame_stream.ps1 -Source video -VideoPath C:\path\to\clip.mp4 -LoopVideo
+.\scripts\legacy\start_rokid_frame_stream.ps1 -Source camera -TaskMode reading
+.\scripts\legacy\start_rokid_frame_stream.ps1 -Source video -VideoPath C:\path\to\clip.mp4 -LoopVideo
 ```
 
 This route posts frames to `/api/v1/rokid/frame`, then prints:
@@ -54,7 +81,7 @@ This route posts frames to `/api/v1/rokid/frame`, then prints:
 To generate the standard first-person calibration worksheet:
 
 ```powershell
-.\generate_scene_calibration_sheet.ps1
+.\scripts\legacy\generate_scene_calibration_sheet.ps1
 ```
 
 This writes:
@@ -63,7 +90,7 @@ This writes:
 
 The recommended protocol is documented in:
 
-- `ROKID_SCENE_CALIBRATION_PROTOCOL.md`
+- `docs/research/ROKID_SCENE_CALIBRATION_PROTOCOL.md`
 
 Use the worksheet together with:
 
@@ -86,7 +113,7 @@ To keep the Windows workflow stable, the project now uses a **Windows runtime br
 Default demo:
 
 ```powershell
-.\start_simulator.ps1
+.\scripts\legacy\start_simulator.ps1
 ```
 
 This now runs the `presentation` mode, which cycles through:
@@ -99,7 +126,7 @@ This now runs the `presentation` mode, which cycles through:
 You can also run a single state:
 
 ```powershell
-.\start_simulator.ps1 -Mode overload
+.\scripts\legacy\start_simulator.ps1 -Mode overload
 ```
 
 Available modes:
@@ -113,8 +140,8 @@ Available modes:
 Useful options:
 
 ```powershell
-& "C:\Users\11721\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe" .\simulate_motion.py --mode presentation --loops 1
-& "C:\Users\11721\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe" .\simulate_motion.py --mode overload --duration 8
+python .\simulate_motion.py --mode presentation --loops 1
+python .\simulate_motion.py --mode overload --duration 8
 ```
 
 ## Quick verification
@@ -122,7 +149,7 @@ Useful options:
 To verify the expected state labels without opening the HUD:
 
 ```powershell
-& "C:\Users\11721\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe" .\analytics\verify_demo_states.py
+python .\analytics\verify_demo_states.py
 ```
 
 The expected presentation progression is:
@@ -137,7 +164,7 @@ The expected presentation progression is:
 To produce a fresh demo CSV and heatmap without overwriting your real study log:
 
 ```powershell
-.\generate_demo_assets.ps1
+.\scripts\legacy\generate_demo_assets.ps1
 ```
 
 This creates:

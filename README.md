@@ -1,149 +1,154 @@
-# Focus Project
+# Learning State Guardian
 
-Rokid glasses oriented education prototype focused on **learning-state sensing** rather than only content assistance.
+Learning State Guardian is a conservative **learning-state proxy** project for smart-glasses-ready study sensing, interpretable state explanation, adaptive regulation, review, validation, and demo support. It does **not** claim precise attention detection.
 
-The current project direction is:
+## Project Positioning
 
-- `A` Cognitive load monitoring
-- `B` Adaptive focus timer
-- `C` Attention heatmap review
+This repository focuses on one question:
 
-These three parts are packaged as one system:
+How can observable posture, behavioral alignment, and first-person scene cues be turned into a useful learning-process replay and coaching loop?
 
-**Learning State Guardian**
+The current answer is an **interpretable learning-state sensing** workflow:
 
-## What this project does
+- real-time posture and scene-based sensing
+- interpreted state explanation with anti-jitter handling
+- adaptive focus regulation
+- difficulty segment marking
+- review and heatmap replay
+- optional validation and labeling support
+- post-session reflection and presentation packaging
 
-This prototype combines:
+## Core Features
 
-- real-time posture and stability sensing
-- cognitive load estimation
-- adaptive focus / recovery guidance
-- difficulty event marking
-- classroom attention timeline visualization
-- optional OCR-based word capture and note collection
+- live sensing of posture, drift, stability, cognitive-load proxy, fatigue-risk proxy, uncertainty, and switching pressure
+- first-person scene proxy extraction for scene content, text density, surface quality, scene lock, blur, and brightness
+- interpreted state output with confidence, evidence, uncertainty reason, and anti-jitter transition rules
+- adaptive focus guidance and recovery support during the study block
+- difficulty-event marking for sustained high-load or review-worthy segments
+- review, heatmap, and evidence surfaces for after-session replay
+- validation workflow for window features, manual labels, and readiness summaries
+- Reflection Coach, Demo Storyboard, and Presentation Assistant for post-session explanation and defense prep
 
-The current priority is the A/B/C learning-state workflow. OCR features are kept as supporting functions, not the main story.
+## System Architecture
 
-## Main files
+- `core/`: sensing, interpreted state logic, regulation, difficulty marking, reflection, storyboard, and presentation support
+- `analytics/`: demo generation, validation, labeling-sheet generation, readiness checks, and smoke utilities
+- `web/`: live HUD, review page, reflection page, demo page, and presentation helper page
+- `utils/`: storage and presentation-support helpers
+- `docs/`: system overview, validation, data collection, reflection, storyboard, presentation, and merge-planning docs
+- `scripts/`: GitHub-ready PowerShell entrypoints for demo and validation pipelines
+- `tests/smoke/`: lightweight verification for the interpreted state layer and major app summaries
 
-- `app.py`: Flask app and status API
-- `run.py`: local launcher and console menu
-- `simulate_motion.py`: demo posture data simulator
-- `core/posture.py`: posture metrics and cognitive load scoring
-- `core/focus_session.py`: adaptive focus-cycle engine
-- `core/difficulty_marker.py`: sustained difficulty event detection
-- `core/vision.py`: OCR, translation, note capture
-- `utils/storage.py`: CSV logging
-- `analytics/analyze_report.py`: attention heatmap export
-- `web/index.html`: HUD interface
-- `PROJECT_MEMORY.md`: condensed project context for future work
+## Directory Structure
 
-## Local Windows setup
-
-1. Open this folder in VSCode.
-2. Run the `Setup Windows Environment` task.
-3. Use the bundled Codex Python runtime configured in `.vscode\settings.json`.
-4. Run `Run Focus Project`.
-5. Run `Run Motion Simulator` in a second terminal or launch config.
-6. Open `http://127.0.0.1:5000`.
-
-Notes:
-
-- `Run Focus Project` and `start_windows.ps1` now default to **serve-only mode**, which keeps the Flask HUD running for browser testing.
-- if you want the original console menu for analytics scripts, use the `Run Focus Project Console` launch config or run `python run.py` manually.
-
-Validation:
-
-- run `generate_validation_report.ps1` on Windows to produce:
-  - `exports/validation_summary.md`
-  - `exports/validation_summary.json`
-- this checks four deterministic scenarios (`stable`, `rising`, `overload`, `recovery`) and the end-to-end demo pipeline against the current learning-state model.
-
-PowerShell commands also work:
-
-```powershell
-.\setup_windows.ps1
-.\start_windows.ps1
-.\start_simulator.ps1
+```text
+.
+├─ app.py
+├─ run.py
+├─ core/
+├─ analytics/
+├─ web/
+├─ utils/
+├─ docs/
+│  ├─ archive/
+│  └─ research/
+├─ scripts/
+│  └─ legacy/
+├─ tests/
+│  └─ smoke/
+├─ images/
+└─ data/
+   ├─ demo_study_report.csv
+   ├─ demo_difficulty_events.csv
+   └─ state_labels_template.csv
 ```
 
-For the Rokid-like video-frame path, you can now also run:
+## Quick Start
 
-```powershell
-.\start_rokid_frame_stream.ps1 -Source image -ImagePath .\images\demo.jpg -MaxFrames 12
+Run the Flask app:
+
+```bash
+python run.py --serve-only
 ```
 
-or switch to a camera / video source:
+Open:
+
+- `http://127.0.0.1:5000/`
+- `http://127.0.0.1:5000/review`
+- `http://127.0.0.1:5000/reflection`
+- `http://127.0.0.1:5000/demo`
+- `http://127.0.0.1:5000/presentation`
+
+Windows helper scripts:
 
 ```powershell
-.\start_rokid_frame_stream.ps1 -Source camera -TaskMode reading
-.\start_rokid_frame_stream.ps1 -Source video -VideoPath C:\path\to\clip.mp4 -LoopVideo
+.\scripts\run_demo_pipeline.ps1
+.\scripts\run_validation_pipeline.ps1
 ```
 
-For standardized Rokid scene calibration, you can now run:
+## Demo Pipeline
 
-```powershell
-.\generate_scene_calibration_sheet.ps1
+Deterministic demo generation:
+
+```bash
+python analytics/generate_demo_assets.py
+python analytics/generate_reflection_report.py
+python analytics/generate_demo_storyboard.py
+python analytics/generate_presentation_script.py
 ```
 
-This writes:
+Main local outputs:
 
-- `exports\rokid_scene_calibration_sheet.md`
+- `data/demo_study_report.csv`
+- `data/demo_difficulty_events.csv`
+- `exports/reflection_report.md`
+- `exports/demo_storyboard.md`
+- `exports/presentation_script_3min.md`
+- `exports/presentation_script_5min.md`
+- `exports/defense_qa.md`
 
-The recommended method is documented in:
+## Validation Pipeline
 
-- `ROKID_SCENE_CALIBRATION_PROTOCOL.md`
+Validation and labeling workflow:
 
-Current Windows note:
+```bash
+python analytics/validate_learning_state.py
+python analytics/build_labeling_sheet.py
+python analytics/summarize_validation_readiness.py
+```
 
-- the legacy `.venv` still stores project packages, but its original Python 3.14 interpreter path is broken on this machine
-- the Windows scripts now use a bundled Codex Python runtime bridge and reuse pure-Python packages from `.venv\Lib\site-packages`
-- some binary plotting features may fall back to summary-only mode until a native Windows environment is rebuilt
+Main local outputs:
 
-## Dependencies
+- `data/state_labels_template.csv`
+- `data/state_labels_draft.csv`
+- `data/state_window_features.csv`
+- `exports/state_validation_report.md`
+- `exports/state_validation_metrics.json`
+- `exports/validation_readiness.md`
 
-Core Python dependencies are listed in `requirements.txt`.
+## Reflection Coach / Demo Storyboard / Presentation Assistant
 
-System dependency:
+- Reflection Coach turns review summaries, difficulty events, and proxy evidence into reflection questions and next actions.
+- Demo Storyboard turns the project into a reproducible five-stage narrative for demos and defenses.
+- Presentation Assistant packages the project into short scripts, metric explanations, defense Q&A, and limitations.
 
-- `Tesseract OCR` for Windows is required for OCR features.
+## Limitations
 
-Optional dependency:
+- all state outputs remain **learning-state proxies**
+- the project should be described as **interpretable learning-state sensing**, not precise attention detection
+- no gaze, blink, fixation, or pupil pipeline is required in the current baseline
+- validation quality depends on real session coverage, label quality, and cross-user calibration
+- first-person scene proxies can degrade under blur, low visibility, unstable camera motion, or material-specific lighting conditions
 
-- `pix2tex` is optional. If missing, the app falls back to basic OCR.
+## Related Docs
 
-Demo-friendly default:
-
-- `ENABLE_AUTO_RECALL=0` keeps random vocabulary flashcards from interrupting the A/B/C presentation flow.
-
-## Output files
-
-- `exports\attention_heatmap.png`: A/B/C attention heatmap report
-- `exports\study_analysis.png`: same report exported under the legacy name
-- `exports\demo_attention_heatmap.png`: clean deterministic demo heatmap
-- `data\study_report.csv`: posture and learning-state log
-- `data\difficulty_events.csv`: detected difficulty-event log
-- `data\demo_study_report.csv`: deterministic presentation-mode demo log
-- `data\demo_difficulty_events.csv`: deterministic demo difficulty-event log
-- `data\my_vocabulary.csv`: captured vocabulary
-- `data\study_notes.md`: collected OCR notes
-
-## Documentation
-
-- `README.md`: project overview and setup
-- `README_WINDOWS.md`: short Windows-specific run note
-- `PROJECT_MEMORY.md`: project decisions, current scope, and next-step context
-- `PROJECT_EXPLANATION.md`: long-form explanation draft for defense and reporting
-- `ROKID_SCENE_CALIBRATION_PROTOCOL.md`: standard first-person scene calibration method
-
-## Current scope
-
-The main demo story should stay focused on:
-
-- real-time learning-state sensing
-- adaptive study regulation
-- difficulty event marking
-- after-class attention review
-
-Avoid presenting OCR and note capture as the core innovation, because those overlap more with teammates' content-assistance ideas.
+- `docs/PROJECT_OVERVIEW.md`
+- `docs/LEARNING_STATE_VALIDATION.md`
+- `docs/STATE_DATA_COLLECTION_PROTOCOL.md`
+- `docs/REFLECTION_COACH.md`
+- `docs/DEMO_STORYBOARD.md`
+- `docs/PRESENTATION_ASSISTANT.md`
+- `docs/STATE_LOGIC_REFACTOR.md`
+- `docs/BRANCH_MERGE_PLAN.md`
+- `docs/archive/`
+- `docs/research/`

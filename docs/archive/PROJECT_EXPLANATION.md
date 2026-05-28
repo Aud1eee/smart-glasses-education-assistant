@@ -36,6 +36,26 @@ Recommended one-line description:
 
 > Existing AI learning assistants mostly focus on what content to give students. This module focuses on whether the student is still in a good state to learn, when regulation is needed, and where review should happen afterward.
 
+## 1.1 Boundary against teammates' modules
+
+This project should be presented as a **learning-state intelligence** direction, not a general content-assistance direction.
+
+That means it is intentionally different from:
+
+- knowledge-extension assistants
+- AI tutor conversation
+- writing guidance
+- language tutoring
+- AI note-taking tools
+- gesture or air-writing input
+
+The project focuses on:
+
+- whether the learner is still in a learnable state
+- when regulation is needed
+- which segment should be reviewed later
+- how the learner should reflect on the process afterward
+
 ## 2. What this completed module does
 
 The completed A/B/C module forms a closed loop:
@@ -68,6 +88,254 @@ The current review page is now designed as a **presentation-ready after-class fo
   - detailed event list
   - supporting report assets
 
+## 2.0 Independent follow-up module: Learning Reflection Coach
+
+The project now also includes an independent module called:
+
+**Learning Reflection Coach**
+
+This module does not replace the main `Learning State Guardian` pipeline. Instead, it sits after the session and asks a different question:
+
+> Given the learning-state evidence, how should the learner reflect on what happened and what should change in the next attempt?
+
+Its input is:
+
+- the structured study-session log
+- the difficulty-event log
+- the session summary already produced by the review layer
+- an optional learner self-note or next-session goal
+
+Its output is:
+
+- a session signature such as productive challenge, switching drift, fatigue drag, signal check, or steady control
+- a short coach memo
+- reflection questions
+- next-session experiments
+
+This matters because it keeps the module differentiated from teammates' directions. It does not do:
+
+- knowledge explanation
+- AI tutor conversation
+- writing guidance
+- language tutoring
+- AI note taking
+- gesture input
+
+Instead, it focuses on:
+
+- metacognitive reflection
+- self-regulation
+- replay strategy
+- study-process experimentation
+
+The current runtime entry points are:
+
+- `/reflection`
+- `/api/reflection_coach`
+
+The current implementation now uses a **switchable provider architecture**:
+
+- `heuristic`
+- `ollama`
+- `remote`
+- `openai`
+
+This matters for future deployment. The reflection logic does not need to be rewritten when moving toward Rokid-side integration:
+
+- for local free demos, it can use a local Ollama model
+- for later deployment, it can switch to a remote API provider
+- if no model is available, it still falls back to the heuristic coach
+
+The evidence base still comes from the local learning-state logs. Model providers only refine the reflection wording and experiment framing.
+
+## 2.0.1 Reflection-coach demo path
+
+The reflection module is easiest to explain as a continuation of the review page:
+
+1. the live HUD records learning-state evidence
+2. the review page identifies the strongest difficulty segment
+3. the reflection page inherits that segment as an `Evidence Anchor`
+4. the reflection engine produces:
+   - a session signature
+   - a coach memo
+   - reflection questions
+   - next-session experiments
+5. the result can be exported as a one-page HTML reflection card
+
+This matters for defense logic, because the reflection module is not floating independently. It is grounded in the same session evidence already produced by the main learning-state pipeline.
+
+## 2.0.2 Independent parallel module: Academic Presentation Companion
+
+The project now also includes a separate page called:
+
+**Academic Presentation Companion**
+
+This module is intentionally **independent** from the learning-state sensing story.
+It does not replace `Learning State Guardian` or `Learning Reflection Coach`.
+Instead, it supports a different student task:
+
+> How can a student prepare and rehearse one academic presentation task without turning the system into an AI tutor or an auto-script generator?
+
+Its workflow is:
+
+1. create a presentation mission from the assignment brief
+2. extract editable task fields from pasted assignment text
+3. let the student write the real outline, speaker notes, and cue cards
+4. map each section to:
+   - a slide or visual anchor
+   - an interaction goal for the audience
+5. run a rehearsal with browser audio or uploaded audio
+6. review transcript, timing, and feedback
+7. generate a lightweight HUD summary for future Rokid-side prompting
+
+This matters because it answers a presentation-preparation need while preserving the same project boundary discipline.
+The module still does **not** become:
+
+- an AI tutor
+- a content explainer
+- a one-click final speech writer
+- a generic writing-correction assistant
+- an AI note-taking workflow
+
+The key educational principle is:
+
+> the student still writes the real presentation content, while AI only supports extraction, structure, rehearsal review, and feedback.
+
+### Current runtime entry points
+
+- `/presentation`
+- `/api/presentation_missions`
+- `/api/presentation_missions/intake_extract`
+- `/api/presentation_missions/<mission_id>/script`
+- `/api/presentation_rehearsals`
+- `/api/presentation_rehearsals/<rehearsal_id>/analyze`
+- `/api/presentation_rehearsals/<rehearsal_id>/hud_summary`
+
+### Script-to-presentation mapping
+
+One important design point in this module is that the script workspace is **not** just a large text area.
+Each section stores:
+
+- a section name
+- a target duration
+- a slide or visual anchor
+- an interaction goal
+- the student's own outline
+- the student's own speaker notes
+- the student's own cue cards
+
+This solves two practical presentation questions:
+
+1. how does the script correspond to what is being shown?
+2. how does the student stay aware of audience interaction instead of only reading?
+
+The current answer is:
+
+- `slide / visual anchor` links the spoken section to the actual presentation content
+- `interaction goal` links the same section to delivery behavior such as:
+  - pause
+  - eye contact
+  - transition
+  - question cue
+  - emphasis point
+
+So the module is not just about writing text.
+It is about preparing spoken content, visual flow, and interaction rhythm together.
+
+### Lightweight presentation control
+
+The current first implementation does not assume a complex full PPT controller.
+Instead, it uses a lightweight control model:
+
+- `phone` is the main controller
+- `rokid_button` is the lightweight glasses-side control scaffold
+
+The control actions are intentionally small:
+
+- next
+- previous
+- cue toggle
+- jump to a selected slide from the phone-side view
+
+This matters because it keeps the interaction realistic for an actual presentation.
+The speaker should not need to manage a complicated interface during delivery.
+
+The latest runtime pass refines those controls into a teleprompter-friendly model:
+
+- `next` and `previous` are now step controls:
+  - they move through teleprompter chunks inside the current slide first
+  - only then do they cross to the next or previous slide
+- the phone controller also exposes explicit:
+  - `previous_chunk`
+  - `next_chunk`
+  - `previous_slide`
+  - `next_slide`
+- each slide card can now store a longer `teleprompter_script`
+- that long script is split into smaller chunks so the user does not need to read a whole slide page at once
+- the phone controller now includes a `chunk navigator` rail so the presenter can jump directly to a specific chunk on the current slide
+- the runtime also surfaces previous / current / next chunk previews to help the speaker recover position after pausing or audience interaction
+- the presentation stage supports:
+  - vertical swipe for chunk navigation
+  - horizontal swipe for slide navigation
+- local keyboard testing now also supports `1-9` for direct chunk jumps
+- the default Rokid button scaffold is now:
+  - `single_press -> next_chunk`
+  - `double_press -> previous_chunk`
+  - `long_press -> next_slide`
+
+The current presentation page now also exposes:
+
+- a compact `present` mode that shows one current slide card at a time
+- the `next_card` so the phone-side controller can preview what is coming next
+- `control_hints` so the phone controller and future Rokid-side integration can share the same lightweight button mapping
+- chunk progress, next-chunk preview, and current teleprompter text in the live HUD payload so future glasses-side delivery can mirror the same runtime state
+
+The next scaffold layer now adds:
+
+- `/presentation/controller` as a phone-first control surface
+- `companion_sync` as the lightweight shared session state
+- `bridge_state`, `bridge_claim`, and `bridge_release` as the lightweight pairing / ownership bridge
+- `rokid_event` as the button-event-to-action mapping endpoint
+- `live_hud` as the future glasses-side pull endpoint for the current slide
+
+The current handoff layer now adds:
+
+- `pairing_state`, `pairing_start`, `pairing_join`, and `pairing_end`
+- a short-lived join-code flow so the phone controller can open a pairing window and a Rokid-side surface can join it
+- explicit pairing lifecycle states:
+  - `inactive`
+  - `waiting`
+  - `paired`
+  - `expired`
+- lightweight session visibility in both the phone workspace and the live HUD payload
+
+The latest polish layer keeps that handoff usable during a real presentation setup:
+
+- the phone controller now renders a clearer pairing sheet instead of only raw API chips
+- the pairing payload exposes readable fields like `status_label`, `countdown_label`, and `next_step`
+- the controller auto-refreshes pairing state while the join window is open or a companion surface is already connected
+- the UI now keeps `owner_surface` separate from the joined companion surface so it is easier to understand who controls slides and who only mirrors HUD prompts
+
+### Rehearsal feedback boundary
+
+The rehearsal feedback can analyze:
+
+- pacing
+- section balance
+- strongest section
+- weakest section
+- one main issue
+- one main strength
+- one next action
+
+But it should not generate the student's final script.
+If no model provider is configured, heuristic fallback still keeps the full page usable through:
+
+- timing comparison
+- section timing comparison
+- transcript availability checks
+- basic phrasing and pacing heuristics
+
 ## 2.1 Validation and experiment layer
 
 The project now includes a **repeatable validation module** for the current learning-state algorithm.
@@ -87,17 +355,17 @@ The validation layer includes:
 
 The main outputs are:
 
-- [validation_summary.md](</C:/Users/11721/Desktop/focus_project_windows/exports/validation_summary.md>)
-- [validation_summary.json](</C:/Users/11721/Desktop/focus_project_windows/exports/validation_summary.json>)
-- [THESIS_EXPERIMENT_DRAFT.md](</C:/Users/11721/Desktop/focus_project_windows/THESIS_EXPERIMENT_DRAFT.md>)
+- `exports/validation_summary.md`
+- `exports/validation_summary.json`
+- [docs/research/THESIS_EXPERIMENT_DRAFT.md](../research/THESIS_EXPERIMENT_DRAFT.md)
 
 The validation launcher for Windows is:
 
-- [generate_validation_report.ps1](</C:/Users/11721/Desktop/focus_project_windows/generate_validation_report.ps1>)
+- [scripts/legacy/generate_validation_report.ps1](../../scripts/legacy/generate_validation_report.ps1)
 
 For paper writing and defense preparation, the preferred human-readable writeup is:
 
-- [THESIS_EXPERIMENT_DRAFT.md](</C:/Users/11721/Desktop/focus_project_windows/THESIS_EXPERIMENT_DRAFT.md>)
+- [docs/research/THESIS_EXPERIMENT_DRAFT.md](../research/THESIS_EXPERIMENT_DRAFT.md)
 
 ## 2.2 Multimodal future-work framework
 
@@ -105,11 +373,11 @@ The next algorithm-development direction is no longer "make the posture score mo
 
 The preferred planning document is:
 
-- [MULTIMODAL_FUTURE_WORK.md](</C:/Users/11721/Desktop/focus_project_windows/MULTIMODAL_FUTURE_WORK.md>)
+- [docs/research/MULTIMODAL_FUTURE_WORK.md](../research/MULTIMODAL_FUTURE_WORK.md)
 
 The project also now includes a lightweight code-level blueprint:
 
-- [multimodal_schema.py](</C:/Users/11721/Desktop/focus_project_windows/core/multimodal_schema.py>)
+- [core/multimodal_schema.py](../../core/multimodal_schema.py)
 - `/api/multimodal_blueprint`
 
 This blueprint separates the future system into four branches:
@@ -172,7 +440,7 @@ This means the Rokid branch is currently best described as:
 
 To make the first-person logic adjustable without changing source code, the project now includes a runtime tuning surface:
 
-- [rokid_debug.html](</C:/Users/11721/Desktop/focus_project_windows/web/rokid_debug.html>)
+- [web/rokid_debug.html](../../web/rokid_debug.html)
 
 The tuning page can:
 
@@ -229,8 +497,8 @@ The local profile store is:
 
 The project now also includes a **standardized Rokid calibration method**:
 
-- [ROKID_SCENE_CALIBRATION_PROTOCOL.md](</C:/Users/11721/Desktop/focus_project_windows/ROKID_SCENE_CALIBRATION_PROTOCOL.md>)
-- [generate_scene_calibration_sheet.ps1](</C:/Users/11721/Desktop/focus_project_windows/generate_scene_calibration_sheet.ps1>)
+- [docs/research/ROKID_SCENE_CALIBRATION_PROTOCOL.md](../research/ROKID_SCENE_CALIBRATION_PROTOCOL.md)
+- [scripts/legacy/generate_scene_calibration_sheet.ps1](../../scripts/legacy/generate_scene_calibration_sheet.ps1)
 
 The protocol defines four standard first-person scenarios:
 
@@ -267,7 +535,7 @@ Its purpose is to prove that future multimodal work has already been structured 
 
 ### 3.1 Deterministic demo simulator
 
-The simulator is implemented in [simulate_motion.py](</C:/Users/11721/Desktop/focus_project_windows/simulate_motion.py:1>).
+The simulator is implemented in [simulate_motion.py](../../simulate_motion.py).
 
 Its role is to produce a **repeatable demo sequence** instead of random-only motion.
 
@@ -289,7 +557,7 @@ This is important because it makes the project easier to demonstrate in a gradua
 
 ### 3.2 Learning-state scoring
 
-The posture-based scoring logic is implemented in [core/posture.py](</C:/Users/11721/Desktop/focus_project_windows/core/posture.py:5>).
+The posture-based scoring logic is implemented in [core/posture.py](../../core/posture.py).
 
 The current system now uses a **task-mode-aware posture proxy** instead of a single raw focus formula.
 
@@ -340,7 +608,7 @@ This stage is best described as a **task-mode-aware, posture-based learning-stat
 
 ### 3.3 Adaptive focus regulation
 
-The real-time regulation logic is implemented in [core/focus_session.py](</C:/Users/11721/Desktop/focus_project_windows/core/focus_session.py:4>).
+The real-time regulation logic is implemented in [core/focus_session.py](../../core/focus_session.py).
 
 This engine converts raw state values into presentation-level labels and guidance, such as:
 
@@ -373,8 +641,8 @@ After the recent refactor, the regulation logic no longer depends only on `load_
 
 The Flask service and the HUD are connected through:
 
-- [app.py](</C:/Users/11721/Desktop/focus_project_windows/app.py:16>)
-- [web/index.html](</C:/Users/11721/Desktop/focus_project_windows/web/index.html:204>)
+- [app.py](../../app.py)
+- [web/index.html](../../web/index.html)
 
 The current input layer exposes two runtime paths:
 
@@ -405,7 +673,7 @@ This path should be described as a **scene-derived learning-state proxy**, not a
 
 In the current Windows bundled runtime, this frame path still depends on native OpenCV availability. If OpenCV is not available in that runtime, the endpoint remains useful as an interface scaffold, but the actual scene-driven proxy extraction will stay in a degraded `frame_unavailable` state until an OpenCV-capable runtime is used.
 
-To support this path locally, `start_windows.ps1` now prefers a Python runtime that can successfully import `cv2`, which means the launcher will fall back to the project `.venv` when the bundled runtime does not provide native OpenCV support.
+To support this path locally, `scripts/legacy/start_windows.ps1` now prefers a Python runtime that can successfully import `cv2`, which means the launcher will fall back to the project `.venv` when the bundled runtime does not provide native OpenCV support.
 
 To make this path easier to inspect during development, the system now includes a dedicated **Rokid frame debug page**:
 
@@ -417,7 +685,7 @@ To make this path easier to inspect during development, the system now includes 
 For continuous local validation, the project now also includes a **frame-stream test chain**:
 
 - `stream_rokid_frames.py`
-- `start_rokid_frame_stream.ps1`
+- `scripts/legacy/start_rokid_frame_stream.ps1`
 
 This chain reads from an image loop, a video file, or a camera source, then continuously posts frames into `/api/v1/rokid/frame`. It is meant to answer the practical question:
 
@@ -474,7 +742,7 @@ This makes the system easier to explain as a **glasses-oriented HUD prototype** 
 
 For local Windows use, the launcher now defaults to a **serve-only mode**:
 
-- `start_windows.ps1` runs `run.py --serve-only`
+- `scripts/legacy/start_windows.ps1` runs `run.py --serve-only`
 - the default VSCode profile `Run Focus Project` also uses this mode
 - this keeps the Flask HUD alive for browser testing instead of dropping into the old console menu flow
 
@@ -487,9 +755,9 @@ If the analytics console menu is needed, it is still available through:
 
 The demo asset generation pipeline is implemented in:
 
-- [analytics/generate_demo_assets.py](</C:/Users/11721/Desktop/focus_project_windows/analytics/generate_demo_assets.py:29>)
-- [analytics/analyze_report.py](</C:/Users/11721/Desktop/focus_project_windows/analytics/analyze_report.py:9>)
-- [generate_demo_assets.ps1](</C:/Users/11721/Desktop/focus_project_windows/generate_demo_assets.ps1:1>)
+- [analytics/generate_demo_assets.py](../../analytics/generate_demo_assets.py)
+- [analytics/analyze_report.py](../../analytics/analyze_report.py)
+- [scripts/legacy/generate_demo_assets.ps1](../../scripts/legacy/generate_demo_assets.ps1)
 
 Its purpose is:
 
@@ -501,7 +769,7 @@ This is very useful for defense preparation, because it produces stable and reus
 
 ### 3.6 Difficulty event marker
 
-The difficulty-event marker is implemented in [core/difficulty_marker.py](</C:/Users/11721/Desktop/focus_project_windows/core/difficulty_marker.py:4>).
+The difficulty-event marker is implemented in [core/difficulty_marker.py](../../core/difficulty_marker.py).
 
 Its purpose is to detect a **sustained difficult segment**, instead of only showing instantaneous load values.
 
@@ -536,9 +804,9 @@ This is important because the system now moves from general state monitoring to 
 
 The review page is implemented through:
 
-- [app.py](</C:/Users/11721/Desktop/focus_project_windows/app.py:67>)
-- [utils/storage.py](</C:/Users/11721/Desktop/focus_project_windows/utils/storage.py:213>)
-- [web/review.html](</C:/Users/11721/Desktop/focus_project_windows/web/review.html:1>)
+- [app.py](../../app.py)
+- [utils/storage.py](../../utils/storage.py)
+- [web/review.html](../../web/review.html)
 
 Its purpose is to convert difficulty-event logs into a **review-first action page**.
 
@@ -568,8 +836,8 @@ It becomes:
 
 The clean demonstration data is stored in:
 
-- [demo_study_report.csv](</C:/Users/11721/Desktop/focus_project_windows/data/demo_study_report.csv>)
-- [demo_difficulty_events.csv](</C:/Users/11721/Desktop/focus_project_windows/data/demo_difficulty_events.csv>)
+- [data/demo_study_report.csv](../../data/demo_study_report.csv)
+- [data/demo_difficulty_events.csv](../../data/demo_difficulty_events.csv)
 
 This file is generated by running the same internal scoring logic used by the real system. It is not hand-written fake data.
 
@@ -614,7 +882,7 @@ The session field is important because the project now supports **multiple reset
 
 The clean demonstration heatmap is stored in:
 
-- [demo_attention_heatmap.png](</C:/Users/11721/Desktop/focus_project_windows/exports/demo_attention_heatmap.png>)
+- `exports/demo_attention_heatmap.png`
 
 This figure now has four layers under the upgraded algorithm framework.
 
@@ -713,6 +981,26 @@ Recommended longer explanation:
 Recommended wording for the difficulty-event marker:
 
 > Beyond continuous monitoring, the system also identifies sustained difficult segments. If cognitive load keeps rising or remains high for long enough, the system groups that period into a difficulty event and records it separately. This helps transform raw state changes into concrete review targets.
+
+Recommended wording for the reflection module:
+
+> After the review page identifies the most important difficulty segment, the independent Learning Reflection Coach reuses that evidence and turns it into a process-focused reflection view. Instead of reteaching content, it asks what happened in the learning process, what pattern the session showed, and what small experiment should be tried in the next attempt.
+
+## 7.1 Recommended defense sequence
+
+For a short live demo or defense walk-through, the cleanest path is:
+
+1. start the HUD and the deterministic simulator
+2. show stable focus, rising load, and regulation changes
+3. open `/review` and point to the strongest flagged event
+4. jump into `/reflection`
+5. show the `Evidence Anchor`
+6. generate the reflection view
+7. save and open the exported HTML reflection card
+
+This sequence presents the full product logic as:
+
+**state sensing -> adaptive regulation -> difficulty localization -> after-class reflection**
 
 ## 8. How to extend this document later
 

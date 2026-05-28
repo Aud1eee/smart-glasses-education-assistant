@@ -1,24 +1,32 @@
 import json
 import os
 import re
+import sys
 from datetime import datetime
+from html import escape as html_escape
+import time
 
 import bootstrap_windows_runtime  # noqa: F401
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request, send_from_directory, Response
 from flask_cors import CORS
+import pandas as pd
 
+from core.demo_storyboard import build_demo_storyboard
 from core.difficulty_marker import DifficultyEventMarker
 from core.edu import EduEngine
 from core.focus_session import FocusSessionEngine
 from core.multimodal_schema import build_multimodal_blueprint
 from core.posture import PostureEngine
+from core.presentation_companion import PresentationCompanion
+from core.reflection_coach import ReflectionCoach
 from core.rokid_adapter import (
     build_rokid_adapter_blueprint,
     build_rokid_packet,
     build_simulator_packet,
 )
 from core.rokid_frame_adapter import RokidFrameAdapter
+from core.state_classifier import rule_baseline
 from core.vision import VisionEngine
 from utils.storage import DataLogger
 
@@ -28,8 +36,14 @@ load_dotenv()
 app = Flask(__name__, template_folder="web", static_folder="web")
 CORS(app)
 EXPORT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "exports")
+REFLECTION_SNAPSHOT_DIR = os.path.join(EXPORT_DIR, "reflection_snapshots")
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 ROKID_PROFILE_STORE_PATH = os.path.join(PROJECT_ROOT, "data", "rokid_scene_profiles.json")
+STATE_WINDOW_FEATURES_PATH = os.path.join(PROJECT_ROOT, "data", "state_window_features.csv")
+STATE_VALIDATION_METRICS_PATH = os.path.join(EXPORT_DIR, "state_validation_metrics.json")
+REFLECTION_RUNTIME_VERSION = "reflection-runtime-info-2026-05-19-v1"
+REFLECTION_SNAPSHOT_EXPORTER_VERSION = "reflection-html-card-2026-05-19-v1"
+APP_BOOTED_AT = datetime.now().isoformat(timespec="seconds")
 
 logger = DataLogger()
 posture = PostureEngine()
@@ -37,6 +51,8 @@ vision = VisionEngine()
 rokid_frame_adapter = RokidFrameAdapter()
 edu = EduEngine(logger.vocab_path)
 focus_session = FocusSessionEngine()
+reflection_coach = ReflectionCoach(logger)
+presentation_companion = PresentationCompanion()
 difficulty_marker = DifficultyEventMarker()
 auto_recall_enabled = os.getenv("ENABLE_AUTO_RECALL", "0").lower() in {"1", "true", "yes", "on"}
 sample_counter = 0
@@ -156,6 +172,194 @@ def _build_session_id(now=None):
     return now.strftime("session-%Y%m%d-%H%M%S-%f")
 
 
+def _safe_float(value, default=None):
+    try:
+        if pd.isna(value):
+            return default
+        return float(value)
+    except Exception:
+        return default
+
+
+def _safe_int(value, default=0):
+    try:
+        if pd.isna(value):
+            return default
+        return int(float(value))
+    except Exception:
+        return default
+
+
+def _window_overlap(start_a, end_a, start_b, end_b):
+    return max(0, min(end_a, end_b) - max(start_a, start_b) + 1)
+
+
+def _load_state_window_frame(session_id=None):
+    if not os.path.exists(STATE_WINDOW_FEATURES_PATH) or os.path.getsize(STATE_WINDOW_FEATURES_PATH) <= 0:
+        return pd.DataFrame()
+    try:
+        frame = pd.read_csv(STATE_WINDOW_FEATURES_PATH)
+    except Exception:
+        return pd.DataFrame()
+    if frame.empty:
+        return pd.DataFrame()
+    if session_id:
+        normalized = str(session_id).strip()
+        frame = frame[frame.get("session_id", pd.Series(dtype=str)).fillna("").astype(str).str.strip() == normalized]
+    if frame.empty:
+        return pd.DataFrame()
+    order_columns = [column for column in ("session_id", "start_sample", "end_sample") if column in frame.columns]
+    if order_columns:
+        frame = frame.sort_values(order_columns, kind="stable").reset_index(drop=True)
+    return frame
+
+
+def _serialize_state_validation_window(row):
+    prediction = rule_baseline(row)
+    return {
+        "session_id": str(row.get("session_id", "")).strip(),
+        "start_sample": _safe_int(row.get("start_sample"), default=0),
+        "end_sample": _safe_int(row.get("end_sample"), default=0),
+        "task_mode_majority": str(row.get("task_mode_majority", "")).strip(),
+        "state_hint_majority": str(row.get("state_hint_majority", "")).strip(),
+        "load_level_majority": str(row.get("load_level_majority", "")).strip(),
+        "predicted_label": prediction["label"],
+        "confidence": prediction["confidence"],
+        "evidence": prediction["evidence"],
+        "uncertainty_reason": prediction["uncertainty_reason"],
+        "model": prediction["model"],
+        "metrics": {
+            "cognitive_load_mean": _safe_float(row.get("cognitive_load_mean")),
+            "behavioral_alignment_mean": _safe_float(row.get("behavioral_alignment_mean")),
+            "fatigue_risk_mean": _safe_float(row.get("fatigue_risk_mean")),
+            "scene_lock_score_mean": _safe_float(row.get("scene_lock_score_mean")),
+            "scene_switch_rate_mean": _safe_float(row.get("scene_switch_rate_mean")),
+            "study_surface_score_mean": _safe_float(row.get("study_surface_score_mean")),
+        },
+    }
+
+
+def _match_state_validation_window(frame, start_sample=None, end_sample=None):
+    if frame.empty:
+        return None
+    if start_sample is None or end_sample is None:
+        return frame.iloc[-1]
+
+    best_row = None
+    best_overlap = 0
+    for _, row in frame.iterrows():
+        overlap = _window_overlap(
+            _safe_int(row.get("start_sample"), default=0),
+            _safe_int(row.get("end_sample"), default=0),
+            _safe_int(start_sample, default=0),
+            _safe_int(end_sample, default=0),
+        )
+        if overlap > best_overlap:
+            best_overlap = overlap
+            best_row = row
+    if best_row is None or best_overlap <= 0:
+        return None
+    return best_row
+
+
+def _validation_metrics_snapshot():
+    if not os.path.exists(STATE_VALIDATION_METRICS_PATH) or os.path.getsize(STATE_VALIDATION_METRICS_PATH) <= 0:
+        return False, None
+    try:
+        with open(STATE_VALIDATION_METRICS_PATH, "r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+    except Exception:
+        return True, None
+    return True, {
+        "generated_at": payload.get("generated_at"),
+        "feature_rows": payload.get("feature_rows"),
+        "labeled_window_rows": payload.get("labeled_window_rows"),
+        "missing_fields": payload.get("missing_fields", []),
+        "window_seconds": payload.get("window_seconds"),
+        "step_seconds": payload.get("step_seconds"),
+        "rule_baseline": payload.get("rule_baseline", {}),
+        "sklearn_baseline": payload.get("sklearn_baseline", {}),
+        "correlations": payload.get("correlations", {}),
+        "confusion_matrix_path": payload.get("confusion_matrix_path", ""),
+    }
+
+
+def _build_state_validation_summary(session_id=None, start_sample=None, end_sample=None, limit=8):
+    metrics_exists, validation_metrics = _validation_metrics_snapshot()
+    frame = _load_state_window_frame(session_id=session_id)
+    recent_windows = []
+    selected_window = None
+    if not frame.empty:
+        recent_windows = [
+            _serialize_state_validation_window(row)
+            for _, row in frame.tail(max(1, min(int(limit or 8), 24))).iterrows()
+        ]
+        matched_row = _match_state_validation_window(frame, start_sample=start_sample, end_sample=end_sample)
+        if matched_row is not None:
+            selected_window = _serialize_state_validation_window(matched_row)
+
+    return {
+        "status": "ok",
+        "has_validation_metrics": metrics_exists,
+        "features_available": bool(not frame.empty),
+        "validation_metrics": validation_metrics,
+        "recent_windows": recent_windows,
+        "selected_window": selected_window,
+        "features_path": STATE_WINDOW_FEATURES_PATH,
+        "metrics_path": STATE_VALIDATION_METRICS_PATH,
+    }
+
+
+def _selected_review_event(review_payload, event_id=None):
+    if not isinstance(review_payload, dict):
+        return None
+    requested = _safe_int(event_id, default=0)
+    events = review_payload.get("events", [])
+    if isinstance(events, list):
+        for event in events:
+            if not isinstance(event, dict):
+                continue
+            if requested and _safe_int(event.get("event_id"), default=0) == requested:
+                return event
+    highlight_event = review_payload.get("highlight_event")
+    if isinstance(highlight_event, dict) and highlight_event:
+        return highlight_event
+    if isinstance(events, list):
+        for event in events:
+            if isinstance(event, dict):
+                return event
+    return None
+
+
+def _build_reflection_coach_summary(session_id=None, dataset="live", event_id=None):
+    review_payload = logger.build_review_payload(session_id=session_id, dataset=dataset)
+    selected_event = _selected_review_event(review_payload, event_id=event_id)
+    validation_summary = _build_state_validation_summary(
+        session_id=review_payload.get("session_id") or session_id,
+        start_sample=_safe_int(selected_event.get("start_sample"), default=0) if isinstance(selected_event, dict) else None,
+        end_sample=_safe_int(selected_event.get("end_sample"), default=0) if isinstance(selected_event, dict) else None,
+        limit=6,
+    )
+    return reflection_coach.build_review_summary_payload(
+        review_payload=review_payload,
+        difficulty_events=review_payload.get("events", []),
+        validation_summary=validation_summary,
+        session_id=review_payload.get("session_id") or session_id,
+        dataset=dataset,
+        event_id=event_id,
+    )
+
+
+def _build_demo_storyboard_payload(session_id=None, dataset="demo"):
+    return build_demo_storyboard(
+        logger=logger,
+        reflection_coach=reflection_coach,
+        dataset=dataset,
+        session_id=session_id,
+        features_path=STATE_WINDOW_FEATURES_PATH,
+    )
+
+
 def _active_scene_metrics():
     return {
         "tracking_state": latest_input.get("tracking_state", "warmup"),
@@ -169,10 +373,18 @@ def _active_scene_metrics():
         "scene_lock_score": posture.scene_lock_score,
         "blur_score": posture.blur_score,
         "brightness_score": posture.brightness_score,
+        "focus_score": posture.focus_score,
         "behavioral_alignment": posture.behavioral_alignment,
+        "behavioral_level": posture.behavioral_level,
         "cognitive_load": posture.cognitive_load,
+        "load_level": posture.load_level,
+        "load_reason": posture.load_reason,
         "fatigue_risk": posture.fatigue_risk,
+        "fatigue_level": posture.fatigue_level,
         "uncertainty_score": posture.uncertainty_score,
+        "confidence_level": posture.confidence_level,
+        "switching_index": posture.switching_index,
+        "drift_trend": posture.drift_trend,
         "state_hint": posture.state_hint,
         "task_mode": posture.task_mode,
     }
@@ -321,6 +533,857 @@ def _slugify_profile_name(name):
     return normalized or "scene-profile"
 
 
+def _slugify_reflection_name(name, fallback="reflection"):
+    normalized = re.sub(r"[^a-zA-Z0-9]+", "-", str(name or "").strip().lower())
+    normalized = normalized.strip("-")
+    return normalized or fallback
+
+
+def _clean_model_override_name(value):
+    return " ".join(str(value or "").strip().split())[:160].strip()
+
+
+def _clean_compare_models(raw_models):
+    if not isinstance(raw_models, list):
+        return []
+    models = []
+    seen = set()
+    for item in raw_models:
+        model_name = _clean_model_override_name(item)
+        if not model_name or model_name in seen:
+            continue
+        models.append(model_name)
+        seen.add(model_name)
+    return models
+
+
+def _reflection_markdown_lines(items, prefix):
+    lines = []
+    for index, item in enumerate(items or [], start=1):
+        if isinstance(item, dict):
+            text = item.get("question") or item.get("title") or ""
+        else:
+            text = str(item or "")
+        text = str(text).strip()
+        if text:
+            lines.append(f"{prefix}{index}. {text}")
+    return lines or [f"{prefix}None"]
+
+
+def _reflection_experiment_lines(items):
+    lines = []
+    for index, item in enumerate(items or [], start=1):
+        if not isinstance(item, dict):
+            continue
+        title = str(item.get("title", "")).strip() or f"Experiment {index}"
+        detail = str(item.get("detail", "")).strip()
+        success_marker = str(item.get("success_marker", "")).strip()
+        combined = title
+        if detail:
+            combined += f": {detail}"
+        if success_marker:
+            combined += f" Success marker: {success_marker}"
+        lines.append(f"- {combined}")
+    return lines or ["- None"]
+
+
+def _snapshot_display_label(value, fallback="--"):
+    text = str(value or "").strip()
+    if not text:
+        return fallback
+    normalized = re.sub(r"[_-]+", " ", text)
+    normalized = " ".join(normalized.split())
+    return normalized.title() if normalized else fallback
+
+
+def _snapshot_metric(value, suffix=""):
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return f"--{suffix}"
+    return f"{int(round(numeric))}{suffix}"
+
+
+def _snapshot_plain_text(value, fallback="--"):
+    text = str(value or "").strip()
+    return text or fallback
+
+
+def _snapshot_html_text(value, fallback="--"):
+    return html_escape(_snapshot_plain_text(value, fallback))
+
+
+def _snapshot_html_paragraph(value, fallback="--"):
+    return _snapshot_html_text(value, fallback).replace("\n", "<br>")
+
+
+def _runtime_info_payload():
+    return {
+        "status": "ok",
+        "service": "focus-project-reflection",
+        "backend_version": REFLECTION_RUNTIME_VERSION,
+        "snapshot_exporter_version": REFLECTION_SNAPSHOT_EXPORTER_VERSION,
+        "booted_at": APP_BOOTED_AT,
+        "pid": os.getpid(),
+        "python_version": sys.version.split()[0],
+        "python_executable": os.path.basename(sys.executable or "python"),
+        "feature_flags": {
+            "runtime_info_endpoint": True,
+            "snapshot_html_card_export": True,
+            "compare_html_card_export": True,
+        },
+    }
+
+
+def _reflection_anchor_reason(payload, event):
+    event = event or {}
+    requested_event_id = str(payload.get("requested_event_id", "") or "").strip()
+    selected_event_id = str(payload.get("selected_event_id", "") or event.get("event_id", "") or "").strip()
+    if not event:
+        return "No specific difficulty event was available, so the coach read the overall session rhythm."
+    if requested_event_id and requested_event_id == selected_event_id:
+        return f"This reflection inherited D{selected_event_id} from the review selection."
+    if requested_event_id and requested_event_id != selected_event_id:
+        return (
+            f"Requested D{requested_event_id} was unavailable in this session, "
+            f"so the coach fell back to D{selected_event_id}, the strongest recorded difficulty segment."
+        )
+    return f"No explicit event was passed in, so the coach anchored itself to D{selected_event_id}, the strongest difficulty segment in this session."
+
+
+def _reflection_anchor_markdown_lines(payload, heading="## Evidence Anchor"):
+    payload = payload if isinstance(payload, dict) else {}
+    event = payload.get("highlight_event") or {}
+    if not event:
+        return [
+            heading,
+            "",
+            "- Anchor reason: No event-specific replay anchor was available for this session.",
+        ]
+
+    severity_label = str(event.get("severity_label", "")).strip() or _snapshot_display_label(event.get("severity"), "Clear")
+    state_label = str(event.get("state_hint_label", "")).strip() or _snapshot_display_label(event.get("state_hint"), "Stable")
+    lines = [
+        heading,
+        "",
+        f"- Anchor reason: {_reflection_anchor_reason(payload, event)}",
+        f"- Event: D{event.get('event_id')}",
+        f"- Window: {event.get('time_window', '--')}",
+        f"- Severity: {severity_label}",
+        f"- State hint: {state_label}",
+        f"- Task mode: {_snapshot_display_label(event.get('task_mode'), '--')}",
+        f"- Load / Fatigue / Switching: {_snapshot_metric(event.get('avg_load'))} / {_snapshot_metric(event.get('avg_fatigue'))} / {_snapshot_metric(event.get('avg_switching'))}",
+        f"- Trigger: {event.get('trigger_label') or '--'}",
+        f"- Trigger reason: {event.get('trigger_reason') or '--'}",
+        f"- Review note: {event.get('review_note') or '--'}",
+        f"- Catch-up action: {event.get('catch_up_action') or '--'}",
+    ]
+    return lines
+
+
+def _build_single_reflection_snapshot_markdown(bundle):
+    payload = bundle.get("payload", {}) or {}
+    summary = payload.get("summary", {}) or {}
+    generation = payload.get("generation", {}) or {}
+    coach_summary = payload.get("coach_summary", {}) or {}
+    signature = payload.get("signature", {}) or {}
+    lines = [
+        "# Reflection Snapshot",
+        "",
+        f"- Saved at: {bundle.get('saved_at', '')}",
+        f"- Session ID: {bundle.get('session_id', '') or '--'}",
+        f"- Dataset: {bundle.get('dataset', '') or '--'}",
+        f"- Provider: {generation.get('provider_label', 'Heuristic')}",
+        f"- Model: {generation.get('model', '') or '--'}",
+        f"- Primary task mode: {summary.get('primary_task_mode', '--')}",
+        "",
+        "## Signature",
+        "",
+        f"**{signature.get('label', '--')}**",
+        "",
+        signature.get("detail", "No signature detail."),
+        "",
+        "## Summary",
+        "",
+        f"- Headline: {coach_summary.get('headline', '--')}",
+        f"- Overview: {coach_summary.get('overview', '--')}",
+        f"- Why it matters: {coach_summary.get('why_it_matters', '--')}",
+        f"- Next boundary: {coach_summary.get('next_boundary', '--')}",
+        "",
+    ]
+    lines.extend(_reflection_anchor_markdown_lines(payload))
+    lines.extend([
+        "",
+        "## Coach Memo",
+        "",
+        payload.get("coach_memo", "No coach memo."),
+        "",
+        "## Reflection Questions",
+        "",
+    ])
+    lines.extend(_reflection_markdown_lines(payload.get("reflection_questions", []), ""))
+    lines.extend([
+        "",
+        "## Next-Session Experiments",
+        "",
+    ])
+    lines.extend(_reflection_experiment_lines(payload.get("next_session_experiments", [])))
+    return "\n".join(lines).strip() + "\n"
+
+
+def _build_compare_reflection_snapshot_markdown(bundle):
+    payload = bundle.get("payload", {}) or {}
+    variants = payload.get("variants", []) or []
+    anchor_payload = {}
+    for variant in variants:
+        candidate = variant.get("payload")
+        if isinstance(candidate, dict) and candidate:
+            anchor_payload = candidate
+            break
+    lines = [
+        "# Reflection Compare Snapshot",
+        "",
+        f"- Saved at: {bundle.get('saved_at', '')}",
+        f"- Session ID: {bundle.get('session_id', '') or '--'}",
+        f"- Dataset: {bundle.get('dataset', '') or '--'}",
+        f"- Compared at: {payload.get('compared_at', '') or '--'}",
+        f"- Provider: {payload.get('request', {}).get('provider', 'ollama')}",
+        "",
+    ]
+    lines.extend(_reflection_anchor_markdown_lines(anchor_payload, heading="## Shared Evidence Anchor"))
+    lines.append("")
+    for variant in variants:
+        generation = variant.get("generation", {}) or {}
+        coach_summary = variant.get("coach_summary", {}) or {}
+        lines.extend([
+            f"## {variant.get('model', '--')}",
+            "",
+            f"- Duration: {variant.get('duration_ms', 0)} ms",
+            f"- Active mode: {generation.get('mode', 'heuristic')}",
+            f"- Provider note: {generation.get('note', '--')}",
+            "",
+            f"Headline: {coach_summary.get('headline', '--')}",
+            "",
+            f"Overview: {coach_summary.get('overview', '--')}",
+            "",
+            "Coach memo:",
+            "",
+            variant.get("coach_memo", "No coach memo."),
+            "",
+            "Reflection questions:",
+            "",
+        ])
+        lines.extend(_reflection_markdown_lines(variant.get("reflection_questions", []), ""))
+        lines.extend([
+            "",
+            "Next-Session Experiments:",
+            "",
+        ])
+        lines.extend(_reflection_experiment_lines(variant.get("next_session_experiments", [])))
+        lines.append("")
+    return "\n".join(lines).strip() + "\n"
+
+
+def _reflection_card_question_items(items):
+    rows = []
+    for index, item in enumerate(items or [], start=1):
+        if isinstance(item, dict):
+            text = item.get("question") or item.get("title") or ""
+        else:
+            text = str(item or "")
+        text = str(text).strip()
+        if not text:
+            continue
+        rows.append(
+            f"<li><strong>Q{index}.</strong> <span>{_snapshot_html_paragraph(text)}</span></li>"
+        )
+    return "".join(rows) or "<li class=\"empty\">No reflection questions were generated.</li>"
+
+
+def _reflection_card_experiment_items(items):
+    rows = []
+    for index, item in enumerate(items or [], start=1):
+        if not isinstance(item, dict):
+            continue
+        title = _snapshot_plain_text(item.get("title"), f"Experiment {index}")
+        detail = _snapshot_plain_text(item.get("detail"), "")
+        success_marker = _snapshot_plain_text(item.get("success_marker"), "")
+        body = [
+            f"<strong>{_snapshot_html_text(title)}</strong>",
+        ]
+        if detail:
+            body.append(f"<p>{_snapshot_html_paragraph(detail)}</p>")
+        if success_marker:
+            body.append(
+                f"<p><span class=\"metric-label\">Success marker</span> {_snapshot_html_paragraph(success_marker)}</p>"
+            )
+        rows.append(f"<li>{''.join(body)}</li>")
+    return "".join(rows) or "<li class=\"empty\">No next-session experiments were generated.</li>"
+
+
+def _reflection_card_anchor_html(payload):
+    payload = payload if isinstance(payload, dict) else {}
+    event = payload.get("highlight_event") or {}
+    anchor_reason = _reflection_anchor_reason(payload, event)
+    if not event:
+        return f"""
+        <article class="anchor-card anchor-empty">
+            <div class="section-eyebrow">Evidence Anchor</div>
+            <h2>Session-wide reading</h2>
+            <p>{_snapshot_html_paragraph(anchor_reason)}</p>
+        </article>
+        """
+
+    severity_label = str(event.get("severity_label", "")).strip() or _snapshot_display_label(event.get("severity"), "Clear")
+    state_label = str(event.get("state_hint_label", "")).strip() or _snapshot_display_label(event.get("state_hint"), "Stable")
+    requested_event_id = str(payload.get("requested_event_id", "") or "").strip()
+    selected_event_id = str(payload.get("selected_event_id", "") or event.get("event_id", "") or "").strip()
+    anchor_meta = "Auto-selected strongest event"
+    if requested_event_id:
+        anchor_meta = "Inherited from review selection" if requested_event_id == selected_event_id else f"Fallback from requested D{requested_event_id}"
+
+    return f"""
+    <article class="anchor-card">
+        <div class="section-eyebrow">Evidence Anchor</div>
+        <div class="anchor-topline">
+            <span class="anchor-meta">{_snapshot_html_text(anchor_meta)}</span>
+            <span class="anchor-event">D{_snapshot_html_text(event.get('event_id'), '--')} | {_snapshot_html_text(event.get('time_window'), '--')}</span>
+        </div>
+        <p class="anchor-reason">{_snapshot_html_paragraph(anchor_reason)}</p>
+        <div class="metric-grid">
+            <div class="metric-chip"><span class="metric-label">Severity</span><strong>{_snapshot_html_text(severity_label)}</strong></div>
+            <div class="metric-chip"><span class="metric-label">State</span><strong>{_snapshot_html_text(state_label)}</strong></div>
+            <div class="metric-chip"><span class="metric-label">Mode</span><strong>{_snapshot_html_text(_snapshot_display_label(event.get('task_mode'), '--'))}</strong></div>
+            <div class="metric-chip"><span class="metric-label">Load</span><strong>{_snapshot_html_text(_snapshot_metric(event.get('avg_load')))}</strong></div>
+            <div class="metric-chip"><span class="metric-label">Fatigue</span><strong>{_snapshot_html_text(_snapshot_metric(event.get('avg_fatigue')))}</strong></div>
+            <div class="metric-chip"><span class="metric-label">Switching</span><strong>{_snapshot_html_text(_snapshot_metric(event.get('avg_switching')))}</strong></div>
+        </div>
+        <div class="anchor-details">
+            <div>
+                <span class="metric-label">Trigger</span>
+                <p>{_snapshot_html_paragraph(event.get('trigger_label'), '--')}</p>
+            </div>
+            <div>
+                <span class="metric-label">Trigger reason</span>
+                <p>{_snapshot_html_paragraph(event.get('trigger_reason'), '--')}</p>
+            </div>
+            <div>
+                <span class="metric-label">Review note</span>
+                <p>{_snapshot_html_paragraph(event.get('review_note'), '--')}</p>
+            </div>
+            <div>
+                <span class="metric-label">Catch-up action</span>
+                <p>{_snapshot_html_paragraph(event.get('catch_up_action'), '--')}</p>
+            </div>
+        </div>
+    </article>
+    """
+
+
+def _reflection_card_shell(title, subtitle, body_html):
+    title = _snapshot_html_text(title, "Reflection Snapshot Card")
+    subtitle = _snapshot_html_paragraph(subtitle, "Reflection summary")
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{title}</title>
+    <style>
+        :root {{
+            color-scheme: light;
+            --paper: #f7f3ea;
+            --panel: #fffaf3;
+            --line: #d8c9af;
+            --text: #1f2430;
+            --muted: #576172;
+            --accent: #a84f2f;
+            --accent-soft: #efe0d1;
+            --ink-soft: #e8f0ec;
+            --ink-strong: #27594a;
+            --warn-soft: #f6ead5;
+            --shadow: 0 20px 48px rgba(31, 36, 48, 0.08);
+        }}
+        * {{ box-sizing: border-box; }}
+        body {{
+            margin: 0;
+            font-family: "Segoe UI", "Noto Sans SC", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(168, 79, 47, 0.12), transparent 34%),
+                radial-gradient(circle at top right, rgba(39, 89, 74, 0.14), transparent 28%),
+                var(--paper);
+        }}
+        main {{
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 32px 24px 48px;
+        }}
+        .hero {{
+            display: grid;
+            gap: 18px;
+            padding: 28px;
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            background: linear-gradient(135deg, rgba(255, 250, 243, 0.98), rgba(247, 243, 234, 0.96));
+            box-shadow: var(--shadow);
+        }}
+        .hero-eyebrow, .section-eyebrow {{
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--accent);
+        }}
+        h1, h2, h3, p {{ margin: 0; }}
+        h1 {{
+            font-size: clamp(30px, 4vw, 48px);
+            line-height: 1.02;
+            letter-spacing: -0.04em;
+        }}
+        .hero-subtitle {{
+            max-width: 760px;
+            font-size: 16px;
+            line-height: 1.65;
+            color: var(--muted);
+        }}
+        .meta-row {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+        }}
+        .meta-card, .panel {{
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.82);
+            box-shadow: var(--shadow);
+        }}
+        .meta-card {{
+            padding: 16px 18px;
+        }}
+        .meta-card span, .metric-label {{
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }}
+        .meta-card strong {{
+            font-size: 16px;
+            line-height: 1.35;
+        }}
+        .content-grid {{
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+            gap: 18px;
+            margin-top: 18px;
+        }}
+        .panel {{
+            padding: 22px;
+        }}
+        .signature-panel {{
+            background: linear-gradient(160deg, rgba(239, 224, 209, 0.9), rgba(255, 250, 243, 0.94));
+        }}
+        .signature-panel h2 {{
+            margin-top: 12px;
+            font-size: 28px;
+            line-height: 1.15;
+        }}
+        .signature-detail {{
+            margin-top: 12px;
+            line-height: 1.7;
+            color: var(--muted);
+        }}
+        .summary-stack, .anchor-details, .variant-stack {{
+            display: grid;
+            gap: 12px;
+        }}
+        .summary-item {{
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: rgba(39, 89, 74, 0.07);
+        }}
+        .summary-item:nth-child(2n) {{
+            background: rgba(168, 79, 47, 0.08);
+        }}
+        .summary-item p {{
+            margin-top: 6px;
+            line-height: 1.6;
+            color: var(--muted);
+        }}
+        .anchor-card {{
+            grid-column: 1 / -1;
+            padding: 22px;
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            background: linear-gradient(180deg, rgba(255, 250, 243, 0.96), rgba(246, 234, 213, 0.78));
+            box-shadow: var(--shadow);
+        }}
+        .anchor-topline {{
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 14px;
+        }}
+        .anchor-meta {{
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--accent);
+        }}
+        .anchor-event {{
+            font-weight: 700;
+            font-size: 18px;
+        }}
+        .anchor-reason {{
+            margin-top: 12px;
+            line-height: 1.7;
+            color: var(--muted);
+        }}
+        .metric-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 16px;
+        }}
+        .metric-chip {{
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid rgba(216, 201, 175, 0.75);
+        }}
+        .metric-chip strong {{
+            font-size: 17px;
+        }}
+        .anchor-details {{
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            margin-top: 16px;
+        }}
+        .anchor-details div {{
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.68);
+        }}
+        .anchor-details p, .memo-body, .list-card li, .variant-block p {{
+            line-height: 1.7;
+            color: var(--muted);
+        }}
+        .lists-grid {{
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+            margin-top: 18px;
+        }}
+        .list-card ul {{
+            margin: 16px 0 0;
+            padding-left: 20px;
+        }}
+        .list-card li {{
+            margin-bottom: 14px;
+        }}
+        .list-card li.empty {{
+            list-style: none;
+            margin-left: -20px;
+        }}
+        .memo-panel {{
+            margin-top: 18px;
+            background: linear-gradient(180deg, rgba(232, 240, 236, 0.86), rgba(255, 255, 255, 0.9));
+        }}
+        .memo-body {{
+            margin-top: 14px;
+            font-size: 15px;
+        }}
+        .footer-note {{
+            margin-top: 18px;
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--muted);
+        }}
+        .compare-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 18px;
+            margin-top: 18px;
+        }}
+        .variant-panel {{
+            background: rgba(255, 255, 255, 0.86);
+        }}
+        .variant-topline {{
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: baseline;
+            margin-top: 12px;
+        }}
+        .variant-badge {{
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: var(--ink-soft);
+            color: var(--ink-strong);
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }}
+        .variant-block {{
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(216, 201, 175, 0.78);
+        }}
+        @media (max-width: 900px) {{
+            .content-grid,
+            .lists-grid {{
+                grid-template-columns: 1fr;
+            }}
+        }}
+        @media print {{
+            body {{ background: #fff; }}
+            main {{ max-width: none; padding: 0; }}
+            .hero, .panel, .anchor-card, .meta-card {{
+                box-shadow: none;
+                break-inside: avoid;
+            }}
+        }}
+    </style>
+</head>
+<body>
+    <main>
+        <section class="hero">
+            <div class="hero-eyebrow">Learning Reflection Coach</div>
+            <h1>{title}</h1>
+            <p class="hero-subtitle">{subtitle}</p>
+        </section>
+        {body_html}
+        <p class="footer-note">
+            This reflection card stays process-focused. It summarizes how the learning session unfolded and what to try next, without reteaching the study content itself.
+        </p>
+    </main>
+</body>
+</html>
+"""
+
+
+def _build_single_reflection_snapshot_html(bundle):
+    payload = bundle.get("payload", {}) or {}
+    summary = payload.get("summary", {}) or {}
+    generation = payload.get("generation", {}) or {}
+    coach_summary = payload.get("coach_summary", {}) or {}
+    signature = payload.get("signature", {}) or {}
+    body_html = f"""
+    <div class="meta-row" style="margin-top: 18px;">
+        <article class="meta-card"><span>Session</span><strong>{_snapshot_html_text(bundle.get('session_id'), '--')}</strong></article>
+        <article class="meta-card"><span>Dataset</span><strong>{_snapshot_html_text(bundle.get('dataset'), '--')}</strong></article>
+        <article class="meta-card"><span>Provider</span><strong>{_snapshot_html_text(generation.get('provider_label'), 'Heuristic')}</strong></article>
+        <article class="meta-card"><span>Model</span><strong>{_snapshot_html_text(generation.get('model'), '--')}</strong></article>
+        <article class="meta-card"><span>Saved At</span><strong>{_snapshot_html_text(bundle.get('saved_at'), '--')}</strong></article>
+        <article class="meta-card"><span>Primary Mode</span><strong>{_snapshot_html_text(summary.get('primary_task_mode'), '--')}</strong></article>
+    </div>
+    <div class="content-grid">
+        <article class="panel signature-panel">
+            <div class="section-eyebrow">Session Signature</div>
+            <h2>{_snapshot_html_text(signature.get('label'), '--')}</h2>
+            <p class="signature-detail">{_snapshot_html_paragraph(signature.get('detail'), 'No signature detail.')}</p>
+        </article>
+        <article class="panel">
+            <div class="section-eyebrow">Coach Summary</div>
+            <div class="summary-stack" style="margin-top: 12px;">
+                <div class="summary-item"><span class="metric-label">Headline</span><p>{_snapshot_html_paragraph(coach_summary.get('headline'), '--')}</p></div>
+                <div class="summary-item"><span class="metric-label">Overview</span><p>{_snapshot_html_paragraph(coach_summary.get('overview'), '--')}</p></div>
+                <div class="summary-item"><span class="metric-label">Why It Matters</span><p>{_snapshot_html_paragraph(coach_summary.get('why_it_matters'), '--')}</p></div>
+                <div class="summary-item"><span class="metric-label">Next Boundary</span><p>{_snapshot_html_paragraph(coach_summary.get('next_boundary'), '--')}</p></div>
+            </div>
+        </article>
+    </div>
+    {_reflection_card_anchor_html(payload)}
+    <div class="lists-grid">
+        <article class="panel list-card">
+            <div class="section-eyebrow">Reflection Questions</div>
+            <ul>{_reflection_card_question_items(payload.get('reflection_questions', []))}</ul>
+        </article>
+        <article class="panel list-card">
+            <div class="section-eyebrow">Next-Session Experiments</div>
+            <ul>{_reflection_card_experiment_items(payload.get('next_session_experiments', []))}</ul>
+        </article>
+    </div>
+    <article class="panel memo-panel">
+        <div class="section-eyebrow">Coach Memo</div>
+        <p class="memo-body">{_snapshot_html_paragraph(payload.get('coach_memo'), 'No coach memo.')}</p>
+    </article>
+    """
+    title = signature.get("label") or "Reflection Snapshot Card"
+    subtitle = coach_summary.get("headline") or "A one-page summary of the session signature, anchor event, and next-session experiments."
+    return _reflection_card_shell(title, subtitle, body_html)
+
+
+def _build_compare_reflection_snapshot_html(bundle):
+    payload = bundle.get("payload", {}) or {}
+    variants = payload.get("variants", []) or []
+    anchor_payload = {}
+    for variant in variants:
+        candidate = variant.get("payload")
+        if isinstance(candidate, dict) and candidate:
+            anchor_payload = candidate
+            break
+
+    variant_html = []
+    for variant in variants:
+        generation = variant.get("generation", {}) or {}
+        coach_summary = variant.get("coach_summary", {}) or {}
+        variant_html.append(f"""
+        <article class="panel variant-panel">
+            <div class="section-eyebrow">Model Variant</div>
+            <div class="variant-topline">
+                <h2>{_snapshot_html_text(variant.get('model') or generation.get('model'), '--')}</h2>
+                <span class="variant-badge">{_snapshot_html_text(generation.get('mode'), 'heuristic')} | {_snapshot_html_text(variant.get('duration_ms'), '0')} ms</span>
+            </div>
+            <div class="variant-stack">
+                <div class="variant-block">
+                    <span class="metric-label">Headline</span>
+                    <p>{_snapshot_html_paragraph(coach_summary.get('headline'), '--')}</p>
+                </div>
+                <div class="variant-block">
+                    <span class="metric-label">Coach Memo</span>
+                    <p>{_snapshot_html_paragraph(variant.get('coach_memo'), 'No coach memo.')}</p>
+                </div>
+                <div class="variant-block">
+                    <span class="metric-label">Reflection Questions</span>
+                    <ul>{_reflection_card_question_items(variant.get('reflection_questions', []))}</ul>
+                </div>
+                <div class="variant-block">
+                    <span class="metric-label">Next-Session Experiments</span>
+                    <ul>{_reflection_card_experiment_items(variant.get('next_session_experiments', []))}</ul>
+                </div>
+            </div>
+        </article>
+        """)
+
+    body_html = f"""
+    <div class="meta-row" style="margin-top: 18px;">
+        <article class="meta-card"><span>Session</span><strong>{_snapshot_html_text(bundle.get('session_id'), '--')}</strong></article>
+        <article class="meta-card"><span>Dataset</span><strong>{_snapshot_html_text(bundle.get('dataset'), '--')}</strong></article>
+        <article class="meta-card"><span>Provider</span><strong>{_snapshot_html_text((payload.get('request', {}) or {}).get('provider'), 'ollama')}</strong></article>
+        <article class="meta-card"><span>Compared At</span><strong>{_snapshot_html_text(payload.get('compared_at'), '--')}</strong></article>
+        <article class="meta-card"><span>Variant Count</span><strong>{_snapshot_html_text(len(variants), '0')}</strong></article>
+    </div>
+    {_reflection_card_anchor_html(anchor_payload)}
+    <div class="compare-grid">
+        {''.join(variant_html) or '<article class="panel variant-panel"><p class="memo-body">No compare variants were generated.</p></article>'}
+    </div>
+    """
+    title = "Reflection Compare Card"
+    subtitle = "A one-page contrast of local model outputs on the same evidence anchor."
+    return _reflection_card_shell(title, subtitle, body_html)
+
+
+def _build_reflection_snapshot_html(bundle):
+    if bundle.get("kind") == "compare":
+        return _build_compare_reflection_snapshot_html(bundle)
+    return _build_single_reflection_snapshot_html(bundle)
+
+
+def _build_reflection_snapshot_markdown(bundle):
+    if bundle.get("kind") == "compare":
+        return _build_compare_reflection_snapshot_markdown(bundle)
+    return _build_single_reflection_snapshot_markdown(bundle)
+
+
+def _build_reflection_snapshot_bundle(kind, payload):
+    saved_at = datetime.now().isoformat(timespec="seconds")
+    payload = payload if isinstance(payload, dict) else {}
+    session_id = str(payload.get("session_id", "")).strip()
+    dataset = str(payload.get("dataset", "")).strip().lower() or "live"
+    anchor_payload = payload
+
+    if kind == "compare":
+        variants = payload.get("variants", []) or []
+        if not session_id and variants:
+            session_id = str((variants[0].get("payload", {}) or {}).get("session_id", "")).strip()
+        if not payload.get("dataset") and variants:
+            dataset = str((variants[0].get("payload", {}) or {}).get("dataset", dataset)).strip().lower() or dataset
+        for variant in variants:
+            candidate = variant.get("payload")
+            if isinstance(candidate, dict) and candidate:
+                anchor_payload = candidate
+                break
+
+    return {
+        "kind": kind,
+        "saved_at": saved_at,
+        "session_id": session_id,
+        "dataset": dataset,
+        "requested_event_id": (anchor_payload or {}).get("requested_event_id"),
+        "selected_event_id": (anchor_payload or {}).get("selected_event_id"),
+        "payload": payload,
+    }
+
+
+def _save_reflection_snapshot(kind, payload):
+    bundle = _build_reflection_snapshot_bundle(kind, payload)
+    os.makedirs(REFLECTION_SNAPSHOT_DIR, exist_ok=True)
+    session_slug = _slugify_reflection_name(bundle.get("session_id") or f"{bundle.get('dataset', 'live')}-session", fallback="session")
+    basename = f"{session_slug}-reflection-{kind}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    json_path = os.path.join(REFLECTION_SNAPSHOT_DIR, f"{basename}.json")
+    md_path = os.path.join(REFLECTION_SNAPSHOT_DIR, f"{basename}.md")
+    html_path = os.path.join(REFLECTION_SNAPSHOT_DIR, f"{basename}.html")
+
+    with open(json_path, "w", encoding="utf-8") as handle:
+        json.dump(bundle, handle, indent=2, ensure_ascii=False)
+    with open(md_path, "w", encoding="utf-8") as handle:
+        handle.write(_build_reflection_snapshot_markdown(bundle))
+    with open(html_path, "w", encoding="utf-8") as handle:
+        handle.write(_build_reflection_snapshot_html(bundle))
+
+    return {
+        "status": "ok",
+        "kind": kind,
+        "snapshot_id": basename,
+        "saved_at": bundle["saved_at"],
+        "snapshot_exporter_version": REFLECTION_SNAPSHOT_EXPORTER_VERSION,
+        "supports_html_card_export": True,
+        "json_url": f"/exports/reflection_snapshots/{basename}.json",
+        "md_url": f"/exports/reflection_snapshots/{basename}.md",
+        "card_url": f"/exports/reflection_snapshots/{basename}.html",
+        "json_path": json_path,
+        "md_path": md_path,
+        "card_path": html_path,
+    }
+
+
+def _build_reflection_compare_variant(dataset, session_id, event_id, learner_note, next_goal, model_name):
+    started_at = time.perf_counter()
+    payload = reflection_coach.build_payload(
+        session_id=session_id,
+        dataset=dataset,
+        event_id=event_id,
+        learner_note=learner_note,
+        next_goal=next_goal,
+        use_llm=True,
+        provider_override="ollama",
+        model_override=model_name,
+        live_guardian_state=_active_scene_metrics(),
+        live_session_state=latest_session,
+        live_difficulty_state=latest_difficulty,
+    )
+    duration_ms = int(round((time.perf_counter() - started_at) * 1000))
+    generation = payload.get("generation", {}) or {}
+    return {
+        "model": generation.get("model") or model_name,
+        "duration_ms": duration_ms,
+        "generation": generation,
+        "signature": payload.get("signature", {}),
+        "coach_summary": payload.get("coach_summary", {}),
+        "coach_memo": payload.get("coach_memo", ""),
+        "reflection_questions": payload.get("reflection_questions", []),
+        "next_session_experiments": payload.get("next_session_experiments", []),
+        "payload": payload,
+    }
+
+
 def _build_scene_profile_payload(profile_name, task_mode=None, notes="", source_preset=""):
     timestamp = datetime.now()
     slug = _slugify_profile_name(profile_name)
@@ -429,6 +1492,23 @@ def index():
 @app.route("/review")
 def review_page():
     return render_template("review.html")
+
+
+@app.route("/reflection")
+def reflection_page():
+    return render_template("reflection.html")
+
+
+@app.route("/demo")
+def demo_storyboard_page():
+    return render_template("demo.html")
+
+
+@app.route("/presentation")
+@app.route("/presentations")
+@app.route("/presentation/controller")
+def presentation_page():
+    return render_template("presentation.html")
 
 
 @app.route("/rokid_debug")
@@ -640,6 +1720,448 @@ def review_summary():
     session_id = request.args.get("session_id") or None
     payload = logger.build_review_payload(session_id=session_id, dataset=dataset)
     return jsonify(payload)
+
+
+@app.route("/api/state_validation_summary")
+def state_validation_summary():
+    session_id = str(request.args.get("session_id", "")).strip() or None
+    start_sample = request.args.get("start_sample")
+    end_sample = request.args.get("end_sample")
+    limit = _safe_int(request.args.get("limit"), default=8)
+    payload = _build_state_validation_summary(
+        session_id=session_id,
+        start_sample=_safe_int(start_sample, default=0) if start_sample not in (None, "") else None,
+        end_sample=_safe_int(end_sample, default=0) if end_sample not in (None, "") else None,
+        limit=limit,
+    )
+    return jsonify(payload)
+
+
+@app.route("/api/reflection_coach_summary")
+def reflection_coach_review_summary():
+    dataset = str(request.args.get("dataset", "live")).strip().lower() or "live"
+    session_id = str(request.args.get("session_id", "")).strip() or None
+    event_id = str(request.args.get("event_id", "")).strip() or None
+    return jsonify(_build_reflection_coach_summary(
+        session_id=session_id,
+        dataset=dataset,
+        event_id=event_id,
+    ))
+
+
+@app.route("/api/demo_storyboard")
+def demo_storyboard_summary():
+    dataset = str(request.args.get("dataset", "demo")).strip().lower() or "demo"
+    session_id = str(request.args.get("session_id", "")).strip() or None
+    return jsonify(_build_demo_storyboard_payload(
+        session_id=session_id,
+        dataset=dataset,
+    ))
+
+
+@app.route("/api/reflection_coach", methods=["GET", "POST"])
+def reflection_coach_summary():
+    payload = (request.get_json(silent=True) or {}) if request.method == "POST" else request.args.to_dict()
+    dataset = str(payload.get("dataset", "live")).strip().lower() or "live"
+    session_id = str(payload.get("session_id", "")).strip() or None
+    event_id = str(payload.get("event_id", "")).strip() or None
+    learner_note = payload.get("learner_note", "")
+    next_goal = payload.get("next_goal", "")
+    use_llm = str(payload.get("use_llm", payload.get("use_model", "0"))).strip().lower() in {"1", "true", "yes", "on"}
+    provider_override = str(payload.get("provider_override", "auto")).strip() or "auto"
+    model_override = str(payload.get("model_override", "")).strip()
+    return jsonify(
+        reflection_coach.build_payload(
+            session_id=session_id,
+            dataset=dataset,
+            event_id=event_id,
+            learner_note=learner_note,
+            next_goal=next_goal,
+            use_llm=use_llm,
+            provider_override=provider_override,
+            model_override=model_override,
+            live_guardian_state=_active_scene_metrics(),
+            live_session_state=latest_session,
+            live_difficulty_state=latest_difficulty,
+        )
+    )
+
+
+@app.route("/api/runtime_info")
+def runtime_info():
+    return jsonify(_runtime_info_payload())
+
+
+@app.route("/api/reflection_provider_status")
+def reflection_provider_status():
+    provider_override = str(request.args.get("provider_override", "auto")).strip() or "auto"
+    model_override = str(request.args.get("model_override", "")).strip()
+    return jsonify(reflection_coach.provider_status(provider_override=provider_override, model_override=model_override))
+
+
+@app.route("/api/reflection_compare", methods=["POST"])
+def reflection_compare():
+    payload = request.get_json(silent=True) or {}
+    dataset = str(payload.get("dataset", "live")).strip().lower() or "live"
+    session_id = str(payload.get("session_id", "")).strip() or None
+    event_id = str(payload.get("event_id", "")).strip() or None
+    learner_note = payload.get("learner_note", "")
+    next_goal = payload.get("next_goal", "")
+    requested_models = _clean_compare_models(payload.get("models", []))
+
+    if len(requested_models) < 2:
+        status = reflection_coach.provider_status(provider_override="ollama")
+        fallback_models = [
+            str(item.get("name", "")).strip()
+            for item in (status.get("ollama", {}) or {}).get("available_models", [])
+            if str(item.get("name", "")).strip()
+        ]
+        requested_models = _clean_compare_models(fallback_models[:2])
+
+    if len(requested_models) < 2:
+        return jsonify({
+            "status": "error",
+            "message": "At least two local Ollama models are required for comparison.",
+        }), 400
+
+    variants = [
+        _build_reflection_compare_variant(dataset, session_id, event_id, learner_note, next_goal, model_name)
+        for model_name in requested_models[:2]
+    ]
+    resolved_session_id = str((variants[0].get("payload", {}) or {}).get("session_id", session_id or "")).strip()
+    resolved_dataset = str((variants[0].get("payload", {}) or {}).get("dataset", dataset)).strip().lower() or dataset
+    return jsonify({
+        "status": "ok",
+        "dataset": resolved_dataset,
+        "session_id": resolved_session_id,
+        "compared_at": datetime.now().isoformat(timespec="seconds"),
+        "request": {
+            "provider": "ollama",
+            "models": [variant.get("model", "") for variant in variants],
+        },
+        "variants": variants,
+    })
+
+
+@app.route("/api/reflection_snapshot", methods=["POST"])
+def reflection_snapshot():
+    payload = request.get_json(silent=True) or {}
+    kind = str(payload.get("kind", "single")).strip().lower()
+    snapshot_payload = payload.get("payload", {})
+    if kind not in {"single", "compare"}:
+        return jsonify({
+            "status": "error",
+            "message": f"Unsupported snapshot kind: {kind}",
+        }), 400
+    if not isinstance(snapshot_payload, dict) or not snapshot_payload:
+        return jsonify({
+            "status": "error",
+            "message": "Snapshot payload is required.",
+        }), 400
+    return jsonify(_save_reflection_snapshot(kind, snapshot_payload))
+
+
+@app.route("/api/presentation_missions", methods=["GET", "POST"])
+def presentation_missions():
+    if request.method == "GET":
+        return jsonify({
+            "status": "ok",
+            "missions": presentation_companion.list_missions(),
+        })
+
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.save_mission(payload)
+    return jsonify({
+        "status": "ok",
+        **result,
+    })
+
+
+@app.route("/api/presentation_missions/intake_extract", methods=["POST"])
+def presentation_intake_extract():
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.extract_intake(payload)
+    status_code = 400 if result.get("status") == "error" else 200
+    return jsonify(result), status_code
+
+
+@app.route("/api/presentation_missions/<mission_id>")
+def presentation_mission_detail(mission_id):
+    result = presentation_companion.get_mission_bundle(mission_id)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    return jsonify({
+        "status": "ok",
+        **result,
+    })
+
+
+@app.route("/api/presentation_missions/<mission_id>/script", methods=["POST"])
+def presentation_script_save(mission_id):
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.save_script(mission_id, payload.get("script_sections", []))
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    return jsonify({
+        "status": "ok",
+        **result,
+    })
+
+
+@app.route("/api/presentation_missions/<mission_id>/presentation_state", methods=["GET", "POST"])
+def presentation_state(mission_id):
+    if request.method == "GET":
+        result = presentation_companion.get_presentation_state(mission_id)
+    else:
+        payload = request.get_json(silent=True) or {}
+        result = presentation_companion.update_presentation_state(mission_id, payload)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    return jsonify({
+        "status": "ok",
+        **result,
+    })
+
+
+@app.route("/api/presentation_missions/<mission_id>/presentation_control", methods=["POST"])
+def presentation_control(mission_id):
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.apply_presentation_control(mission_id, payload)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    return jsonify({
+        "status": "ok",
+        **result,
+    })
+
+
+@app.route("/api/presentation_missions/<mission_id>/companion_sync", methods=["GET", "POST"])
+def presentation_companion_sync(mission_id):
+    if request.method == "GET":
+        result = presentation_companion.get_companion_sync_bundle(mission_id)
+    else:
+        payload = request.get_json(silent=True) or {}
+        result = presentation_companion.update_companion_sync(mission_id, payload)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    status_code = 400 if result.get("status") == "error" else 200
+    return jsonify({
+        "status": "ok" if status_code == 200 else "error",
+        **result,
+    }), status_code
+
+
+@app.route("/api/presentation_missions/<mission_id>/pairing_state")
+def presentation_pairing_state(mission_id):
+    result = presentation_companion.get_pairing_bundle(mission_id)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    return jsonify({
+        "status": "ok",
+        **result,
+    })
+
+
+@app.route("/api/presentation_missions/<mission_id>/pairing_start", methods=["POST"])
+def presentation_pairing_start(mission_id):
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.start_pairing(mission_id, payload)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    status_code = 400 if result.get("status") == "error" else 200
+    return jsonify({
+        "status": "ok" if status_code == 200 else "error",
+        **result,
+    }), status_code
+
+
+@app.route("/api/presentation_missions/<mission_id>/pairing_join", methods=["POST"])
+def presentation_pairing_join(mission_id):
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.join_pairing(mission_id, payload)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    status_code = 400 if result.get("status") == "error" else 200
+    return jsonify({
+        "status": "ok" if status_code == 200 else "error",
+        **result,
+    }), status_code
+
+
+@app.route("/api/presentation_missions/<mission_id>/pairing_end", methods=["POST"])
+def presentation_pairing_end(mission_id):
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.end_pairing(mission_id, payload)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    status_code = 400 if result.get("status") == "error" else 200
+    return jsonify({
+        "status": "ok" if status_code == 200 else "error",
+        **result,
+    }), status_code
+
+
+@app.route("/api/presentation_missions/<mission_id>/bridge_state")
+def presentation_bridge_state(mission_id):
+    result = presentation_companion.get_bridge_bundle(mission_id)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    return jsonify({
+        "status": "ok",
+        **result,
+    })
+
+
+@app.route("/api/presentation_missions/<mission_id>/bridge_claim", methods=["POST"])
+def presentation_bridge_claim(mission_id):
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.claim_bridge(mission_id, payload)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    status_code = 400 if result.get("status") == "error" else 200
+    return jsonify({
+        "status": "ok" if status_code == 200 else "error",
+        **result,
+    }), status_code
+
+
+@app.route("/api/presentation_missions/<mission_id>/bridge_release", methods=["POST"])
+def presentation_bridge_release(mission_id):
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.release_bridge(mission_id, payload)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    status_code = 400 if result.get("status") == "error" else 200
+    return jsonify({
+        "status": "ok" if status_code == 200 else "error",
+        **result,
+    }), status_code
+
+
+@app.route("/api/presentation_missions/<mission_id>/rokid_event", methods=["POST"])
+def presentation_rokid_event(mission_id):
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.apply_rokid_event(mission_id, payload)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    status_code = 400 if result.get("status") == "error" else 200
+    return jsonify({
+        "status": "ok" if status_code == 200 else "error",
+        **result,
+    }), status_code
+
+
+@app.route("/api/presentation_missions/<mission_id>/live_hud")
+def presentation_live_hud(mission_id):
+    result = presentation_companion.get_live_hud(mission_id, surface=request.args.get("surface", "rokid_hud"))
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation mission not found.",
+        }), 404
+    return jsonify({
+        "status": "ok",
+        **result,
+    })
+
+
+@app.route("/api/presentation_rehearsals", methods=["POST"])
+def presentation_rehearsals():
+    if request.files:
+        audio_file = request.files.get("audio")
+        try:
+            payload = json.loads(request.form.get("payload", "{}") or "{}")
+        except Exception:
+            payload = {}
+        audio_bytes = audio_file.read() if audio_file else None
+        audio_name = audio_file.filename if audio_file else ""
+        audio_type = audio_file.content_type if audio_file else ""
+    else:
+        payload = request.get_json(silent=True) or {}
+        audio_bytes = None
+        audio_name = ""
+        audio_type = ""
+
+    result = presentation_companion.create_rehearsal(
+        payload=payload,
+        audio_bytes=audio_bytes,
+        audio_filename=audio_name,
+        audio_content_type=audio_type,
+    )
+    status_code = 400 if result.get("status") == "error" else 200
+    return jsonify(result), status_code
+
+
+@app.route("/api/presentation_rehearsals/<rehearsal_id>")
+def presentation_rehearsal_detail(rehearsal_id):
+    result = presentation_companion.get_rehearsal_bundle(rehearsal_id)
+    if not result:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation rehearsal not found.",
+        }), 404
+    return jsonify(result)
+
+
+@app.route("/api/presentation_rehearsals/<rehearsal_id>/analyze", methods=["POST"])
+def presentation_rehearsal_analyze(rehearsal_id):
+    payload = request.get_json(silent=True) or {}
+    result = presentation_companion.analyze_rehearsal(rehearsal_id, payload)
+    status_code = 400 if result.get("status") == "error" else 200
+    return jsonify(result), status_code
+
+
+@app.route("/api/presentation_rehearsals/<rehearsal_id>/hud_summary")
+def presentation_hud_summary(rehearsal_id):
+    hud_summary = presentation_companion.get_hud_summary(rehearsal_id)
+    if not hud_summary:
+        return jsonify({
+            "status": "error",
+            "message": "Presentation rehearsal not found.",
+        }), 404
+    return jsonify({
+        "status": "ok",
+        "hud_summary": hud_summary,
+    })
 
 
 @app.route("/api/multimodal_blueprint")

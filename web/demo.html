@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Storyboard</title>
+    <style>
+        :root {
+            --bg: #f6f1e7;
+            --ink: #20160f;
+            --muted: rgba(32, 22, 15, 0.68);
+            --line: rgba(80, 53, 31, 0.14);
+            --card: rgba(255, 255, 255, 0.76);
+            --shadow: 0 26px 60px rgba(48, 28, 10, 0.10);
+            --round: 26px;
+            --stable: #2f8f83;
+            --load: #c06d28;
+            --productive: #6f8d2c;
+            --offtask: #b54133;
+            --recovery: #3d6ac9;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            min-height: 100%;
+            background:
+                radial-gradient(circle at 18% 16%, rgba(47, 143, 131, 0.10), transparent 24%),
+                radial-gradient(circle at 86% 14%, rgba(192, 109, 40, 0.10), transparent 22%),
+                linear-gradient(180deg, #f9f4ea 0%, #f1e6d8 100%);
+            color: var(--ink);
+            font-family: "Aptos", "Segoe UI", "PingFang SC", sans-serif;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(rgba(80, 53, 31, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(80, 53, 31, 0.03) 1px, transparent 1px);
+            background-size: 52px 52px;
+            opacity: 0.45;
+        }
+
+        main {
+            position: relative;
+            z-index: 1;
+            width: min(1180px, calc(100vw - 40px));
+            margin: 0 auto;
+            padding: 22px 0 34px;
+        }
+
+        .panel {
+            border-radius: var(--round);
+            border: 1px solid var(--line);
+            background: var(--card);
+            backdrop-filter: blur(18px);
+            box-shadow: var(--shadow);
+        }
+
+        .topbar {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 18px;
+            align-items: center;
+            padding: 16px 18px;
+        }
+
+        .brand strong {
+            display: block;
+            font-size: 18px;
+            letter-spacing: 0.03em;
+        }
+
+        .brand span {
+            display: block;
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .nav-link,
+        .chip-switch button {
+            border: 0;
+            border-radius: 999px;
+            padding: 10px 14px;
+            background: rgba(80, 53, 31, 0.06);
+            color: var(--ink);
+            text-decoration: none;
+            cursor: pointer;
+            font: inherit;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .chip-switch {
+            display: inline-flex;
+            gap: 6px;
+            padding: 4px;
+            border-radius: 999px;
+            border: 1px solid rgba(80, 53, 31, 0.10);
+            background: rgba(255, 255, 255, 0.58);
+        }
+
+        .chip-switch button.active {
+            background: #20160f;
+            color: #fff4e3;
+        }
+
+        .hero {
+            margin-top: 16px;
+            padding: 28px;
+            display: grid;
+            grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+            gap: 20px;
+        }
+
+        .eyebrow {
+            color: rgba(32, 22, 15, 0.54);
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            margin: 10px 0 0;
+            font-size: clamp(34px, 4vw, 52px);
+            line-height: 0.96;
+            letter-spacing: -0.05em;
+            max-width: 12ch;
+        }
+
+        .hero-copy {
+            margin: 16px 0 0;
+            max-width: 62ch;
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        .hero-side {
+            border-radius: 22px;
+            padding: 20px;
+            border: 1px solid rgba(80, 53, 31, 0.10);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(243, 234, 222, 0.82));
+            display: grid;
+            gap: 14px;
+        }
+
+        .hero-stat {
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(80, 53, 31, 0.05);
+        }
+
+        .hero-stat span {
+            display: block;
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .hero-stat strong {
+            display: block;
+            margin-top: 8px;
+            font-size: 24px;
+            letter-spacing: -0.04em;
+        }
+
+        .timeline-panel,
+        .stages-panel {
+            margin-top: 18px;
+            padding: 22px;
+        }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: end;
+        }
+
+        .section-head h2 {
+            margin: 0;
+            font-size: 24px;
+            letter-spacing: -0.03em;
+        }
+
+        .section-sub {
+            margin-top: 8px;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        .timeline {
+            margin-top: 20px;
+            display: grid;
+            gap: 16px;
+        }
+
+        .timeline-track {
+            position: relative;
+            min-height: 84px;
+            border-radius: 22px;
+            border: 1px solid rgba(80, 53, 31, 0.10);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(241, 234, 224, 0.85));
+            overflow: hidden;
+        }
+
+        .timeline-track::before {
+            content: "";
+            position: absolute;
+            left: 18px;
+            right: 18px;
+            top: 50%;
+            height: 4px;
+            transform: translateY(-50%);
+            border-radius: 999px;
+            background: rgba(80, 53, 31, 0.10);
+        }
+
+        .timeline-stage {
+            position: absolute;
+            top: 16px;
+            bottom: 16px;
+            border-radius: 18px;
+            padding: 10px 12px;
+            color: #fffaf0;
+            display: grid;
+            align-content: space-between;
+            text-decoration: none;
+            box-shadow: 0 12px 24px rgba(80, 53, 31, 0.12);
+        }
+
+        .timeline-stage strong {
+            font-size: 14px;
+            letter-spacing: -0.02em;
+        }
+
+        .timeline-stage span {
+            font-size: 11px;
+            opacity: 0.88;
+        }
+
+        .stage-stable_focus { background: linear-gradient(135deg, #2f8f83, #225d64); }
+        .stage-load_rising { background: linear-gradient(135deg, #c06d28, #8c4819); }
+        .stage-productive_struggle { background: linear-gradient(135deg, #6f8d2c, #48611c); }
+        .stage-off_task_risk { background: linear-gradient(135deg, #b54133, #7d281f); }
+        .stage-recovery { background: linear-gradient(135deg, #3d6ac9, #2a4f9a); }
+
+        .stages-grid {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .stage-card {
+            border-radius: 22px;
+            padding: 20px;
+            border: 1px solid rgba(80, 53, 31, 0.10);
+            background: rgba(255, 255, 255, 0.78);
+            display: grid;
+            gap: 14px;
+        }
+
+        .stage-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: start;
+        }
+
+        .stage-label {
+            font-size: 11px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .stage-card h3 {
+            margin: 8px 0 0;
+            font-size: 24px;
+            letter-spacing: -0.03em;
+        }
+
+        .stage-pill {
+            border-radius: 999px;
+            padding: 8px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #fffaf0;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .metric {
+            padding: 12px;
+            border-radius: 16px;
+            background: rgba(80, 53, 31, 0.05);
+        }
+
+        .metric span {
+            display: block;
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .metric strong {
+            display: block;
+            margin-top: 6px;
+            font-size: 18px;
+            letter-spacing: -0.03em;
+        }
+
+        .stage-copy {
+            display: grid;
+            gap: 12px;
+        }
+
+        .stage-copy strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .stage-copy p {
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .evidence-list {
+            margin: 0;
+            padding-left: 18px;
+            color: var(--muted);
+        }
+
+        .evidence-list li + li {
+            margin-top: 7px;
+        }
+
+        .empty-card {
+            margin-top: 20px;
+            padding: 18px;
+            border-radius: 18px;
+            border: 1px dashed rgba(80, 53, 31, 0.18);
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.56);
+        }
+
+        @media (max-width: 960px) {
+            .hero,
+            .stages-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-links {
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 640px) {
+            main {
+                width: min(100vw, calc(100vw - 20px));
+            }
+
+            .hero,
+            .timeline-panel,
+            .stages-panel {
+                padding: 18px;
+            }
+
+            .metrics-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <header class="panel topbar">
+            <div class="brand">
+                <strong>Learning State Guardian</strong>
+                <span>Demo Storyboard</span>
+            </div>
+            <div class="chip-switch">
+                <button id="demo-btn" type="button" class="active" onclick="switchDataset('demo')">Demo</button>
+                <button id="live-btn" type="button" onclick="switchDataset('live')">Live</button>
+            </div>
+            <div class="nav-links">
+                <a class="nav-link" id="hud-link" href="/">HUD</a>
+                <a class="nav-link" id="review-link" href="/review">Review</a>
+                <a class="nav-link" id="reflection-link" href="/reflection">Reflection Coach</a>
+            </div>
+        </header>
+
+        <section class="panel hero">
+            <div>
+                <div class="eyebrow">Storyboard Narrative</div>
+                <h1>Show the system as a learning-state proxy coach.</h1>
+                <p id="story-summary" class="hero-copy">
+                    Loading the demo storyboard...
+                </p>
+            </div>
+            <div class="hero-side">
+                <div class="hero-stat">
+                    <span>Dataset</span>
+                    <strong id="dataset-label">Demo</strong>
+                </div>
+                <div class="hero-stat">
+                    <span>Session ID</span>
+                    <strong id="session-label">--</strong>
+                </div>
+                <div class="hero-stat">
+                    <span>Story Stages</span>
+                    <strong id="stage-count">5</strong>
+                </div>
+                <div class="hero-stat">
+                    <span>Boundary</span>
+                    <strong id="boundary-label">Proxy-based narration only</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel timeline-panel">
+            <div class="section-head">
+                <div>
+                    <h2>Demo Timeline</h2>
+                    <div class="section-sub">
+                        Use this strip to walk through the story in order: stable setup, rising pressure, challenge, off-task risk, then recovery.
+                    </div>
+                </div>
+            </div>
+            <div class="timeline">
+                <div id="timeline-track" class="timeline-track"></div>
+                <div id="timeline-empty" class="empty-card" hidden>
+                    No storyboard timeline is available yet. Generate demo assets or run a session first.
+                </div>
+            </div>
+        </section>
+
+        <section class="panel stages-panel">
+            <div class="section-head">
+                <div>
+                    <h2>Stage Cards</h2>
+                    <div class="section-sub">
+                        Each card is phrased conservatively. The explanation layer is based on learning-state proxies and review evidence, not precise attention detection.
+                    </div>
+                </div>
+            </div>
+            <div id="stages-grid" class="stages-grid"></div>
+        </section>
+    </main>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        let activeDataset = params.get("dataset") === "live" ? "live" : "demo";
+        const APP_BASE_URL = window.location.protocol === "file:" ? "http://127.0.0.1:5000" : "";
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll("\"", "&quot;")
+                .replaceAll("'", "&#39;");
+        }
+
+        function titleCase(value) {
+            return String(value || "")
+                .split(/[-_\s]+/)
+                .filter(Boolean)
+                .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+                .join(" ");
+        }
+
+        function formatMetric(value) {
+            const numeric = Number(value);
+            return Number.isFinite(numeric) ? numeric.toFixed(1) : "--";
+        }
+
+        function switchDataset(dataset) {
+            activeDataset = dataset === "live" ? "live" : "demo";
+            document.getElementById("demo-btn").classList.toggle("active", activeDataset === "demo");
+            document.getElementById("live-btn").classList.toggle("active", activeDataset === "live");
+            const query = new URLSearchParams(window.location.search);
+            query.set("dataset", activeDataset);
+            window.history.replaceState({}, "", `${window.location.pathname}?${query.toString()}`);
+            syncNavLinks();
+            loadStoryboard();
+        }
+
+        function syncNavLinks() {
+            document.getElementById("hud-link").href = `${APP_BASE_URL}/`;
+            document.getElementById("review-link").href = `${APP_BASE_URL}/review?dataset=${activeDataset}`;
+            document.getElementById("reflection-link").href = `${APP_BASE_URL}/reflection?dataset=${activeDataset}`;
+        }
+
+        function renderTimeline(stages) {
+            const host = document.getElementById("timeline-track");
+            const empty = document.getElementById("timeline-empty");
+            host.innerHTML = "";
+            const validStages = (stages || []).filter(stage => Number.isFinite(Number(stage.start_sample)) && Number.isFinite(Number(stage.end_sample)));
+            if (!validStages.length) {
+                empty.hidden = false;
+                host.hidden = true;
+                return;
+            }
+            empty.hidden = true;
+            host.hidden = false;
+            const maxSample = Math.max(...validStages.map(stage => Number(stage.end_sample || 0)), 1);
+            validStages.forEach((stage) => {
+                const block = document.createElement("a");
+                block.href = `#${stage.stage_key}`;
+                block.className = `timeline-stage stage-${stage.stage_key}`;
+                const start = Number(stage.start_sample || 0);
+                const end = Number(stage.end_sample || start);
+                const left = ((Math.max(0, start - 1)) / maxSample) * 100;
+                const width = Math.max(10, ((Math.max(1, end - start + 1)) / maxSample) * 100);
+                block.style.left = `${Math.min(92, left)}%`;
+                block.style.width = `${Math.min(100 - left, width)}%`;
+                block.innerHTML = `
+                    <strong>${escapeHtml(titleCase(stage.stage_key))}</strong>
+                    <span>${escapeHtml(stage.time_range || "Unavailable")}</span>
+                `;
+                host.appendChild(block);
+            });
+        }
+
+        function renderStages(stages) {
+            const host = document.getElementById("stages-grid");
+            host.innerHTML = "";
+            (stages || []).forEach((stage) => {
+                const metrics = stage.key_metrics || {};
+                const evidenceItems = Array.isArray(stage.evidence) && stage.evidence.length
+                    ? stage.evidence.map(item => `<li>${escapeHtml(item)}</li>`).join("")
+                    : "<li>No stage evidence is available yet.</li>";
+                const card = document.createElement("article");
+                card.className = "stage-card";
+                card.id = stage.stage_key || "";
+                card.innerHTML = `
+                    <div class="stage-top">
+                        <div>
+                            <div class="stage-label">${escapeHtml(stage.stage_title || "Storyboard Stage")}</div>
+                            <h3>${escapeHtml(titleCase(stage.stage_key || "stage"))}</h3>
+                            <div class="section-sub">${escapeHtml(stage.time_range || "Unavailable")}</div>
+                        </div>
+                        <div class="stage-pill stage-${stage.stage_key}">${escapeHtml(titleCase(stage.stage_key || "stage"))}</div>
+                    </div>
+                    <div class="metrics-grid">
+                        <div class="metric"><span>Load</span><strong>${escapeHtml(formatMetric(metrics.avg_load))}</strong></div>
+                        <div class="metric"><span>Focus</span><strong>${escapeHtml(formatMetric(metrics.avg_focus))}</strong></div>
+                        <div class="metric"><span>Alignment</span><strong>${escapeHtml(formatMetric(metrics.avg_alignment))}</strong></div>
+                        <div class="metric"><span>Switching</span><strong>${escapeHtml(formatMetric(metrics.avg_switching))}</strong></div>
+                        <div class="metric"><span>Fatigue</span><strong>${escapeHtml(formatMetric(metrics.avg_fatigue))}</strong></div>
+                        <div class="metric"><span>Stability</span><strong>${escapeHtml(formatMetric(metrics.avg_stability))}</strong></div>
+                    </div>
+                    <div class="stage-copy">
+                        <div>
+                            <strong>What User Sees</strong>
+                            <p>${escapeHtml(stage.what_user_sees || "No detail available.")}</p>
+                        </div>
+                        <div>
+                            <strong>What System Infers</strong>
+                            <p>${escapeHtml(stage.what_system_infers || "No detail available.")}</p>
+                        </div>
+                        <div>
+                            <strong>Speaker Notes</strong>
+                            <p>${escapeHtml(stage.speaker_notes || "No presenter note available.")}</p>
+                        </div>
+                        <div>
+                            <strong>Evidence</strong>
+                            <ul class="evidence-list">${evidenceItems}</ul>
+                        </div>
+                        <div>
+                            <strong>Transition To Next Stage</strong>
+                            <p>${escapeHtml(stage.transition_to_next_stage || "No transition note available.")}</p>
+                        </div>
+                    </div>
+                `;
+                host.appendChild(card);
+            });
+        }
+
+        async function loadStoryboard() {
+            const query = new URLSearchParams({ dataset: activeDataset });
+            try {
+                const response = await fetch(`${APP_BASE_URL}/api/demo_storyboard?${query.toString()}`);
+                const payload = await response.json();
+                document.getElementById("dataset-label").innerText = String(payload.dataset || activeDataset).toUpperCase();
+                document.getElementById("session-label").innerText = payload.session_id || "--";
+                document.getElementById("stage-count").innerText = String((payload.stages || []).length || 0);
+                document.getElementById("boundary-label").innerText = payload.empty ? "Awaiting demo data" : "Conservative proxy narrative";
+                document.getElementById("story-summary").innerText = payload.story_summary || "No storyboard summary is available yet.";
+                renderTimeline(payload.stages || []);
+                renderStages(payload.stages || []);
+            } catch (error) {
+                document.getElementById("dataset-label").innerText = String(activeDataset).toUpperCase();
+                document.getElementById("session-label").innerText = "--";
+                document.getElementById("stage-count").innerText = "0";
+                document.getElementById("boundary-label").innerText = "Backend unavailable";
+                document.getElementById("story-summary").innerText =
+                    "The demo storyboard API is unavailable. Start the local Flask app, then refresh this page.";
+                renderTimeline([]);
+                renderStages([]);
+                console.error(error);
+            }
+        }
+
+        syncNavLinks();
+        loadStoryboard();
+    </script>
+</body>
+</html>

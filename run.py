@@ -21,6 +21,11 @@ def parse_args():
 def main():
     args = parse_args()
     root = os.path.dirname(os.path.abspath(__file__))
+    server_bootstrap = (
+        "import bootstrap_windows_runtime; "
+        "import serve_app; "
+        "serve_app.main()"
+    )
 
     print("=" * 52)
     print("Focus Project | Rokid Learning State Guardian")
@@ -34,7 +39,10 @@ def main():
 
     print("Starting Flask HUD service...")
     app_proc = subprocess.Popen(
-        [sys.executable, "app.py"],
+        # Launch through an import-based entrypoint instead of executing
+        # app.py directly. This keeps the long-running Flask process aligned
+        # with the latest `app` module helpers on Windows.
+        [sys.executable, "-B", "-c", server_bootstrap],
         cwd=root,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.STDOUT,
