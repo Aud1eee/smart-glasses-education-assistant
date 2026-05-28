@@ -157,7 +157,7 @@ For each scenario, record:
 
 Use the worksheet generator if you want a ready-to-fill form:
 
-- `.\generate_scene_calibration_sheet.ps1`
+- `.\scripts\legacy\generate_scene_calibration_sheet.ps1`
 
 Output:
 

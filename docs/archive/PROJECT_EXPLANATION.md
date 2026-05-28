@@ -355,17 +355,17 @@ The validation layer includes:
 
 The main outputs are:
 
-- [validation_summary.md](</C:/Users/11721/Desktop/focus_project_windows/exports/validation_summary.md>)
-- [validation_summary.json](</C:/Users/11721/Desktop/focus_project_windows/exports/validation_summary.json>)
-- [THESIS_EXPERIMENT_DRAFT.md](</C:/Users/11721/Desktop/focus_project_windows/THESIS_EXPERIMENT_DRAFT.md>)
+- `exports/validation_summary.md`
+- `exports/validation_summary.json`
+- [docs/research/THESIS_EXPERIMENT_DRAFT.md](../research/THESIS_EXPERIMENT_DRAFT.md)
 
 The validation launcher for Windows is:
 
-- [generate_validation_report.ps1](</C:/Users/11721/Desktop/focus_project_windows/generate_validation_report.ps1>)
+- [scripts/legacy/generate_validation_report.ps1](../../scripts/legacy/generate_validation_report.ps1)
 
 For paper writing and defense preparation, the preferred human-readable writeup is:
 
-- [THESIS_EXPERIMENT_DRAFT.md](</C:/Users/11721/Desktop/focus_project_windows/THESIS_EXPERIMENT_DRAFT.md>)
+- [docs/research/THESIS_EXPERIMENT_DRAFT.md](../research/THESIS_EXPERIMENT_DRAFT.md)
 
 ## 2.2 Multimodal future-work framework
 
@@ -373,11 +373,11 @@ The next algorithm-development direction is no longer "make the posture score mo
 
 The preferred planning document is:
 
-- [MULTIMODAL_FUTURE_WORK.md](</C:/Users/11721/Desktop/focus_project_windows/MULTIMODAL_FUTURE_WORK.md>)
+- [docs/research/MULTIMODAL_FUTURE_WORK.md](../research/MULTIMODAL_FUTURE_WORK.md)
 
 The project also now includes a lightweight code-level blueprint:
 
-- [multimodal_schema.py](</C:/Users/11721/Desktop/focus_project_windows/core/multimodal_schema.py>)
+- [core/multimodal_schema.py](../../core/multimodal_schema.py)
 - `/api/multimodal_blueprint`
 
 This blueprint separates the future system into four branches:
@@ -440,7 +440,7 @@ This means the Rokid branch is currently best described as:
 
 To make the first-person logic adjustable without changing source code, the project now includes a runtime tuning surface:
 
-- [rokid_debug.html](</C:/Users/11721/Desktop/focus_project_windows/web/rokid_debug.html>)
+- [web/rokid_debug.html](../../web/rokid_debug.html)
 
 The tuning page can:
 
@@ -497,8 +497,8 @@ The local profile store is:
 
 The project now also includes a **standardized Rokid calibration method**:
 
-- [ROKID_SCENE_CALIBRATION_PROTOCOL.md](</C:/Users/11721/Desktop/focus_project_windows/ROKID_SCENE_CALIBRATION_PROTOCOL.md>)
-- [generate_scene_calibration_sheet.ps1](</C:/Users/11721/Desktop/focus_project_windows/generate_scene_calibration_sheet.ps1>)
+- [docs/research/ROKID_SCENE_CALIBRATION_PROTOCOL.md](../research/ROKID_SCENE_CALIBRATION_PROTOCOL.md)
+- [scripts/legacy/generate_scene_calibration_sheet.ps1](../../scripts/legacy/generate_scene_calibration_sheet.ps1)
 
 The protocol defines four standard first-person scenarios:
 
@@ -535,7 +535,7 @@ Its purpose is to prove that future multimodal work has already been structured 
 
 ### 3.1 Deterministic demo simulator
 
-The simulator is implemented in [simulate_motion.py](</C:/Users/11721/Desktop/focus_project_windows/simulate_motion.py:1>).
+The simulator is implemented in [simulate_motion.py](../../simulate_motion.py).
 
 Its role is to produce a **repeatable demo sequence** instead of random-only motion.
 
@@ -557,7 +557,7 @@ This is important because it makes the project easier to demonstrate in a gradua
 
 ### 3.2 Learning-state scoring
 
-The posture-based scoring logic is implemented in [core/posture.py](</C:/Users/11721/Desktop/focus_project_windows/core/posture.py:5>).
+The posture-based scoring logic is implemented in [core/posture.py](../../core/posture.py).
 
 The current system now uses a **task-mode-aware posture proxy** instead of a single raw focus formula.
 
@@ -608,7 +608,7 @@ This stage is best described as a **task-mode-aware, posture-based learning-stat
 
 ### 3.3 Adaptive focus regulation
 
-The real-time regulation logic is implemented in [core/focus_session.py](</C:/Users/11721/Desktop/focus_project_windows/core/focus_session.py:4>).
+The real-time regulation logic is implemented in [core/focus_session.py](../../core/focus_session.py).
 
 This engine converts raw state values into presentation-level labels and guidance, such as:
 
@@ -641,8 +641,8 @@ After the recent refactor, the regulation logic no longer depends only on `load_
 
 The Flask service and the HUD are connected through:
 
-- [app.py](</C:/Users/11721/Desktop/focus_project_windows/app.py:16>)
-- [web/index.html](</C:/Users/11721/Desktop/focus_project_windows/web/index.html:204>)
+- [app.py](../../app.py)
+- [web/index.html](../../web/index.html)
 
 The current input layer exposes two runtime paths:
 
@@ -673,7 +673,7 @@ This path should be described as a **scene-derived learning-state proxy**, not a
 
 In the current Windows bundled runtime, this frame path still depends on native OpenCV availability. If OpenCV is not available in that runtime, the endpoint remains useful as an interface scaffold, but the actual scene-driven proxy extraction will stay in a degraded `frame_unavailable` state until an OpenCV-capable runtime is used.
 
-To support this path locally, `start_windows.ps1` now prefers a Python runtime that can successfully import `cv2`, which means the launcher will fall back to the project `.venv` when the bundled runtime does not provide native OpenCV support.
+To support this path locally, `scripts/legacy/start_windows.ps1` now prefers a Python runtime that can successfully import `cv2`, which means the launcher will fall back to the project `.venv` when the bundled runtime does not provide native OpenCV support.
 
 To make this path easier to inspect during development, the system now includes a dedicated **Rokid frame debug page**:
 
@@ -685,7 +685,7 @@ To make this path easier to inspect during development, the system now includes 
 For continuous local validation, the project now also includes a **frame-stream test chain**:
 
 - `stream_rokid_frames.py`
-- `start_rokid_frame_stream.ps1`
+- `scripts/legacy/start_rokid_frame_stream.ps1`
 
 This chain reads from an image loop, a video file, or a camera source, then continuously posts frames into `/api/v1/rokid/frame`. It is meant to answer the practical question:
 
@@ -742,7 +742,7 @@ This makes the system easier to explain as a **glasses-oriented HUD prototype** 
 
 For local Windows use, the launcher now defaults to a **serve-only mode**:
 
-- `start_windows.ps1` runs `run.py --serve-only`
+- `scripts/legacy/start_windows.ps1` runs `run.py --serve-only`
 - the default VSCode profile `Run Focus Project` also uses this mode
 - this keeps the Flask HUD alive for browser testing instead of dropping into the old console menu flow
 
@@ -755,9 +755,9 @@ If the analytics console menu is needed, it is still available through:
 
 The demo asset generation pipeline is implemented in:
 
-- [analytics/generate_demo_assets.py](</C:/Users/11721/Desktop/focus_project_windows/analytics/generate_demo_assets.py:29>)
-- [analytics/analyze_report.py](</C:/Users/11721/Desktop/focus_project_windows/analytics/analyze_report.py:9>)
-- [generate_demo_assets.ps1](</C:/Users/11721/Desktop/focus_project_windows/generate_demo_assets.ps1:1>)
+- [analytics/generate_demo_assets.py](../../analytics/generate_demo_assets.py)
+- [analytics/analyze_report.py](../../analytics/analyze_report.py)
+- [scripts/legacy/generate_demo_assets.ps1](../../scripts/legacy/generate_demo_assets.ps1)
 
 Its purpose is:
 
@@ -769,7 +769,7 @@ This is very useful for defense preparation, because it produces stable and reus
 
 ### 3.6 Difficulty event marker
 
-The difficulty-event marker is implemented in [core/difficulty_marker.py](</C:/Users/11721/Desktop/focus_project_windows/core/difficulty_marker.py:4>).
+The difficulty-event marker is implemented in [core/difficulty_marker.py](../../core/difficulty_marker.py).
 
 Its purpose is to detect a **sustained difficult segment**, instead of only showing instantaneous load values.
 
@@ -804,9 +804,9 @@ This is important because the system now moves from general state monitoring to 
 
 The review page is implemented through:
 
-- [app.py](</C:/Users/11721/Desktop/focus_project_windows/app.py:67>)
-- [utils/storage.py](</C:/Users/11721/Desktop/focus_project_windows/utils/storage.py:213>)
-- [web/review.html](</C:/Users/11721/Desktop/focus_project_windows/web/review.html:1>)
+- [app.py](../../app.py)
+- [utils/storage.py](../../utils/storage.py)
+- [web/review.html](../../web/review.html)
 
 Its purpose is to convert difficulty-event logs into a **review-first action page**.
 
@@ -836,8 +836,8 @@ It becomes:
 
 The clean demonstration data is stored in:
 
-- [demo_study_report.csv](</C:/Users/11721/Desktop/focus_project_windows/data/demo_study_report.csv>)
-- [demo_difficulty_events.csv](</C:/Users/11721/Desktop/focus_project_windows/data/demo_difficulty_events.csv>)
+- [data/demo_study_report.csv](../../data/demo_study_report.csv)
+- [data/demo_difficulty_events.csv](../../data/demo_difficulty_events.csv)
 
 This file is generated by running the same internal scoring logic used by the real system. It is not hand-written fake data.
 
@@ -882,7 +882,7 @@ The session field is important because the project now supports **multiple reset
 
 The clean demonstration heatmap is stored in:
 
-- [demo_attention_heatmap.png](</C:/Users/11721/Desktop/focus_project_windows/exports/demo_attention_heatmap.png>)
+- `exports/demo_attention_heatmap.png`
 
 This figure now has four layers under the upgraded algorithm framework.
 

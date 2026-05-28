@@ -73,13 +73,13 @@ You do not need `OPENAI_API_KEY` for this path.
 In one terminal:
 
 ```powershell
-.\start_windows.ps1
+.\scripts\legacy\start_windows.ps1
 ```
 
 If needed, in a second terminal:
 
 ```powershell
-.\start_simulator.ps1
+.\scripts\legacy\start_simulator.ps1
 ```
 
 Open:

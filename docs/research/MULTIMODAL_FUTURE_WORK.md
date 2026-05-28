@@ -155,11 +155,11 @@ This is the stage where the system gets closer to a genuinely multimodal learnin
 
 The project already contains a lightweight multimodal blueprint layer:
 
-- [multimodal_schema.py](</C:/Users/11721/Desktop/focus_project_windows/core/multimodal_schema.py>)
+- [core/multimodal_schema.py](../../core/multimodal_schema.py)
 
 It also exposes an explanatory API:
 
-- [app.py](/C:/Users/11721/Desktop/focus_project_windows/app.py:1) route `/api/multimodal_blueprint`
+- [app.py](../../app.py) route `/api/multimodal_blueprint`
 
 The goal of that endpoint is not to participate in inference immediately. Instead, it makes three things explicit:
 

@@ -7,7 +7,7 @@ Read this file first before exploring the rest of the project.
 - Project name: `Focus Project`
 - Current presentation name: `Learning State Guardian`
 - Domain: `AI glasses for education / Rokid glasses`
-- Main environment for future work: `C:\Users\11721\Desktop\focus_project_windows`
+- Main environment for future work: the local project workspace root
 
 ## Team-positioning summary
 
@@ -65,8 +65,8 @@ The current demo-ready checkpoint includes:
 - runtime badges and exporter-version hints in the reflection UI
 - Windows startup stabilization for the Flask backend
 - repeatable validation through:
-  - `generate_validation_report.ps1`
-  - `generate_reflection_smoke_report.ps1`
+  - `scripts/legacy/generate_validation_report.ps1`
+  - `scripts/legacy/generate_reflection_smoke_report.ps1`
 
 ## Current implementation status
 
@@ -112,11 +112,11 @@ The current demo-ready checkpoint includes:
   - generated outputs:
     - `exports/validation_summary.md`
     - `exports/validation_summary.json`
-    - `THESIS_EXPERIMENT_DRAFT.md`
+    - `docs/research/THESIS_EXPERIMENT_DRAFT.md`
   - Windows launcher:
-    - `generate_validation_report.ps1`
+    - `scripts/legacy/generate_validation_report.ps1`
 - future-work algorithm framework with:
-  - [MULTIMODAL_FUTURE_WORK.md](</C:/Users/11721/Desktop/focus_project_windows/MULTIMODAL_FUTURE_WORK.md>)
+  - [docs/research/MULTIMODAL_FUTURE_WORK.md](docs/research/MULTIMODAL_FUTURE_WORK.md)
   - code-level placeholder schema:
     - `core/multimodal_schema.py`
   - explanation API:
@@ -247,7 +247,7 @@ The current demo-ready checkpoint includes:
   - `study_surface_score`
   - `scene_lock_score`
 - the runtime now includes a **Rokid scene tuning page** in:
-  - [rokid_debug.html](</C:/Users/11721/Desktop/focus_project_windows/web/rokid_debug.html>)
+  - [web/rokid_debug.html](web/rokid_debug.html)
 - the tuning page can:
   - read current posture and frame-adapter thresholds
   - apply threshold overrides without editing code
@@ -277,9 +277,9 @@ The current demo-ready checkpoint includes:
   - `data/rokid_scene_profiles.json`
 - that JSON store should stay local and should not be committed as team source code
 - a standard Rokid calibration method is now documented in:
-  - [ROKID_SCENE_CALIBRATION_PROTOCOL.md](</C:/Users/11721/Desktop/focus_project_windows/ROKID_SCENE_CALIBRATION_PROTOCOL.md>)
+  - [docs/research/ROKID_SCENE_CALIBRATION_PROTOCOL.md](docs/research/ROKID_SCENE_CALIBRATION_PROTOCOL.md)
 - a fillable worksheet can now be generated with:
-  - `generate_scene_calibration_sheet.ps1`
+  - `scripts/legacy/generate_scene_calibration_sheet.ps1`
 - that generator writes:
   - `exports/rokid_scene_calibration_sheet.md`
   - it should not be described as simple distraction
@@ -314,13 +314,13 @@ The current demo-ready checkpoint includes:
 - `.vscode/launch.json`
 - `.vscode/tasks.json`
 - `.vscode/settings.json`
-- `setup_windows.ps1`
-- `start_windows.ps1`
-- `start_simulator.ps1`
+- `scripts/legacy/setup_windows.ps1`
+- `scripts/legacy/start_windows.ps1`
+- `scripts/legacy/start_simulator.ps1`
 
 ### Windows launcher behavior
 
-- `start_windows.ps1` now starts `run.py --serve-only` by default
+- `scripts/legacy/start_windows.ps1` now starts `run.py --serve-only` by default
 - the default VSCode config `Run Focus Project` also uses `--serve-only`
 - this avoids the old issue where the interactive console menu could exit and stop the Flask HUD child process at the same time
 - if analytics menu access is needed, use:
@@ -491,7 +491,7 @@ This was checked with `analytics/verify_demo_states.py` using the deterministic 
 
 There is now a non-destructive demo asset flow:
 
-- `generate_demo_assets.ps1`
+- `scripts/legacy/generate_demo_assets.ps1`
 - `analytics/generate_demo_assets.py`
 
 It creates:
@@ -658,7 +658,7 @@ New HUD interaction highlights:
   - active scene features include `scene_content_score / scene_text_score / scene_stability_score / scene_switch_rate / study_surface_score / scene_lock_score / blur_score / brightness_score`
   - scene quality is folded into the active uncertainty path, so blurred, low-visibility, or content-sparse frames degrade into `Signal check` instead of fake stability
   - in the current Windows bundled runtime, this path still depends on native OpenCV availability; if OpenCV is missing, the adapter stays in scaffold mode and reports `frame_unavailable` / `opencv-unavailable`
-  - `start_windows.ps1` now prefers a Python runtime that can actually import `cv2`, so local app startup will choose the OpenCV-capable `.venv` when needed
+  - `scripts/legacy/start_windows.ps1` now prefers a Python runtime that can actually import `cv2`, so local app startup will choose the OpenCV-capable `.venv` when needed
 - a dedicated Rokid frame debug surface is now part of the local workflow:
   - `/rokid_debug` renders `web/rokid_debug.html`
   - it accepts upload, local-path, and demo-image probes for `/api/v1/rokid/frame`
@@ -666,11 +666,11 @@ New HUD interaction highlights:
   - HUD now links to it with `K`, and the review page also exposes a `Rokid Debug` entry
 - a continuous Rokid frame-stream test chain is now available:
   - `stream_rokid_frames.py` continuously posts JPEG frames into `/api/v1/rokid/frame`
-  - `start_rokid_frame_stream.ps1` is the Windows launcher for `image / video / camera` sources
+  - `scripts/legacy/start_rokid_frame_stream.ps1` is the Windows launcher for `image / video / camera` sources
   - it can optionally reset, warm up, calibrate, and restart a session before the measured run
   - terminal output now shows `tracking_state / tracking_confidence / state_hint / alignment / load / fatigue / study_surface / scene_lock` per frame
 - recent-paper rationale for the scene-driven Rokid path is now stored in:
-  - `ROKID_SCENE_LOGIC_LITERATURE.md`
+  - `docs/research/ROKID_SCENE_LOGIC_LITERATURE.md`
 - the adapter keeps the active runtime constrained to Rokid-realistic signals:
   - `pitch / yaw / roll`
   - optional `motion_intensity`
@@ -763,7 +763,7 @@ If future context is tight, start with:
 
 The long-form explanation draft now lives in:
 
-- `PROJECT_EXPLANATION.md`
+- `docs/archive/PROJECT_EXPLANATION.md`
 
 This should be the main expandable document for:
 

@@ -158,8 +158,8 @@ That means the remote provider can fail without breaking the reflection page.
 
 This project now includes a lightweight mock service:
 
-- [mock_reflection_provider.py](/C:/Users/11721/Desktop/focus_project_windows/mock_reflection_provider.py:1)
-- [start_mock_reflection_provider.ps1](/C:/Users/11721/Desktop/focus_project_windows/start_mock_reflection_provider.ps1:1)
+- [mock_reflection_provider.py](../../mock_reflection_provider.py)
+- [scripts/legacy/start_mock_reflection_provider.ps1](../../scripts/legacy/start_mock_reflection_provider.ps1)
 
 Default mock endpoint:
 
@@ -174,7 +174,7 @@ Health check:
 1. Start the mock provider:
 
 ```powershell
-.\start_mock_reflection_provider.ps1
+.\scripts\legacy\start_mock_reflection_provider.ps1
 ```
 
 2. Set `.env`:
@@ -188,7 +188,7 @@ REFLECTION_REMOTE_LABEL=mock-reflection-provider
 3. Start the main project:
 
 ```powershell
-.\start_windows.ps1
+.\scripts\legacy\start_windows.ps1
 ```
 
 4. Open:

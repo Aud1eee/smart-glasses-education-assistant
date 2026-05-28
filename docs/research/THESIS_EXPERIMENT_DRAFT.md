@@ -4,8 +4,8 @@ This document turns the current validation results into a version that is suitab
 
 Related raw validation artifacts:
 
-- [validation_summary.md](</C:/Users/11721/Desktop/focus_project_windows/exports/validation_summary.md>)
-- [validation_summary.json](</C:/Users/11721/Desktop/focus_project_windows/exports/validation_summary.json>)
+- `exports/validation_summary.md`
+- `exports/validation_summary.json`
 
 ## 1. Experiment Goal
 
@@ -39,12 +39,12 @@ The validated target is the learning-state sensing backend in this project, main
 
 The validation was executed in the current Windows local project copy:
 
-- [focus_project_windows](</C:/Users/11721/Desktop/focus_project_windows>)
+- `focus_project_windows`
 
 Command:
 
 ```powershell
-.\generate_validation_report.ps1
+.\scripts\legacy\generate_validation_report.ps1
 ```
 
 That command automatically runs two parts:
@@ -54,8 +54,8 @@ That command automatically runs two parts:
 
 Output files:
 
-- [validation_summary.md](</C:/Users/11721/Desktop/focus_project_windows/exports/validation_summary.md>)
-- [validation_summary.json](</C:/Users/11721/Desktop/focus_project_windows/exports/validation_summary.json>)
+- `exports/validation_summary.md`
+- `exports/validation_summary.json`
 
 ## 4. Experiment Design
 
@@ -78,8 +78,8 @@ Because of that, for both `stable` and `recovery`, a tail-dominant state of eith
 
 Beyond single-scenario checks, the project also runs an end-to-end validation of the full demo pipeline. That flow automatically generates:
 
-- [demo_study_report.csv](</C:/Users/11721/Desktop/focus_project_windows/data/demo_study_report.csv>)
-- [demo_difficulty_events.csv](</C:/Users/11721/Desktop/focus_project_windows/data/demo_difficulty_events.csv>)
+- [data/demo_study_report.csv](../../data/demo_study_report.csv)
+- [data/demo_difficulty_events.csv](../../data/demo_difficulty_events.csv)
 
 It then checks:
 
