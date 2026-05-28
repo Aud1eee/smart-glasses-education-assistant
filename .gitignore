@@ -15,6 +15,7 @@ exports/state_validation_report.md
 exports/state_validation_metrics.json
 exports/state_classifier_model.joblib
 exports/reflection_report.md
+exports/demo_storyboard.md
 # `exports/*.png` already covers `exports/state_confusion_matrix.png`.
 data/state_labels.csv
 data/state_labels_draft.csv

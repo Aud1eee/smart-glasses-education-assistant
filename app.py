@@ -12,6 +12,7 @@ from flask import Flask, jsonify, render_template, request, send_from_directory,
 from flask_cors import CORS
 import pandas as pd
 
+from core.demo_storyboard import build_demo_storyboard
 from core.difficulty_marker import DifficultyEventMarker
 from core.edu import EduEngine
 from core.focus_session import FocusSessionEngine
@@ -346,6 +347,16 @@ def _build_reflection_coach_summary(session_id=None, dataset="live", event_id=No
         session_id=review_payload.get("session_id") or session_id,
         dataset=dataset,
         event_id=event_id,
+    )
+
+
+def _build_demo_storyboard_payload(session_id=None, dataset="demo"):
+    return build_demo_storyboard(
+        logger=logger,
+        reflection_coach=reflection_coach,
+        dataset=dataset,
+        session_id=session_id,
+        features_path=STATE_WINDOW_FEATURES_PATH,
     )
 
 
@@ -1488,6 +1499,11 @@ def reflection_page():
     return render_template("reflection.html")
 
 
+@app.route("/demo")
+def demo_storyboard_page():
+    return render_template("demo.html")
+
+
 @app.route("/presentation")
 @app.route("/presentations")
 @app.route("/presentation/controller")
@@ -1730,6 +1746,16 @@ def reflection_coach_review_summary():
         session_id=session_id,
         dataset=dataset,
         event_id=event_id,
+    ))
+
+
+@app.route("/api/demo_storyboard")
+def demo_storyboard_summary():
+    dataset = str(request.args.get("dataset", "demo")).strip().lower() or "demo"
+    session_id = str(request.args.get("session_id", "")).strip() or None
+    return jsonify(_build_demo_storyboard_payload(
+        session_id=session_id,
+        dataset=dataset,
     ))
 
 
