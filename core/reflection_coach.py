@@ -156,6 +156,69 @@ class ReflectionCoach:
 
         return payload
 
+    def build_review_summary_payload(
+        self,
+        review_payload=None,
+        difficulty_events=None,
+        validation_summary=None,
+        session_id=None,
+        dataset="live",
+        event_id=None,
+    ):
+        review_payload = review_payload if isinstance(review_payload, dict) else self.logger.build_review_payload(
+            session_id=session_id,
+            dataset=dataset,
+        )
+        summary = review_payload.get("summary", {}) if isinstance(review_payload, dict) else {}
+        dataset_name = str(review_payload.get("dataset", dataset)).strip().lower() if isinstance(review_payload, dict) else str(dataset).strip().lower()
+        dataset_name = dataset_name or "live"
+        resolved_session_id = str(review_payload.get("session_id", session_id or "")).strip() if isinstance(review_payload, dict) else str(session_id or "").strip()
+        events = difficulty_events if isinstance(difficulty_events, list) else review_payload.get("events", [])
+        selected_event = self._pick_review_event(
+            events,
+            requested_event_id=event_id,
+            fallback=review_payload.get("highlight_event") if isinstance(review_payload, dict) else None,
+        )
+        selected_event_id = selected_event.get("event_id") if isinstance(selected_event, dict) else None
+        heuristic_payload = self.build_payload(
+            session_id=resolved_session_id or None,
+            dataset=dataset_name,
+            event_id=selected_event_id,
+            use_llm=False,
+            provider_override="heuristic",
+        )
+
+        return {
+            "status": "ok",
+            "dataset": dataset_name,
+            "session_id": resolved_session_id,
+            "selected_event_id": self._safe_int(selected_event_id, default=0) or None,
+            "empty": bool(heuristic_payload.get("empty", False)),
+            "session_summary": self._build_review_session_summary(
+                review_payload,
+                heuristic_payload,
+                selected_event=selected_event,
+                validation_summary=validation_summary,
+            ),
+            "key_moments": self._build_review_key_moments(
+                review_payload,
+                heuristic_payload,
+                selected_event=selected_event,
+                validation_summary=validation_summary,
+            ),
+            "reflection_questions": [
+                str(item.get("question", "")).strip()
+                for item in heuristic_payload.get("reflection_questions", [])
+                if isinstance(item, dict) and str(item.get("question", "")).strip()
+            ][:3],
+            "next_actions": self._build_review_next_actions(review_payload, heuristic_payload),
+            "encouragement": self._build_review_encouragement(heuristic_payload),
+            "module_boundary": (
+                "Reflection Coach is a post-session reflection aid built from learning-state proxies, "
+                "difficulty markers, and study context. It does not diagnose mental state or precisely detect attention."
+            ),
+        }
+
     def provider_status(self, provider_override="auto", model_override=""):
         model_override = self._clean_model_name(model_override)
         requested_provider, configured_provider, effective_provider = self._resolve_provider_request(provider_override)
@@ -554,6 +617,210 @@ class ReflectionCoach:
             f"{int(round(self._safe_float(summary.get('low_confidence_ratio', 0))))}% low-confidence exposure."
             f"{event_line} The next coaching boundary is: {signature['next_boundary']}.{note_line}{goal_line}"
         ).strip()
+
+    def _pick_review_event(self, events, requested_event_id=None, fallback=None):
+        valid_events = [event for event in (events or []) if isinstance(event, dict)]
+        requested = self._safe_int(requested_event_id, default=0)
+        if requested:
+            for event in valid_events:
+                if self._safe_int(event.get("event_id"), default=0) == requested:
+                    return event
+        if isinstance(fallback, dict) and fallback:
+            fallback_id = self._safe_int(fallback.get("event_id"), default=0)
+            if fallback_id:
+                for event in valid_events:
+                    if self._safe_int(event.get("event_id"), default=0) == fallback_id:
+                        return event
+            return fallback
+        return valid_events[0] if valid_events else None
+
+    def _title_case_label(self, value):
+        return " ".join(
+            part.capitalize()
+            for part in str(value or "").replace("-", "_").split("_")
+            if part
+        )
+
+    def _selected_validation_window(self, validation_summary):
+        if not isinstance(validation_summary, dict):
+            return None
+        selected = validation_summary.get("selected_window")
+        if isinstance(selected, dict) and selected:
+            return selected
+        recent = validation_summary.get("recent_windows", [])
+        if isinstance(recent, list) and recent:
+            candidate = recent[-1]
+            return candidate if isinstance(candidate, dict) else None
+        return None
+
+    def _build_review_session_summary(self, review_payload, heuristic_payload, selected_event=None, validation_summary=None):
+        if bool(heuristic_payload.get("empty", False)):
+            return (
+                "No session data is available yet. Run a live or demo study session first, then come back for a "
+                "proxy-based reflection summary."
+            )
+
+        summary = review_payload.get("summary", {}) if isinstance(review_payload, dict) else {}
+        coach_summary = heuristic_payload.get("coach_summary", {}) if isinstance(heuristic_payload, dict) else {}
+        validation_window = self._selected_validation_window(validation_summary)
+        primary_mode = self._title_case_label(summary.get("primary_task_mode", "reading") or "reading")
+        duration_label = str(summary.get("duration_label", "00:00")).strip() or "00:00"
+        avg_load = int(round(self._safe_float(summary.get("avg_load", 0))))
+        avg_fatigue = int(round(self._safe_float(summary.get("avg_fatigue", 0))))
+        difficulty_count = self._safe_int(summary.get("difficulty_count", 0), default=0)
+        parts = [
+            f"This {primary_mode.lower()} session lasted {duration_label} with average load {avg_load} and fatigue {avg_fatigue}."
+        ]
+        if isinstance(selected_event, dict) and selected_event:
+            parts.append(
+                f"The strongest replay target is D{self._safe_int(selected_event.get('event_id'), default=0)} "
+                f"({selected_event.get('time_window', '--')}) with {selected_event.get('trigger_label', 'a notable state shift')}."
+            )
+        elif difficulty_count > 0:
+            parts.append(f"{difficulty_count} difficulty events were flagged, but none is currently selected.")
+        else:
+            parts.append("No sustained difficulty event was recorded, so the reflection should focus on broader study rhythm and setup patterns.")
+        if isinstance(validation_window, dict) and validation_window:
+            confidence_text = int(round(max(0.0, min(1.0, self._safe_float(validation_window.get("confidence", 0.0)))) * 100))
+            parts.append(
+                f"The nearest learning-state proxy window reads as {self._title_case_label(validation_window.get('predicted_label', 'stable_focus')).lower()} "
+                f"at about {confidence_text}% confidence."
+            )
+        else:
+            parts.append("Where state-window evidence is available, it should be interpreted as a conservative learning-state proxy rather than precise attention detection.")
+        next_boundary = str(coach_summary.get("next_boundary", "")).strip()
+        if next_boundary:
+            parts.append(next_boundary)
+        return " ".join(part.strip() for part in parts if part).strip()
+
+    def _build_review_key_moments(self, review_payload, heuristic_payload, selected_event=None, validation_summary=None):
+        key_moments = []
+        assets = review_payload.get("assets", {}) if isinstance(review_payload, dict) else {}
+        top_action = {}
+        if isinstance(review_payload, dict):
+            actions = review_payload.get("next_actions", [])
+            if isinstance(actions, list) and actions:
+                top_action = actions[0] if isinstance(actions[0], dict) else {}
+        validation_window = self._selected_validation_window(validation_summary)
+
+        if isinstance(selected_event, dict) and selected_event:
+            key_moments.append({
+                "title": f"Replay D{self._safe_int(selected_event.get('event_id'), default=0)} first",
+                "detail": (
+                    f"{selected_event.get('time_window', '--')} in {self._title_case_label(selected_event.get('task_mode', 'reading')).lower()} mode. "
+                    f"{selected_event.get('review_note', selected_event.get('trigger_reason', 'Review this window carefully.'))} "
+                    f"{selected_event.get('catch_up_action', '')}"
+                ).strip(),
+                "source": "difficulty_event",
+                "window": str(selected_event.get("time_window", "--")).strip() or "--",
+            })
+
+        if isinstance(validation_window, dict) and validation_window:
+            evidence_items = validation_window.get("evidence", [])
+            if isinstance(evidence_items, list):
+                evidence_summary = "; ".join(
+                    str(item).strip()
+                    for item in evidence_items
+                    if str(item).strip()
+                )
+            else:
+                evidence_summary = ""
+            uncertainty_reason = str(validation_window.get("uncertainty_reason", "")).strip()
+            sample_window = (
+                f"samples {self._safe_int(validation_window.get('start_sample'), default=0)}-"
+                f"{self._safe_int(validation_window.get('end_sample'), default=0)}"
+            )
+            confidence_text = int(round(max(0.0, min(1.0, self._safe_float(validation_window.get("confidence", 0.0)))) * 100))
+            detail_parts = [
+                f"{self._title_case_label(validation_window.get('predicted_label', 'stable_focus'))} at about {confidence_text}% confidence.",
+            ]
+            if evidence_summary:
+                detail_parts.append(f"Evidence: {evidence_summary}.")
+            if uncertainty_reason:
+                detail_parts.append(uncertainty_reason)
+            key_moments.append({
+                "title": "Learning-state proxy window",
+                "detail": " ".join(part.strip() for part in detail_parts if part).strip(),
+                "source": "state_window",
+                "window": sample_window,
+            })
+
+        guidance_detail = ""
+        if top_action:
+            guidance_detail = str(top_action.get("detail", "")).strip()
+        if not guidance_detail:
+            guidance_detail = str(heuristic_payload.get("coach_summary", {}).get("why_it_matters", "")).strip()
+        heatmap = assets.get("heatmap", {}) if isinstance(assets, dict) else {}
+        heatmap_note = (
+            "The heatmap export is ready if you want to verify where the pattern spread across the full session."
+            if isinstance(heatmap, dict) and heatmap.get("available")
+            else "Generate the heatmap export if you want a full-session timing view alongside this reflection."
+        )
+        if guidance_detail or heatmap_note:
+            key_moments.append({
+                "title": str(top_action.get("title", "")).strip() or "Carry forward one coaching boundary",
+                "detail": " ".join(part.strip() for part in [guidance_detail, heatmap_note] if part).strip(),
+                "source": "focus_guidance",
+                "window": "session-wide",
+            })
+
+        if not key_moments:
+            headline = str(heuristic_payload.get("coach_summary", {}).get("headline", "")).strip() or "Session reflection summary"
+            detail = str(heuristic_payload.get("coach_summary", {}).get("overview", "")).strip() or (
+                "The session needs more evidence before a more concrete reflection summary can be generated."
+            )
+            key_moments.append({
+                "title": headline,
+                "detail": detail,
+                "source": "session_summary",
+                "window": "session-wide",
+            })
+        return key_moments[:3]
+
+    def _build_review_next_actions(self, review_payload, heuristic_payload):
+        actions = []
+        for item in heuristic_payload.get("next_session_experiments", []):
+            if not isinstance(item, dict):
+                continue
+            title = str(item.get("title", "")).strip()
+            detail = str(item.get("detail", "")).strip()
+            if title and detail:
+                actions.append({
+                    "title": title,
+                    "detail": detail,
+                    "success_marker": str(item.get("success_marker", "")).strip(),
+                })
+        if actions:
+            return actions[:3]
+
+        fallback_actions = review_payload.get("next_actions", []) if isinstance(review_payload, dict) else []
+        cleaned = []
+        for item in fallback_actions:
+            if not isinstance(item, dict):
+                continue
+            title = str(item.get("title", "")).strip()
+            detail = str(item.get("detail", "")).strip()
+            if title and detail:
+                cleaned.append({"title": title, "detail": detail, "success_marker": ""})
+        return cleaned[:3]
+
+    def _build_review_encouragement(self, heuristic_payload):
+        if bool(heuristic_payload.get("empty", False)):
+            return "Once a live or demo session exists, the coach can turn it into a more concrete reflection guide."
+
+        signature = heuristic_payload.get("signature", {}) if isinstance(heuristic_payload, dict) else {}
+        key = str(signature.get("key", "")).strip().lower()
+        if key == "productive_challenge":
+            return "A demanding window can still be a useful learning marker when alignment stayed present. Treat it as a replay target, not a failure verdict."
+        if key == "switching_drift":
+            return "This pattern points more toward regulation and source-management tuning than a fixed ability problem."
+        if key == "fatigue_drag":
+            return "Fatigue pressure is feedback about pacing and recovery boundaries, not a judgment about commitment or ability."
+        if key == "signal_check":
+            return "Cleaner signal conditions can make the next reflection more trustworthy, so signal uncertainty should not be read as a learner verdict."
+        if key == "steady_control":
+            return "The session looked relatively steady. Preserve what supported control, then stretch difficulty gently next time."
+        return "Use one concrete change in the next session so the next reflection becomes easier to interpret and compare."
 
     def _attach_regulation_cycle_overlay(
         self,

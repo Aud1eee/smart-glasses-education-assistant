@@ -14,9 +14,13 @@ exports/*.png
 exports/state_validation_report.md
 exports/state_validation_metrics.json
 exports/state_classifier_model.joblib
+exports/reflection_report.md
 # `exports/*.png` already covers `exports/state_confusion_matrix.png`.
 data/state_labels.csv
+data/state_labels_draft.csv
+data/session_manifest.csv
 data/state_window_features.csv
+exports/validation_readiness.md
 data/difficulty_events.csv
 data/rokid_scene_profiles.json
 data/presentation_companion_store.json

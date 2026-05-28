@@ -1031,6 +1031,14 @@
                 </section>
 
                 <section class="panel section">
+                    <h2>Reflection Coach</h2>
+                    <div class="section-sub">
+                        Post-session reflection support built from review cues, difficulty markers, and learning-state proxies. This card is conservative by design and does not claim precise attention detection.
+                    </div>
+                    <div id="reflection-coach-card" class="asset-card"></div>
+                </section>
+
+                <section class="panel section">
                     <h2>Learning State Evidence</h2>
                     <div class="section-sub">
                         Conservative confidence and evidence for the current learning-state proxy window. This layer supports review, not precise attention detection.
@@ -1059,6 +1067,7 @@
         let currentAssets = null;
         let selectedEventId = params.get("event_id") || "";
         let stateValidationSequence = 0;
+        let reflectionCoachSequence = 0;
         const APP_BASE_URL = window.location.protocol === "file:" ? "http://127.0.0.1:5000" : "";
 
         document.getElementById("back-link").href = `${APP_BASE_URL}/`;
@@ -1226,6 +1235,71 @@
             `;
         }
 
+        function renderReflectionCoach(payload) {
+            const host = document.getElementById("reflection-coach-card");
+            if (!payload) {
+                host.innerHTML = `
+                    <div class="asset-kicker">Reflection status</div>
+                    <h3>Unavailable</h3>
+                    <div class="asset-copy">The Reflection Coach summary API is not available yet. Start the Flask backend to load a local post-session reflection summary here.</div>
+                `;
+                return;
+            }
+
+            const keyMoments = Array.isArray(payload.key_moments) ? payload.key_moments.slice(0, 3) : [];
+            const questions = Array.isArray(payload.reflection_questions) ? payload.reflection_questions.slice(0, 3) : [];
+            const actions = Array.isArray(payload.next_actions) ? payload.next_actions.slice(0, 3) : [];
+            const keyMomentCards = keyMoments.length
+                ? keyMoments.map((moment) => `
+                    <div class="event-action">
+                        <strong>${escapeHtml(moment.title || "Key moment")}</strong>
+                        <p>${escapeHtml(moment.detail || "No detail available.")}</p>
+                        <div class="validation-note">${escapeHtml((moment.source || "session_summary") + " | " + (moment.window || "session-wide"))}</div>
+                    </div>
+                `).join("")
+                : `
+                    <div class="event-action">
+                        <strong>No key moments yet</strong>
+                        <p>Run a live or demo session first, then reopen this page for a structured reflection summary.</p>
+                    </div>
+                `;
+            const questionItems = questions.length
+                ? questions.map((question) => `<li>${escapeHtml(question)}</li>`).join("")
+                : "<li>No reflection questions are available yet.</li>";
+            const actionCards = actions.length
+                ? actions.map((action) => `
+                    <article class="action-card">
+                        <strong>${escapeHtml(action.title || "Next action")}</strong>
+                        <p>${escapeHtml(action.detail || "No action detail available.")}</p>
+                    </article>
+                `).join("")
+                : `
+                    <article class="action-card">
+                        <strong>No next action yet</strong>
+                        <p>The coach will suggest a next step here once session evidence is available.</p>
+                    </article>
+                `;
+
+            host.innerHTML = `
+                <div class="asset-kicker">Reflection summary</div>
+                <h3>${payload.empty ? "Awaiting session evidence" : "Overall session summary"}</h3>
+                <div class="asset-copy">${escapeHtml(payload.session_summary || "No reflection summary is available yet.")}</div>
+                <div class="validation-banner">${escapeHtml(payload.module_boundary || "This panel is a post-session reflection aid built from conservative learning-state proxies.")}</div>
+                <div class="event-actions">${keyMomentCards}</div>
+                <div class="event-actions">
+                    <div class="event-action">
+                        <strong>Reflection Questions</strong>
+                        <ul class="validation-list">${questionItems}</ul>
+                    </div>
+                    <div class="event-action">
+                        <strong>Encouragement</strong>
+                        <p>${escapeHtml(payload.encouragement || "Use the next session as a comparison point instead of treating one report as a final verdict.")}</p>
+                    </div>
+                </div>
+                <div class="action-list">${actionCards}</div>
+            `;
+        }
+
         async function loadStateValidation(event = null) {
             const requestId = ++stateValidationSequence;
             const query = new URLSearchParams();
@@ -1243,6 +1317,26 @@
             } catch (error) {
                 if (requestId !== stateValidationSequence) return;
                 renderStateValidation(null, event);
+                console.error(error);
+            }
+        }
+
+        async function loadReflectionCoach(event = null) {
+            const requestId = ++reflectionCoachSequence;
+            const query = new URLSearchParams({ dataset: activeDataset });
+            const sessionId = currentReviewSessionId();
+            const eventId = String(event?.event_id || selectedEventId || "").trim();
+            if (sessionId) query.set("session_id", sessionId);
+            if (eventId) query.set("event_id", eventId);
+
+            try {
+                const response = await fetch(`${APP_BASE_URL}/api/reflection_coach_summary?${query.toString()}`);
+                const payload = await response.json();
+                if (requestId !== reflectionCoachSequence) return;
+                renderReflectionCoach(payload);
+            } catch (error) {
+                if (requestId !== reflectionCoachSequence) return;
+                renderReflectionCoach(null);
                 console.error(error);
             }
         }
@@ -1441,6 +1535,7 @@
             });
             renderSpotlight(selected);
             loadStateValidation(selected);
+            loadReflectionCoach(selected);
             syncReviewRoute();
         }
 
@@ -1498,6 +1593,7 @@
                 selectedEventId = "";
                 renderSpotlight(null);
                 loadStateValidation(null);
+                loadReflectionCoach(null);
                 syncReviewRoute();
                 return;
             }
@@ -1667,6 +1763,7 @@
                 }]);
                 renderEvents([]);
                 renderStateValidation(null);
+                renderReflectionCoach(null);
                 console.error(error);
             }
         }

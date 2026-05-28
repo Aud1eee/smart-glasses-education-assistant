@@ -309,6 +309,46 @@ def _build_state_validation_summary(session_id=None, start_sample=None, end_samp
     }
 
 
+def _selected_review_event(review_payload, event_id=None):
+    if not isinstance(review_payload, dict):
+        return None
+    requested = _safe_int(event_id, default=0)
+    events = review_payload.get("events", [])
+    if isinstance(events, list):
+        for event in events:
+            if not isinstance(event, dict):
+                continue
+            if requested and _safe_int(event.get("event_id"), default=0) == requested:
+                return event
+    highlight_event = review_payload.get("highlight_event")
+    if isinstance(highlight_event, dict) and highlight_event:
+        return highlight_event
+    if isinstance(events, list):
+        for event in events:
+            if isinstance(event, dict):
+                return event
+    return None
+
+
+def _build_reflection_coach_summary(session_id=None, dataset="live", event_id=None):
+    review_payload = logger.build_review_payload(session_id=session_id, dataset=dataset)
+    selected_event = _selected_review_event(review_payload, event_id=event_id)
+    validation_summary = _build_state_validation_summary(
+        session_id=review_payload.get("session_id") or session_id,
+        start_sample=_safe_int(selected_event.get("start_sample"), default=0) if isinstance(selected_event, dict) else None,
+        end_sample=_safe_int(selected_event.get("end_sample"), default=0) if isinstance(selected_event, dict) else None,
+        limit=6,
+    )
+    return reflection_coach.build_review_summary_payload(
+        review_payload=review_payload,
+        difficulty_events=review_payload.get("events", []),
+        validation_summary=validation_summary,
+        session_id=review_payload.get("session_id") or session_id,
+        dataset=dataset,
+        event_id=event_id,
+    )
+
+
 def _active_scene_metrics():
     return {
         "tracking_state": latest_input.get("tracking_state", "warmup"),
@@ -1679,6 +1719,18 @@ def state_validation_summary():
         limit=limit,
     )
     return jsonify(payload)
+
+
+@app.route("/api/reflection_coach_summary")
+def reflection_coach_review_summary():
+    dataset = str(request.args.get("dataset", "live")).strip().lower() or "live"
+    session_id = str(request.args.get("session_id", "")).strip() or None
+    event_id = str(request.args.get("event_id", "")).strip() or None
+    return jsonify(_build_reflection_coach_summary(
+        session_id=session_id,
+        dataset=dataset,
+        event_id=event_id,
+    ))
 
 
 @app.route("/api/reflection_coach", methods=["GET", "POST"])
