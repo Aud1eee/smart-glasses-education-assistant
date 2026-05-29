@@ -1129,6 +1129,7 @@
                     </div>
                     <div id="state-label" class="state">Focus Settling</div>
                     <div id="guidance-text" class="message">Keep one learning target and settle into the current mode.</div>
+                    <div id="evidence-text" class="metric-note">Proxy evidence will appear here when a stable interpretation is available.</div>
 
                     <div class="signal-strip" aria-label="Compact signal summary">
                         <div class="signal-chip"><span class="signal-dot tone-calm" id="align-dot"></span><span>A</span></div>
@@ -1400,8 +1401,32 @@
                 "recovery": "Recover",
                 "fatigue risk": "Fatigue",
                 "signal check": "Signal",
+                "signal uncertain": "Signal",
             };
             return map[String(label || "").toLowerCase()] || label || "Stable";
+        }
+
+        function displayStateLabel(label, fallback = "Stable focus") {
+            const raw = String(label || "").trim();
+            if (!raw) return fallback;
+            return raw
+                .replaceAll("_", " ")
+                .replaceAll("-", " ")
+                .split(/\s+/)
+                .filter(Boolean)
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join(" ");
+        }
+
+        function normalizedStateKey(label, fallback = "stable") {
+            const raw = String(label || "").trim().toLowerCase();
+            if (!raw) return fallback;
+            return raw
+                .replaceAll("-", " ")
+                .replaceAll("_", " ")
+                .split(/\s+/)
+                .filter(Boolean)
+                .join("_");
         }
 
         function compactGuidanceText(label, guidance) {
@@ -1416,6 +1441,7 @@
                 "recovery": "Re-center attention.",
                 "fatigue risk": "Take a short break.",
                 "signal check": "Check signal or pose.",
+                "signal uncertain": "Treat signal cautiously.",
             };
             const compact = map[String(label || "").toLowerCase()];
             if (compact) return compact;
@@ -1430,8 +1456,10 @@
                 off_task_risk: "Target drift",
                 fatigue_risk: "Fatigue drift",
                 signal_check: "Signal check",
+                signal_uncertain: "Signal check",
                 load_rising: "Load rising",
                 stable: "Stable",
+                stable_focus: "Stable",
             };
             const normalizedHint = String(stateHint || "").toLowerCase();
             if (hintMap[normalizedHint]) return hintMap[normalizedHint];
@@ -1439,6 +1467,16 @@
             if (!text) return "Stable";
             if (text.length <= 24) return text;
             return `${text.slice(0, 21).trim()}...`;
+        }
+
+        function compactEvidenceText(evidence) {
+            if (!Array.isArray(evidence) || !evidence.length) {
+                return "Proxy evidence warming up.";
+            }
+            const first = String(evidence[0] || "").trim();
+            if (!first) return "Proxy evidence warming up.";
+            if (first.length <= 44) return first;
+            return `${first.slice(0, 41).trim()}...`;
         }
 
         function compactPhaseLabel(label) {
@@ -1492,11 +1530,18 @@
                 const confidenceRaw = String(d.confidence_level || "medium");
                 const confidence = confidenceRaw.toUpperCase();
                 const glassesView = currentViewMode() === "glasses";
-                const stateLabel = session.state_label || "Focus settling";
-                const stateHint = d.state_hint || "stable";
+                const interpretedState = String(d.interpreted_state || "").trim();
+                const interpretedEvidence = Array.isArray(d.interpreted_evidence) ? d.interpreted_evidence.filter(Boolean) : [];
+                const stateKey = normalizedStateKey(interpretedState || d.state_hint || "stable", "stable");
+                const stateLabel = interpretedState
+                    ? displayStateLabel(interpretedState, session.state_label || "Focus settling")
+                    : (session.state_label || "Focus settling");
                 const guidanceText = session.guidance || "Keep one learning target and settle into the current mode.";
-                const reasonText = d.load_reason || "Stable learning state";
-                const mainTone = stateTone(d.load_level, stateLabel, confidenceRaw, stateHint);
+                const reasonText = d.transition_reason || d.load_reason || "Stable learning state";
+                const evidenceText = interpretedEvidence.length
+                    ? `Proxy evidence: ${interpretedEvidence.slice(0, 2).join(" · ")}`
+                    : "Proxy evidence will appear here when a stable interpretation is available.";
+                const mainTone = stateTone(d.load_level, stateLabel, confidenceRaw, stateKey);
                 const alignTone = alignmentTone(d.behavioral_alignment || d.focus_score || 0);
                 const loadBandTone = loadTone(d.load_level);
                 const fatigueRiskTone = fatigueTone(d.fatigue_risk || 0, stateLabel);
@@ -1514,7 +1559,7 @@
                 document.getElementById("mode-val-center").innerText = glassesView ? compactModeLabel(mode) : mode;
                 document.getElementById("confidence-val-top").innerText = glassesView ? compactConfidenceLabel(confidenceRaw) : confidence;
                 document.getElementById("confidence-val").innerText = glassesView ? compactConfidenceLabel(confidenceRaw) : confidence;
-                document.getElementById("reason-val").innerText = glassesView ? compactReasonText(reasonText, stateHint) : `${stateHint.replaceAll("_", " ")} | ${reasonText}`;
+                document.getElementById("reason-val").innerText = glassesView ? compactReasonText(reasonText, stateKey) : `${displayStateLabel(stateKey, "Stable")} | ${reasonText}`;
                 document.getElementById("yaw-val-top").innerText = formatSignedAngle(d.signed_yaw_delta);
                 document.getElementById("roll-val-top").innerText = formatSignedAngle(d.signed_roll_delta);
                 document.getElementById("move-val-top").innerText = movementSummary(d.movement_intensity, glassesView);
@@ -1525,6 +1570,7 @@
                 document.getElementById("time-bottom").innerText = formatTime(session.remaining_seconds);
                 document.getElementById("state-label").innerText = glassesView ? compactStateLabel(stateLabel) : stateLabel;
                 document.getElementById("guidance-text").innerText = glassesView ? compactGuidanceText(stateLabel, guidanceText) : guidanceText;
+                document.getElementById("evidence-text").innerText = glassesView ? compactEvidenceText(interpretedEvidence) : evidenceText;
 
                 let eventText = "Clear";
                 let reviewText = "No flagged segment yet.";
@@ -1568,14 +1614,15 @@
                 setBar("time-bar", (session.progress || 0) * 100);
 
                 setModeSelection(mode);
-                setVisualState(d.load_level, session.state_label, d.confidence_level, stateHint);
-                setOcclusionState(d.load_level, session.state_label, d.confidence_level, activeEvent);
+                setVisualState(d.load_level, stateLabel, d.confidence_level, stateKey);
+                setOcclusionState(d.load_level, stateLabel, d.confidence_level, activeEvent);
 
                 if (d.flashcard && d.flashcard.word) {
                     showFlashcard(d.flashcard);
                 }
             } catch (err) {
                 document.getElementById("guidance-text").innerText = "Waiting for learning-state data.";
+                document.getElementById("evidence-text").innerText = "Proxy evidence will appear when a stable interpretation becomes available.";
                 console.error(err);
             }
         }

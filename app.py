@@ -27,6 +27,8 @@ from core.rokid_adapter import (
 )
 from core.rokid_frame_adapter import RokidFrameAdapter
 from core.state_classifier import rule_baseline
+from core.state_interpreter import StateInterpreter
+from core.state_transition_manager import StateTransitionManager
 from core.vision import VisionEngine
 from utils.storage import DataLogger
 
@@ -45,12 +47,42 @@ REFLECTION_RUNTIME_VERSION = "reflection-runtime-info-2026-05-19-v1"
 REFLECTION_SNAPSHOT_EXPORTER_VERSION = "reflection-html-card-2026-05-19-v1"
 APP_BOOTED_AT = datetime.now().isoformat(timespec="seconds")
 
+
+def _initial_interpreted_state():
+    return {
+        "label": "signal_uncertain",
+        "display_label": "signal_uncertain",
+        "stable_label": "signal_uncertain",
+        "confidence": 0.35,
+        "evidence": [
+            "The learning-state proxy is still warming up, so the display stays conservative.",
+        ],
+        "uncertainty_reason": "No recent posture and scene snapshot is available yet.",
+        "axes": {
+            "engagement_score": 0.0,
+            "cognitive_load_score": 0.0,
+            "fatigue_score": 0.0,
+            "signal_quality_score": 0.0,
+        },
+        "auxiliary_flags": {
+            "valid_learning_switch": False,
+            "off_task_switch": False,
+            "productive_struggle_candidate": False,
+            "fatigue_candidate": False,
+            "signal_uncertain_candidate": True,
+        },
+        "transition_reason": "Interpreter warm-up: waiting for the first live snapshot.",
+        "pending_label": None,
+    }
+
 logger = DataLogger()
 posture = PostureEngine()
 vision = VisionEngine()
 rokid_frame_adapter = RokidFrameAdapter()
 edu = EduEngine(logger.vocab_path)
 focus_session = FocusSessionEngine()
+state_interpreter = StateInterpreter()
+state_transition_manager = StateTransitionManager()
 reflection_coach = ReflectionCoach(logger)
 presentation_companion = PresentationCompanion()
 difficulty_marker = DifficultyEventMarker()
@@ -90,6 +122,7 @@ latest_input = {
     "frame_source": "simulator",
     "timestamp_ms": None,
 }
+latest_interpreted_state = _initial_interpreted_state()
 
 ROKID_SCENE_PRESETS = {
     "balanced-reading": {
@@ -360,6 +393,7 @@ def _build_demo_storyboard_payload(session_id=None, dataset="demo"):
     )
 
 
+
 def _active_scene_metrics():
     return {
         "tracking_state": latest_input.get("tracking_state", "warmup"),
@@ -388,6 +422,96 @@ def _active_scene_metrics():
         "state_hint": posture.state_hint,
         "task_mode": posture.task_mode,
     }
+
+
+def _current_posture_state_snapshot():
+    return {
+        "relative_pitch": round(abs(posture.smooth_pitch - posture.base_pitch), 1),
+        "relative_yaw": round(abs(posture.smooth_yaw - posture.base_yaw), 1),
+        "relative_roll": round(abs(posture.smooth_roll - posture.base_roll), 1),
+        "combined_drift": round(posture.combined_drift, 1),
+        "movement_intensity": posture.movement_intensity,
+        "stability": posture.current_stability,
+        "focus_score": posture.focus_score,
+        "cognitive_load": posture.cognitive_load,
+        "load_level": posture.load_level,
+        "load_reason": posture.load_reason,
+        "behavioral_alignment": posture.behavioral_alignment,
+        "behavioral_level": posture.behavioral_level,
+        "fatigue_risk": posture.fatigue_risk,
+        "fatigue_level": posture.fatigue_level,
+        "uncertainty_score": posture.uncertainty_score,
+        "confidence_level": posture.confidence_level,
+        "switching_index": posture.switching_index,
+        "drift_trend": posture.drift_trend,
+        "state_hint": posture.state_hint,
+        "task_mode": posture.task_mode,
+        "scene_content_score": posture.scene_content_score,
+        "scene_text_score": posture.scene_text_score,
+        "scene_stability_score": posture.scene_stability_score,
+        "scene_switch_rate": posture.scene_switch_rate,
+        "study_surface_score": posture.study_surface_score,
+        "scene_lock_score": posture.scene_lock_score,
+        "blur_score": posture.blur_score,
+        "brightness_score": posture.brightness_score,
+    }
+
+
+def _build_state_interpreter_snapshot(posture_state=None, input_state=None, session_state=None):
+    posture_state = posture_state or _current_posture_state_snapshot()
+    input_state = input_state or latest_input or {}
+    session_state = session_state or latest_session or focus_session.snapshot()
+    return {
+        "task_mode": posture_state.get("task_mode", posture.task_mode),
+        "state_hint": posture_state.get("state_hint", posture.state_hint),
+        "load_level": posture_state.get("load_level", posture.load_level),
+        "load_reason": posture_state.get("load_reason", posture.load_reason),
+        "focus_score": posture_state.get("focus_score", posture.focus_score),
+        "behavioral_alignment": posture_state.get("behavioral_alignment", posture.behavioral_alignment),
+        "cognitive_load": posture_state.get("cognitive_load", posture.cognitive_load),
+        "fatigue_risk": posture_state.get("fatigue_risk", posture.fatigue_risk),
+        "uncertainty_score": posture_state.get("uncertainty_score", posture.uncertainty_score),
+        "switching_index": posture_state.get("switching_index", posture.switching_index),
+        "drift_trend": posture_state.get("drift_trend", posture.drift_trend),
+        "combined_drift": posture_state.get("combined_drift", posture.combined_drift),
+        "movement_intensity": posture_state.get("movement_intensity", posture.movement_intensity),
+        "stability": posture_state.get("stability", posture.current_stability),
+        "scene_content_score": posture_state.get("scene_content_score", posture.scene_content_score),
+        "scene_text_score": posture_state.get("scene_text_score", posture.scene_text_score),
+        "scene_stability_score": posture_state.get("scene_stability_score", posture.scene_stability_score),
+        "scene_switch_rate": posture_state.get("scene_switch_rate", posture.scene_switch_rate),
+        "study_surface_score": posture_state.get("study_surface_score", posture.study_surface_score),
+        "scene_lock_score": posture_state.get("scene_lock_score", posture.scene_lock_score),
+        "blur_score": posture_state.get("blur_score", posture.blur_score),
+        "brightness_score": posture_state.get("brightness_score", posture.brightness_score),
+        "tracking_state": input_state.get("tracking_state", latest_input.get("tracking_state", "warmup")),
+        "tracking_confidence": input_state.get("tracking_confidence", latest_input.get("tracking_confidence") or 0.0),
+        "tracking_uncertainty": input_state.get("tracking_uncertainty", latest_input.get("tracking_uncertainty", 0.0)),
+        "session_phase": session_state.get("phase", ""),
+        "session_state_label": session_state.get("state_label", ""),
+        "session_guidance": session_state.get("guidance", ""),
+    }
+
+
+def _update_interpreted_state(posture_state=None, input_state=None, session_state=None, now=None):
+    global latest_interpreted_state
+    try:
+        snapshot = _build_state_interpreter_snapshot(
+            posture_state=posture_state,
+            input_state=input_state,
+            session_state=session_state,
+        )
+        interpreted = state_interpreter.interpret(snapshot)
+        transition = state_transition_manager.update(interpreted, now=now)
+        latest_interpreted_state = {
+            **interpreted,
+            **transition,
+        }
+    except Exception:
+        fallback = dict(latest_interpreted_state or _initial_interpreted_state())
+        fallback["transition_reason"] = "Interpreter fallback preserved the last stable proxy label."
+        latest_interpreted_state = fallback
+    return latest_interpreted_state
 
 
 def _build_scene_calibration_diagnosis():
@@ -1464,18 +1588,20 @@ def _input_snapshot(packet=None):
 
 
 def _start_new_session(reset_posture=False):
-    global latest_session, latest_difficulty, latest_input, sample_counter, last_posture_at, current_session_id
+    global latest_session, latest_difficulty, latest_input, latest_interpreted_state, sample_counter, last_posture_at, current_session_id
     rokid_frame_adapter.reset_scene_memory()
     if reset_posture:
         posture.calibrate()
     else:
         posture.reset_tracking(preserve_baseline=True)
     focus_session.reset()
+    state_transition_manager.reset()
     difficulty_marker.reset()
     current_session_id = _build_session_id()
     latest_session = focus_session.snapshot()
     latest_difficulty = _new_difficulty_snapshot()
     latest_input = _input_snapshot()
+    latest_interpreted_state = _initial_interpreted_state()
     sample_counter = 0
     last_posture_at = None
     return current_session_id
@@ -1594,6 +1720,13 @@ def _ingest_packet(packet):
         },
     )
     latest_session = focus_session.update(res)
+    latest_input = _input_snapshot(packet)
+    _update_interpreted_state(
+        posture_state=res,
+        input_state=latest_input,
+        session_state=latest_session,
+        now=time.time(),
+    )
     latest_difficulty = difficulty_marker.update(
         res,
         latest_session,
@@ -1631,7 +1764,6 @@ def _ingest_packet(packet):
         timestamp_text=timestamp_text,
         session_id=current_session_id,
     )
-    latest_input = _input_snapshot(packet)
     if latest_difficulty["completed_event"]:
         logger.log_difficulty_event(latest_difficulty["completed_event"])
 
@@ -1663,8 +1795,10 @@ def handle_collect():
 
 @app.route("/status")
 def get_status():
-    global pending_card, latest_session, latest_difficulty, latest_input, last_posture_at
+    global pending_card, latest_session, latest_difficulty, latest_input, latest_interpreted_state, last_posture_at
     latest_session = focus_session.snapshot()
+    interpreted = latest_interpreted_state if isinstance(latest_interpreted_state, dict) else _initial_interpreted_state()
+    interpreted_axes = interpreted.get("axes", {}) if isinstance(interpreted.get("axes"), dict) else {}
     data = {
         "rel_pitch": round(abs(posture.smooth_pitch - posture.base_pitch), 1),
         "signed_pitch_delta": round(posture.smooth_pitch - posture.base_pitch, 1),
@@ -1699,6 +1833,13 @@ def get_status():
         "scene_lock_score": posture.scene_lock_score,
         "blur_score": posture.blur_score,
         "brightness_score": posture.brightness_score,
+        "interpreted_state": interpreted.get("display_label") or interpreted.get("stable_label") or interpreted.get("label"),
+        "interpreted_confidence": interpreted.get("confidence"),
+        "interpreted_evidence": interpreted.get("evidence", []),
+        "signal_quality_score": interpreted_axes.get("signal_quality_score"),
+        "engagement_score": interpreted_axes.get("engagement_score"),
+        "interpreted_axes": interpreted_axes,
+        "transition_reason": interpreted.get("transition_reason", ""),
         "session": latest_session,
         "input": latest_input,
         "difficulty": {

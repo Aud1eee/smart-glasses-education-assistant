@@ -1122,6 +1122,39 @@
                 .join(" ");
         }
 
+        function preferredStateKey(event) {
+            return String(event?.interpreted_state || event?.state_hint || "")
+                .trim()
+                .toLowerCase()
+                .replaceAll("-", " ")
+                .replaceAll("_", " ")
+                .split(/\s+/)
+                .filter(Boolean)
+                .join("_");
+        }
+
+        function preferredStateLabel(event) {
+            return titleCase(
+                event?.interpreted_state_label
+                || event?.interpreted_state
+                || event?.state_hint_label
+                || event?.state_hint
+                || "stable"
+            );
+        }
+
+        function preferredStateTone(event) {
+            const key = preferredStateKey(event);
+            if (key === "productive_struggle") return "productive";
+            if (key === "off_task_risk") return "off-task";
+            return event?.missed_content_risk || "low";
+        }
+
+        function preferredEvidenceText(event) {
+            const evidence = Array.isArray(event?.interpreted_evidence) ? event.interpreted_evidence.filter(Boolean) : [];
+            return evidence.length ? evidence.slice(0, 2).join(" · ") : "";
+        }
+
         function escapeHtml(value) {
             return String(value ?? "")
                 .replaceAll("&", "&amp;")
@@ -1436,6 +1469,8 @@
                 return;
             }
 
+            const stateLabel = preferredStateLabel(event);
+            const evidenceText = preferredEvidenceText(event);
             host.className = `spotlight-card ${event.severity || "medium"}`;
             host.innerHTML = `
                 <div class="spotlight-kicker">Priority replay</div>
@@ -1455,7 +1490,7 @@
                     </div>
                     <div class="meta-item">
                         <span>Type</span>
-                        <strong>${event.state_hint_label || "Stable"}</strong>
+                        <strong>${stateLabel || "Stable"}</strong>
                     </div>
                     <div class="meta-item">
                         <span>Peak / Fatigue</span>
@@ -1479,6 +1514,11 @@
                         <strong>Catch-up action</strong>
                         <p>${event.catch_up_action}</p>
                     </div>
+                    ${evidenceText ? `
+                    <div class="event-action">
+                        <strong>Proxy evidence</strong>
+                        <p>${escapeHtml(evidenceText)}</p>
+                    </div>` : ""}
                 </div>
                 <div class="asset-actions">
                     <a class="asset-link" href="${buildReflectionHref(event.event_id)}">Open in Reflection Coach</a>
@@ -1600,6 +1640,8 @@
 
             empty.hidden = true;
             currentEvents.forEach((event) => {
+                const stateBadgeTone = preferredStateTone(event);
+                const stateLabel = preferredStateLabel(event);
                 const card = document.createElement("article");
                 card.className = `event-card ${event.severity}`;
                 card.dataset.eventId = event.event_id;
@@ -1614,9 +1656,9 @@
                             </div>
                         </div>
                         <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-                            <div class="badge ${event.state_hint === "productive_struggle" ? "productive" : event.state_hint === "off_task_risk" ? "off-task" : event.missed_content_risk}">
+                            <div class="badge ${stateBadgeTone}">
                                 <span class="badge-dot"></span>
-                                <span>${event.state_hint_label || "Stable"}</span>
+                                <span>${stateLabel || "Stable"}</span>
                             </div>
                             <div class="badge ${event.missed_content_risk}">
                                 <span class="badge-dot"></span>
