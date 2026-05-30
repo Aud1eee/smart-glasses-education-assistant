@@ -113,6 +113,33 @@ Self-report scales:
 - `self_report_fatigue`: `1 = not fatigued`, `7 = very fatigued`
 - `task_difficulty`: `1 = very easy`, `7 = very difficult`
 
+### Build A Labeling Draft
+
+You can prefill a draft sheet before manual review:
+
+```bash
+python analytics/build_labeling_sheet.py
+python analytics/build_labeling_sheet.py --features data/state_window_features.csv --output data/state_labels_draft.csv
+```
+
+The draft file includes:
+
+- `predicted_label`
+- `confidence`
+- `evidence_summary`
+- key window metrics such as `cognitive_load_mean` and `scene_lock_score_mean`
+
+The script preserves any manual values already present in `data/state_labels_draft.csv` when it regenerates the draft.
+
+### Move From `state_labels_draft.csv` To `state_labels.csv`
+
+Recommended flow:
+
+1. Generate `data/state_labels_draft.csv`.
+2. Review each row and update the manual fields.
+3. Copy the curated columns into `data/state_labels.csv`.
+4. Keep `data/state_labels_draft.csv` as a working draft and `data/state_labels.csv` as the cleaner evaluation file.
+
 ## 6. Run Validation
 
 Example:
@@ -162,6 +189,12 @@ Key metrics:
 
 Interpretation guidance:
 
+- 20 labeled windows:
+  enough to prove the workflow runs end to end
+- 50 labeled windows:
+  enough for an early internal demo
+- 100 labeled windows:
+  a better point for comparing the rule baseline and sklearn baseline
 - high accuracy with low macro F1 often means one or two classes dominate
 - low confusion between `productive_struggle` and `off_task_risk` is especially valuable for coaching quality
 - strong correlations can support the proxy, but they do not prove precise internal-state measurement
