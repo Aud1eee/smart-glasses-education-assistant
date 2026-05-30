@@ -17,6 +17,7 @@ from core.difficulty_marker import DifficultyEventMarker
 from core.edu import EduEngine
 from core.focus_session import FocusSessionEngine
 from core.multimodal_schema import build_multimodal_blueprint
+from core.presentation_assistant import PresentationAssistant
 from core.posture import PostureEngine
 from core.presentation_companion import PresentationCompanion
 from core.reflection_coach import ReflectionCoach
@@ -84,6 +85,7 @@ focus_session = FocusSessionEngine()
 state_interpreter = StateInterpreter()
 state_transition_manager = StateTransitionManager()
 reflection_coach = ReflectionCoach(logger)
+presentation_assistant = PresentationAssistant(logger, reflection_coach, features_path=STATE_WINDOW_FEATURES_PATH, validation_metrics_path=STATE_VALIDATION_METRICS_PATH)
 presentation_companion = PresentationCompanion()
 difficulty_marker = DifficultyEventMarker()
 auto_recall_enabled = os.getenv("ENABLE_AUTO_RECALL", "0").lower() in {"1", "true", "yes", "on"}
@@ -392,6 +394,12 @@ def _build_demo_storyboard_payload(session_id=None, dataset="demo"):
         features_path=STATE_WINDOW_FEATURES_PATH,
     )
 
+
+def _build_presentation_assistant_summary(session_id=None, dataset="demo"):
+    return presentation_assistant.build_summary_payload(
+        dataset=dataset,
+        session_id=session_id,
+    )
 
 
 def _active_scene_metrics():
@@ -1895,6 +1903,16 @@ def demo_storyboard_summary():
     dataset = str(request.args.get("dataset", "demo")).strip().lower() or "demo"
     session_id = str(request.args.get("session_id", "")).strip() or None
     return jsonify(_build_demo_storyboard_payload(
+        session_id=session_id,
+        dataset=dataset,
+    ))
+
+
+@app.route("/api/presentation_assistant_summary")
+def presentation_assistant_summary():
+    dataset = str(request.args.get("dataset", "demo")).strip().lower() or "demo"
+    session_id = str(request.args.get("session_id", "")).strip() or None
+    return jsonify(_build_presentation_assistant_summary(
         session_id=session_id,
         dataset=dataset,
     ))
