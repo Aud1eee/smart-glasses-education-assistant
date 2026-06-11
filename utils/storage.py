@@ -466,7 +466,7 @@ class DataLogger:
         low_confidence_ratio = self._ratio((session_report.get("Confidence_Level") == "low").sum(), len(session_report.index))
         state_hints = session_report.get("State_Hint", pd.Series(dtype=str)).fillna("").astype(str).str.lower()
         productive_ratio = self._ratio((state_hints == "productive_struggle").sum(), len(session_report.index))
-        off_task_ratio = self._ratio((state_hints == "off_task_risk").sum(), len(session_report.index))
+        off_task_ratio = self._ratio(state_hints.isin(["off_task_risk", "off_task_risk_proxy"]).sum(), len(session_report.index))
         severity_values = [str(value).lower() for value in session_events.get("Severity", pd.Series(dtype=str)).tolist()]
         review_priority = "high" if "high" in severity_values else "medium" if len(severity_values) else "clear"
 
@@ -585,7 +585,7 @@ class DataLogger:
                 "low_confidence": self._mask_segments(confidence_levels.eq("low")),
                 "fatigue": self._mask_segments(fatigue_risk >= 55),
                 "productive_struggle": self._mask_segments(state_hints.eq("productive_struggle")),
-                "off_task": self._mask_segments(state_hints.eq("off_task_risk")),
+                "off_task": self._mask_segments(state_hints.isin(["off_task_risk", "off_task_risk_proxy"])),
             },
         }
 
@@ -676,18 +676,28 @@ class DataLogger:
 
         struggle_value = self._safe_float(summary.get("productive_struggle_ratio", 0))
         off_task_value = self._safe_float(summary.get("off_task_ratio", 0))
+        input_source = str(summary.get("primary_input_source", "")).strip().lower()
+        frame_only_review = input_source == "rokid_video_adapter"
         if struggle_value >= off_task_value:
             insights.append({
                 "label": "Challenge type",
                 "value": "Aligned effort",
-                "detail": f"{int(round(struggle_value))}% of samples looked like productive struggle, which is more consistent with concept difficulty than simple drift.",
+                "detail": (
+                    f"{int(round(struggle_value))}% of samples looked like productive struggle, which is more consistent "
+                    "with concept difficulty than simple drift."
+                ),
                 "tone": "cool" if struggle_value >= 10 else "good",
             })
         else:
             insights.append({
                 "label": "Challenge type",
-                "value": "Drift pressure",
-                "detail": f"{int(round(off_task_value))}% of samples were tagged as off-task risk, suggesting switching or misalignment was more dominant.",
+                "value": "Scene-switch pressure" if frame_only_review else "Drift pressure",
+                "detail": (
+                    f"{int(round(off_task_value))}% of samples were tagged as off-task risk proxy, suggesting scene-switch "
+                    "pressure or study-surface unlock was more dominant."
+                    if frame_only_review
+                    else f"{int(round(off_task_value))}% of samples were tagged as off-task risk, suggesting switching or misalignment was more dominant."
+                ),
                 "tone": "warn" if off_task_value >= 10 else "good",
             })
 
@@ -828,6 +838,12 @@ class DataLogger:
         return "low"
 
     def _review_action(self, severity, task_mode, avg_fatigue, state_hint="stable"):
+        if state_hint == "scene_snapshot":
+            return "This segment only has a short valid frame window, so keep the takeaway at scene-snapshot strength rather than a stronger learning-state claim."
+        if state_hint == "load_rising_proxy":
+            return "This looks like a scene-driven load proxy. Recheck the learning material and the study-surface lock before turning it into a stronger interpretation."
+        if state_hint == "off_task_risk_proxy":
+            return "This looks like a scene-switch proxy within the current learning-state sensing proxy. Recenter on one source and verify whether the study surface was actually left."
         if state_hint == "productive_struggle":
             return "This looks like a genuine challenge point. Rebuild the concept slowly and check the exact reasoning step that raised the effort."
         if state_hint == "off_task_risk":
@@ -843,6 +859,12 @@ class DataLogger:
         return "Review this segment once more and confirm the main idea before moving on."
 
     def _catch_up_action(self, severity, task_mode, avg_fatigue, missed_risk, state_hint="stable"):
+        if state_hint == "scene_snapshot":
+            return "Collect a longer run with at least a few more valid frames before treating this as more than a scene snapshot."
+        if state_hint == "load_rising_proxy":
+            return "Replay the segment slowly and keep the same study surface in view so the scene-driven proxy has a cleaner anchor."
+        if state_hint == "off_task_risk_proxy":
+            return "Reduce scene switching, keep one source in frame, and confirm whether study-surface lock really broke before drawing a stronger conclusion."
         if state_hint == "productive_struggle":
             return "Replay the segment slowly, keep the same target on screen, and rebuild the difficult concept step by step."
         if state_hint == "off_task_risk":
@@ -860,11 +882,16 @@ class DataLogger:
     def _state_hint_label(self, state_hint):
         mapping = {
             "stable": "Stable",
+            "stable_focus": "Stable focus",
+            "scene_snapshot": "Scene snapshot",
             "load_rising": "Load rising",
+            "load_rising_proxy": "Load rising proxy",
             "productive_struggle": "Productive struggle",
             "off_task_risk": "Off-task risk",
+            "off_task_risk_proxy": "Off-task risk proxy",
             "fatigue_risk": "Fatigue risk",
             "signal_check": "Signal check",
+            "signal_uncertain": "Signal uncertain",
         }
         return mapping.get(str(state_hint).strip().lower(), "Stable")
 

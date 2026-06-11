@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import Any, Optional
 
@@ -33,6 +33,14 @@ class RokidInputPacket:
     motion_source: str = "explicit"
     pose_source: str = "telemetry"
     frame_source: str = "telemetry"
+    source_mode: str = "imu_only"
+    has_pose: bool = True
+    has_imu: bool = False
+    pose_reliability: str = "measured"
+    valid_frame_streak: int = 0
+    valid_frame_seconds: float = 0.0
+    missing_signals: list[str] = field(default_factory=list)
+    rokid_compatible_mode: bool = False
 
 
 def build_simulator_packet(payload: dict[str, Any], default_task_mode: str = "reading") -> RokidInputPacket:
@@ -41,6 +49,7 @@ def build_simulator_packet(payload: dict[str, Any], default_task_mode: str = "re
     accel_mag = _as_float(_pick(payload, "accel_magnitude", "imu.accel_magnitude"))
     gyro_mag = _as_float(_pick(payload, "gyro_magnitude", "imu.gyro_magnitude"))
     motion_intensity, motion_source = _resolve_motion_intensity(explicit_motion, accel_mag, gyro_mag)
+    has_imu = accel_mag is not None or gyro_mag is not None
     return RokidInputPacket(
         source="simulator",
         timestamp_text=timestamp.strftime("%H:%M:%S"),
@@ -60,12 +69,21 @@ def build_simulator_packet(payload: dict[str, Any], default_task_mode: str = "re
         motion_source=motion_source,
         pose_source="simulator",
         frame_source="simulator",
+        source_mode="hybrid" if has_imu else "imu_only",
+        has_pose=True,
+        has_imu=has_imu,
+        pose_reliability="measured",
+        missing_signals=[],
+        rokid_compatible_mode=False,
     )
 
 
 def build_rokid_packet(payload: dict[str, Any], default_task_mode: str = "reading") -> RokidInputPacket:
     timestamp = datetime.now()
     timestamp_ms = _as_int(_pick(payload, "timestamp_ms", "sensor_timestamp_ms", "imu.timestamp_ms"))
+    pitch = _as_float(_pick(payload, "pitch", "head_pitch", "imu.pitch", "orientation.pitch"))
+    yaw = _as_float(_pick(payload, "yaw", "head_yaw", "imu.yaw", "orientation.yaw"))
+    roll = _as_float(_pick(payload, "roll", "head_roll", "imu.roll", "orientation.roll"))
     accel_mag = _as_float(
         _pick(
             payload,
@@ -86,6 +104,8 @@ def build_rokid_packet(payload: dict[str, Any], default_task_mode: str = "readin
     )
     explicit_motion = _as_float(_pick(payload, "motion_intensity", "motion.movement_intensity"))
     motion_intensity, motion_source = _resolve_motion_intensity(explicit_motion, accel_mag, gyro_mag)
+    has_pose = any(value is not None for value in (pitch, yaw, roll))
+    has_imu = accel_mag is not None or gyro_mag is not None
     tracking_state = str(
         _pick(payload, "tracking_state", "tracking.mode", "tracking_mode", "tracking_3dof")
         or "tracked"
@@ -95,9 +115,9 @@ def build_rokid_packet(payload: dict[str, Any], default_task_mode: str = "readin
         timestamp_text=timestamp.strftime("%H:%M:%S"),
         timestamp_ms=timestamp_ms,
         task_mode=_normalize_task_mode(_pick(payload, "task_mode", "context.task_mode"), default_task_mode),
-        pitch=_as_float(_pick(payload, "pitch", "head_pitch", "imu.pitch", "orientation.pitch")),
-        yaw=_as_float(_pick(payload, "yaw", "head_yaw", "imu.yaw", "orientation.yaw")),
-        roll=_as_float(_pick(payload, "roll", "head_roll", "imu.roll", "orientation.roll")),
+        pitch=pitch,
+        yaw=yaw,
+        roll=roll,
         motion_intensity=motion_intensity,
         accel_magnitude=accel_mag,
         gyro_magnitude=gyro_mag,
@@ -109,6 +129,17 @@ def build_rokid_packet(payload: dict[str, Any], default_task_mode: str = "readin
         motion_source=motion_source,
         pose_source="imu-packet",
         frame_source="telemetry",
+        source_mode="hybrid" if has_pose and has_imu else "imu_only",
+        has_pose=has_pose,
+        has_imu=has_imu,
+        pose_reliability="measured" if has_pose else "missing",
+        missing_signals=_build_missing_signals(
+            has_pose=has_pose,
+            has_imu=has_imu,
+            motion_source=motion_source,
+            pose_reliability="measured" if has_pose else "missing",
+        ),
+        rokid_compatible_mode=False,
     )
 
 
@@ -218,3 +249,19 @@ def _as_int(value: Any) -> Optional[int]:
 
 def _clamp(value: float, low: float = 0.0, high: float = 100.0) -> float:
     return max(low, min(high, float(value)))
+
+
+def _build_missing_signals(
+    has_pose: bool,
+    has_imu: bool,
+    motion_source: str,
+    pose_reliability: str,
+) -> list[str]:
+    missing = []
+    if pose_reliability == "missing" or not has_pose:
+        missing.append("pose")
+    if not has_imu:
+        missing.append("imu")
+    if motion_source in {"default", "unavailable", "scene-derived"}:
+        missing.append("motion")
+    return missing
