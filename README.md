@@ -1,6 +1,6 @@
 # Learning State Guardian
 
-Learning State Guardian is a conservative **learning-state proxy** project for smart-glasses-ready study sensing, interpretable state explanation, adaptive regulation, review, validation, and demo support. It does **not** claim precise attention detection.
+Learning State Guardian is a conservative **learning-state proxy** project for smart-glasses-ready study sensing, interpretable state explanation, adaptive regulation, review, validation, and demo support.
 
 ## Project Positioning
 
@@ -135,7 +135,7 @@ Main local outputs:
 ## Limitations
 
 - all state outputs remain **learning-state proxies**
-- the project should be described as **interpretable learning-state sensing**, not precise attention detection
+- the project should be described as **interpretable learning-state sensing proxy** with conservative scene-driven wording
 - no gaze, blink, fixation, or pupil pipeline is required in the current baseline
 - validation quality depends on real session coverage, label quality, and cross-user calibration
 - first-person scene proxies can degrade under blur, low visibility, unstable camera motion, or material-specific lighting conditions

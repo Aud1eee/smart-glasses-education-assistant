@@ -122,6 +122,14 @@ latest_input = {
     "motion_source": "default",
     "pose_source": "simulator",
     "frame_source": "simulator",
+    "source_mode": "imu_only",
+    "has_pose": True,
+    "has_imu": False,
+    "pose_reliability": "measured",
+    "valid_frame_streak": 0,
+    "valid_frame_seconds": 0.0,
+    "missing_signals": [],
+    "rokid_compatible_mode": False,
     "timestamp_ms": None,
 }
 latest_interpreted_state = _initial_interpreted_state()
@@ -495,6 +503,16 @@ def _build_state_interpreter_snapshot(posture_state=None, input_state=None, sess
         "tracking_state": input_state.get("tracking_state", latest_input.get("tracking_state", "warmup")),
         "tracking_confidence": input_state.get("tracking_confidence", latest_input.get("tracking_confidence") or 0.0),
         "tracking_uncertainty": input_state.get("tracking_uncertainty", latest_input.get("tracking_uncertainty", 0.0)),
+        "motion_source": input_state.get("motion_source", latest_input.get("motion_source", "default")),
+        "pose_source": input_state.get("pose_source", latest_input.get("pose_source", "telemetry")),
+        "source_mode": input_state.get("source_mode", latest_input.get("source_mode", "imu_only")),
+        "has_pose": input_state.get("has_pose", latest_input.get("has_pose", True)),
+        "has_imu": input_state.get("has_imu", latest_input.get("has_imu", False)),
+        "pose_reliability": input_state.get("pose_reliability", latest_input.get("pose_reliability", "measured")),
+        "valid_frame_streak": input_state.get("valid_frame_streak", latest_input.get("valid_frame_streak", 0)),
+        "valid_frame_seconds": input_state.get("valid_frame_seconds", latest_input.get("valid_frame_seconds", 0.0)),
+        "missing_signals": input_state.get("missing_signals", latest_input.get("missing_signals", [])),
+        "rokid_compatible_mode": input_state.get("rokid_compatible_mode", latest_input.get("rokid_compatible_mode", False)),
         "session_phase": session_state.get("phase", ""),
         "session_state_label": session_state.get("state_label", ""),
         "session_guidance": session_state.get("guidance", ""),
@@ -520,6 +538,49 @@ def _update_interpreted_state(posture_state=None, input_state=None, session_stat
         fallback["transition_reason"] = "Interpreter fallback preserved the last stable proxy label."
         latest_interpreted_state = fallback
     return latest_interpreted_state
+
+
+def _guardian_mode_note(input_state=None, interpreted_state=None):
+    input_state = input_state or latest_input or {}
+    interpreted_state = interpreted_state or latest_interpreted_state or {}
+    if not input_state.get("rokid_compatible_mode"):
+        return ""
+
+    source_mode = str(input_state.get("source_mode", "")).strip().lower()
+    if source_mode != "frame_only":
+        return "Rokid-compatible mode is active. Current status is still described as a conservative scene-driven proxy."
+
+    streak = _safe_int(input_state.get("valid_frame_streak"), default=0)
+    seconds = _safe_float(input_state.get("valid_frame_seconds"), default=0.0)
+    label = str(interpreted_state.get("label", "")).strip().lower()
+    if label in {"scene_snapshot", "signal_uncertain"}:
+        return (
+            f"Frame-only Rokid mode is active. The system has {streak} valid frame(s) across about {seconds:.1f}s, "
+            "so it stays at scene-snapshot or signal-uncertain strength."
+        )
+    return (
+        "Frame-only Rokid mode is active. Current output is a scene-driven proxy based on study-surface lock and "
+        "scene-switch patterns, with fatigue-risk proxy limited without pose/IMU and without a measured head-pose signal."
+    )
+
+
+def _conservative_logged_state_hint(posture_state=None, interpreted_state=None, input_state=None):
+    posture_state = posture_state or {}
+    interpreted_state = interpreted_state or latest_interpreted_state or {}
+    input_state = input_state or latest_input or {}
+    raw_state_hint = str(posture_state.get("state_hint", "stable")).strip().lower() or "stable"
+    if not input_state.get("rokid_compatible_mode") or str(input_state.get("source_mode", "")).strip().lower() != "frame_only":
+        return raw_state_hint
+
+    label = str(interpreted_state.get("label", "")).strip().lower()
+    mapping = {
+        "stable_focus": "stable",
+        "scene_snapshot": "scene_snapshot",
+        "load_rising_proxy": "load_rising_proxy",
+        "off_task_risk_proxy": "off_task_risk_proxy",
+        "signal_uncertain": "signal_uncertain",
+    }
+    return mapping.get(label, raw_state_hint)
 
 
 def _build_scene_calibration_diagnosis():
@@ -1571,6 +1632,14 @@ def _input_snapshot(packet=None):
             "motion_source": "default",
             "pose_source": "simulator",
             "frame_source": "simulator",
+            "source_mode": "imu_only",
+            "has_pose": True,
+            "has_imu": False,
+            "pose_reliability": "measured",
+            "valid_frame_streak": 0,
+            "valid_frame_seconds": 0.0,
+            "missing_signals": [],
+            "rokid_compatible_mode": False,
             "timestamp_ms": None,
         }
     return {
@@ -1591,6 +1660,14 @@ def _input_snapshot(packet=None):
         "motion_source": packet.motion_source,
         "pose_source": packet.pose_source,
         "frame_source": packet.frame_source,
+        "source_mode": packet.source_mode,
+        "has_pose": packet.has_pose,
+        "has_imu": packet.has_imu,
+        "pose_reliability": packet.pose_reliability,
+        "valid_frame_streak": packet.valid_frame_streak,
+        "valid_frame_seconds": packet.valid_frame_seconds,
+        "missing_signals": list(packet.missing_signals or []),
+        "rokid_compatible_mode": packet.rokid_compatible_mode,
         "timestamp_ms": packet.timestamp_ms,
     }
 
@@ -1686,11 +1763,11 @@ def handle_rokid_frame():
 
     packet = rokid_frame_adapter.build_packet(payload, image_bytes=image_bytes, default_task_mode=posture.task_mode)
     _ingest_packet(packet)
-    message = "Frame packet ingested."
+    message = "Frame packet ingested as a scene-driven proxy."
     if packet.frame_source == "opencv-unavailable":
         message = "Frame adapter scaffold is active, but the current runtime does not provide OpenCV scene-analysis support."
     elif packet.tracking_state in {"content_sparse", "low_visibility", "blurred", "scene_unstable"}:
-        message = "Frame received, but the study scene was not stable enough; the session will bias toward signal-check behavior."
+        message = "Frame received, but the study scene was not stable enough for a stronger scene-driven proxy, so the session will bias toward signal-uncertain behavior."
     elif packet.tracking_state == "frame_unavailable":
         message = "Frame input was not decoded successfully."
     return jsonify({
@@ -1698,6 +1775,14 @@ def handle_rokid_frame():
         "source": packet.source,
         "tracking_state": packet.tracking_state,
         "tracking_confidence": packet.tracking_confidence,
+        "source_mode": packet.source_mode,
+        "has_pose": packet.has_pose,
+        "has_imu": packet.has_imu,
+        "pose_reliability": packet.pose_reliability,
+        "valid_frame_streak": packet.valid_frame_streak,
+        "valid_frame_seconds": packet.valid_frame_seconds,
+        "missing_signals": packet.missing_signals,
+        "rokid_compatible_mode": packet.rokid_compatible_mode,
         "message": message,
         "session_id": current_session_id,
     })
@@ -1735,6 +1820,11 @@ def _ingest_packet(packet):
         session_state=latest_session,
         now=time.time(),
     )
+    logged_state_hint = _conservative_logged_state_hint(
+        posture_state=res,
+        interpreted_state=latest_interpreted_state,
+        input_state=latest_input,
+    )
     latest_difficulty = difficulty_marker.update(
         res,
         latest_session,
@@ -1760,7 +1850,7 @@ def _ingest_packet(packet):
         behavioral_level=res["behavioral_level"],
         drift_trend=res.get("drift_trend", 0),
         switching_index=res.get("switching_index", 0),
-        state_hint=res.get("state_hint", "stable"),
+        state_hint=logged_state_hint,
         fatigue_risk=res["fatigue_risk"],
         fatigue_level=res["fatigue_level"],
         uncertainty_score=res["uncertainty_score"],
@@ -1844,6 +1934,15 @@ def get_status():
         "interpreted_state": interpreted.get("display_label") or interpreted.get("stable_label") or interpreted.get("label"),
         "interpreted_confidence": interpreted.get("confidence"),
         "interpreted_evidence": interpreted.get("evidence", []),
+        "guarded_state_hint": _conservative_logged_state_hint(
+            posture_state={"state_hint": posture.state_hint},
+            interpreted_state=interpreted,
+            input_state=latest_input,
+        ),
+        "guardian_mode_note": _guardian_mode_note(
+            input_state=latest_input,
+            interpreted_state=interpreted,
+        ),
         "signal_quality_score": interpreted_axes.get("signal_quality_score"),
         "engagement_score": interpreted_axes.get("engagement_score"),
         "interpreted_axes": interpreted_axes,
@@ -1868,6 +1967,11 @@ def review_summary():
     dataset = request.args.get("dataset", "live")
     session_id = request.args.get("session_id") or None
     payload = logger.build_review_payload(session_id=session_id, dataset=dataset)
+    if str(dataset).strip().lower() == "live":
+        payload["guardian_mode_note"] = _guardian_mode_note(
+            input_state=latest_input,
+            interpreted_state=latest_interpreted_state,
+        )
     return jsonify(payload)
 
 

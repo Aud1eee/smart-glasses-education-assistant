@@ -15,10 +15,13 @@ class StateTransitionManager:
     }
 
     DEFAULT_PER_LABEL_RULES = {
+        "scene_snapshot": {"min_enter_seconds": 1.5, "min_exit_seconds": 1.0, "cooldown_seconds": 1.0},
         "stable_focus": {"min_enter_seconds": 4.0, "min_exit_seconds": 2.5, "cooldown_seconds": 2.5},
         "load_rising": {"min_enter_seconds": 3.0, "min_exit_seconds": 2.0, "cooldown_seconds": 2.0},
+        "load_rising_proxy": {"min_enter_seconds": 3.0, "min_exit_seconds": 2.0, "cooldown_seconds": 2.0},
         "productive_struggle": {"min_enter_seconds": 3.5, "min_exit_seconds": 2.0, "cooldown_seconds": 2.0},
         "off_task_risk": {"min_enter_seconds": 4.0, "min_exit_seconds": 3.0, "cooldown_seconds": 4.0},
+        "off_task_risk_proxy": {"min_enter_seconds": 4.0, "min_exit_seconds": 3.0, "cooldown_seconds": 4.0},
         "fatigue_risk": {"min_enter_seconds": 4.0, "min_exit_seconds": 3.0, "cooldown_seconds": 4.5},
         "signal_uncertain": {"min_enter_seconds": 2.0, "min_exit_seconds": 1.5, "cooldown_seconds": 1.5},
     }
@@ -49,6 +52,7 @@ class StateTransitionManager:
     def reset(self, now=None):
         now = time.time() if now is None else float(now)
         self.current_label = None
+        self.current_display_label = None
         self.current_entered_at = None
         self.pending_label = None
         self.pending_since = None
@@ -59,9 +63,11 @@ class StateTransitionManager:
     def update(self, interpreted_state, now=None):
         now = time.time() if now is None else float(now)
         candidate_label = str((interpreted_state or {}).get("label") or "").strip() or "stable_focus"
+        candidate_display_label = str((interpreted_state or {}).get("display_label") or candidate_label).strip() or candidate_label
 
         if self.current_label is None:
             self.current_label = candidate_label
+            self.current_display_label = candidate_display_label
             self.current_entered_at = now
             self.pending_label = None
             self.pending_since = None
@@ -70,6 +76,7 @@ class StateTransitionManager:
             return self.snapshot()
 
         if candidate_label == self.current_label:
+            self.current_display_label = candidate_display_label
             self.pending_label = None
             self.pending_since = None
             self.transition_reason = f"Holding {self.current_label} because the current proxy evidence remains consistent."
@@ -110,6 +117,7 @@ class StateTransitionManager:
 
         previous_label = self.current_label
         self.current_label = candidate_label
+        self.current_display_label = candidate_display_label
         self.current_entered_at = now
         self.pending_label = None
         self.pending_since = None
@@ -122,7 +130,7 @@ class StateTransitionManager:
     def snapshot(self):
         return {
             "stable_label": self.current_label or "stable_focus",
-            "display_label": self.current_label or "stable_focus",
+            "display_label": self.current_display_label or self.current_label or "stable_focus",
             "transition_reason": self.transition_reason,
             "pending_label": self.pending_label,
         }

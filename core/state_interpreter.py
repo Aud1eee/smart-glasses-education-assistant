@@ -8,9 +8,12 @@ class StateInterpreter:
 
     LABEL_DISPLAY = {
         "stable_focus": "Stable focus",
+        "scene_snapshot": "Scene snapshot",
         "load_rising": "Load rising",
+        "load_rising_proxy": "Load rising proxy",
         "productive_struggle": "Productive struggle",
         "off_task_risk": "Off-task risk",
+        "off_task_risk_proxy": "Off-task risk proxy",
         "fatigue_risk": "Fatigue risk",
         "signal_uncertain": "Signal uncertain",
     }
@@ -31,6 +34,9 @@ class StateInterpreter:
         "stable_fatigue_ceiling": 40.0,
         "load_rising_floor": 50.0,
         "load_rising_engagement_ceiling": 72.0,
+        "frame_ready_streak": 4.0,
+        "frame_ready_seconds": 3.0,
+        "frame_only_confidence_cap": 62.0,
     }
 
     def __init__(self, thresholds=None):
@@ -48,7 +54,7 @@ class StateInterpreter:
         auxiliary_flags = self._compute_auxiliary_flags(metrics, axes)
         label = self._select_label(metrics, axes, auxiliary_flags)
         evidence = self._build_evidence(label, metrics, axes, auxiliary_flags)
-        uncertainty_reason = self._uncertainty_reason(metrics, axes, auxiliary_flags)
+        uncertainty_reason = self._uncertainty_reason(label, metrics, axes, auxiliary_flags)
         confidence = self._confidence(label, metrics, axes, auxiliary_flags, uncertainty_reason)
 
         return {
@@ -98,6 +104,16 @@ class StateInterpreter:
             "tracking_confidence": self._number(snapshot, "tracking_confidence", default=0.0),
             "tracking_uncertainty": self._number(snapshot, "tracking_uncertainty", default=0.0),
             "tracking_state": self._text(snapshot, "tracking_state", default="warmup"),
+            "source_mode": self._text(snapshot, "source_mode", default="imu_only"),
+            "motion_source": self._text(snapshot, "motion_source", default="default"),
+            "pose_source": self._text(snapshot, "pose_source", default="telemetry"),
+            "has_pose": self._bool(snapshot.get("has_pose")),
+            "has_imu": self._bool(snapshot.get("has_imu")),
+            "pose_reliability": self._text(snapshot, "pose_reliability", default="measured"),
+            "valid_frame_streak": self._number(snapshot, "valid_frame_streak", default=0.0),
+            "valid_frame_seconds": self._number(snapshot, "valid_frame_seconds", default=0.0),
+            "missing_signals": self._list(snapshot.get("missing_signals")),
+            "rokid_compatible_mode": self._bool(snapshot.get("rokid_compatible_mode")),
         }
 
     def _compute_axes(self, metrics):
@@ -189,15 +205,42 @@ class StateInterpreter:
             or metrics["uncertainty_score"] >= 60.0
             or metrics["tracking_state"] in {"warmup", "frame_unavailable", "blurred", "low_visibility", "content_sparse"}
         )
+        frame_only_guard_active = self._is_frame_only_guard(metrics)
+        frame_temporal_ready = bool(
+            metrics["valid_frame_streak"] >= self.thresholds["frame_ready_streak"]
+            and metrics["valid_frame_seconds"] >= self.thresholds["frame_ready_seconds"]
+        )
+        frame_scene_snapshot_ready = bool(
+            metrics["tracking_state"] in {"scene_tracking", "scene_locked"}
+            and (
+                metrics["scene_content_score"] >= 18.0
+                or metrics["study_surface_score"] >= 22.0
+                or metrics["scene_lock_score"] >= 22.0
+            )
+        )
         return {
             "valid_learning_switch": valid_learning_switch,
             "off_task_switch": off_task_switch,
             "productive_struggle_candidate": productive_struggle_candidate,
             "fatigue_candidate": fatigue_candidate,
             "signal_uncertain_candidate": signal_uncertain_candidate,
+            "frame_only_guard_active": frame_only_guard_active,
+            "frame_temporal_ready": frame_temporal_ready,
+            "frame_scene_snapshot_ready": frame_scene_snapshot_ready,
         }
 
     def _select_label(self, metrics, axes, auxiliary_flags):
+        if auxiliary_flags["frame_only_guard_active"]:
+            warmup_label = self._frame_only_guard_label(metrics, axes, auxiliary_flags)
+            if warmup_label:
+                return warmup_label
+
+        label = self._select_standard_label(metrics, axes, auxiliary_flags)
+        if not auxiliary_flags["frame_only_guard_active"]:
+            return label
+        return self._frame_only_remap_label(label, metrics, auxiliary_flags)
+
+    def _select_standard_label(self, metrics, axes, auxiliary_flags):
         if auxiliary_flags["signal_uncertain_candidate"]:
             return "signal_uncertain"
         if auxiliary_flags["fatigue_candidate"]:
@@ -214,17 +257,55 @@ class StateInterpreter:
             return "load_rising"
         return "stable_focus"
 
+    def _frame_only_guard_label(self, metrics, axes, auxiliary_flags):
+        if auxiliary_flags["signal_uncertain_candidate"]:
+            return "signal_uncertain"
+        if metrics["tracking_state"] not in {"scene_tracking", "scene_locked"}:
+            return "signal_uncertain"
+        if axes["signal_quality_score"] < self.thresholds["signal_guard_floor"]:
+            return "signal_uncertain"
+        if not auxiliary_flags["frame_temporal_ready"]:
+            if auxiliary_flags["frame_scene_snapshot_ready"]:
+                return "scene_snapshot"
+            return "signal_uncertain"
+        return None
+
+    def _frame_only_remap_label(self, label, metrics, auxiliary_flags):
+        if label == "fatigue_risk":
+            return "load_rising_proxy" if auxiliary_flags["frame_temporal_ready"] else "signal_uncertain"
+        if label in {"productive_struggle", "load_rising"}:
+            return "load_rising_proxy"
+        if label == "off_task_risk":
+            return "off_task_risk_proxy"
+        if label == "stable_focus" and metrics["scene_lock_score"] < 38.0:
+            return "scene_snapshot"
+        return label
+
     def _build_evidence(self, label, metrics, axes, auxiliary_flags):
         evidence = []
+        frame_only_guard = auxiliary_flags["frame_only_guard_active"]
+
         if label == "stable_focus":
-            if axes["engagement_score"] >= self.thresholds["stable_engagement_floor"]:
-                evidence.append("behavioral alignment and focus cues stayed relatively steady")
-            if axes["cognitive_load_score"] <= self.thresholds["stable_load_ceiling"]:
-                evidence.append("cognitive-load proxy stayed in a lower band")
-            if metrics["scene_lock_score"] >= 50.0 or metrics["study_surface_score"] >= 50.0:
-                evidence.append("first-person scene stayed anchored on a study surface")
-            if axes["signal_quality_score"] >= 60.0:
-                evidence.append("signal quality was stable enough for a cautious proxy interpretation")
+            if frame_only_guard:
+                evidence.append("scene-driven proxy kept a relatively steady study-surface lock")
+                if metrics["scene_lock_score"] >= 50.0 or metrics["study_surface_score"] >= 50.0:
+                    evidence.append("first-person scene stayed anchored on learning material")
+                if axes["signal_quality_score"] >= 60.0:
+                    evidence.append("signal quality stayed stable enough for a cautious proxy interpretation")
+            else:
+                if axes["engagement_score"] >= self.thresholds["stable_engagement_floor"]:
+                    evidence.append("behavioral alignment and focus cues stayed relatively steady")
+                if axes["cognitive_load_score"] <= self.thresholds["stable_load_ceiling"]:
+                    evidence.append("cognitive-load proxy stayed in a lower band")
+                if metrics["scene_lock_score"] >= 50.0 or metrics["study_surface_score"] >= 50.0:
+                    evidence.append("first-person scene stayed anchored on a study surface")
+                if axes["signal_quality_score"] >= 60.0:
+                    evidence.append("signal quality was stable enough for a cautious proxy interpretation")
+        elif label == "scene_snapshot":
+            evidence.append("scene-driven proxy has only a short continuous frame window so far")
+            if metrics["scene_lock_score"] >= 28.0 or metrics["study_surface_score"] >= 28.0:
+                evidence.append("the current frame still looks anchored on a study surface")
+            evidence.append("the system stays at scene-snapshot strength until more valid frames arrive")
         elif label == "load_rising":
             if axes["cognitive_load_score"] >= self.thresholds["load_rising_floor"]:
                 evidence.append("cognitive-load proxy rose into a medium or higher band")
@@ -234,6 +315,13 @@ class StateInterpreter:
                 evidence.append("switching or drift trend increased across the current snapshot")
             if metrics["state_hint"] == "load_rising":
                 evidence.append("legacy state hint also points to load rising")
+        elif label == "load_rising_proxy":
+            evidence.append("scene-driven proxy suggests learning pressure or challenge is rising")
+            if metrics["scene_switch_rate"] >= 34.0 or metrics["drift_trend"] >= 5.0:
+                evidence.append("scene-switch proxy or drift trend increased")
+            if metrics["scene_lock_score"] >= 34.0 or metrics["study_surface_score"] >= 34.0:
+                evidence.append("study-surface lock still looks partially intact")
+            evidence.append("without measured pose or IMU, this stays a conservative load proxy rather than a stronger fatigue or struggle claim")
         elif label == "productive_struggle":
             if axes["cognitive_load_score"] >= self.thresholds["productive_load_floor"]:
                 evidence.append("cognitive-load proxy is elevated")
@@ -252,6 +340,13 @@ class StateInterpreter:
                 evidence.append("study-surface lock weakened during the current snapshot")
             if axes["engagement_score"] <= self.thresholds["off_task_engagement_ceiling"]:
                 evidence.append("engagement cues dropped while switching pressure increased")
+        elif label == "off_task_risk_proxy":
+            evidence.append("scene-switch proxy rose while study-surface lock weakened")
+            if metrics["scene_switch_rate"] >= 45.0:
+                evidence.append("first-person scene changed more often than a settled study view")
+            if metrics["scene_lock_score"] <= 40.0 or metrics["study_surface_score"] <= 44.0:
+                evidence.append("study-surface lock softened during the current frame window")
+            evidence.append("this remains a scene-driven learning-state proxy with conservative certainty")
         elif label == "fatigue_risk":
             if axes["fatigue_score"] >= self.thresholds["fatigue_floor"]:
                 evidence.append("fatigue proxy stayed elevated")
@@ -270,12 +365,22 @@ class StateInterpreter:
                 evidence.append("frame clarity looks limited")
             if metrics["brightness_score"] < 14.0 or metrics["brightness_score"] > 88.0:
                 evidence.append("brightness looks atypical for a stable scene proxy")
+            if frame_only_guard and metrics["missing_signals"]:
+                evidence.append("measured pose or IMU signals are missing, so the system stays conservative")
 
         if not evidence:
             evidence.append("current proxy signals are mixed, so the interpretation stays conservative")
         return evidence[:4]
 
-    def _uncertainty_reason(self, metrics, axes, auxiliary_flags):
+    def _uncertainty_reason(self, label, metrics, axes, auxiliary_flags):
+        if auxiliary_flags["frame_only_guard_active"] and not auxiliary_flags["frame_temporal_ready"]:
+            if metrics["tracking_state"] not in {"scene_tracking", "scene_locked"}:
+                return "Frame-only mode has not reached a stable scene window yet, so the learning-state proxy stays uncertain."
+            return (
+                f"Only {int(round(metrics['valid_frame_streak']))} valid frame(s) and "
+                f"{metrics['valid_frame_seconds']:.1f}s of continuous scene evidence are available, "
+                "so the system stays at scene-snapshot strength."
+            )
         if auxiliary_flags["signal_uncertain_candidate"]:
             if metrics["tracking_state"] in {"frame_unavailable", "warmup"}:
                 return "Scene and posture signals are still warming up, so the learning-state proxy should be treated cautiously."
@@ -284,6 +389,8 @@ class StateInterpreter:
             if metrics["brightness_score"] < 14.0 or metrics["brightness_score"] > 88.0:
                 return "Lighting conditions look atypical, so the scene proxy is less reliable."
             return "Signal quality is currently weak, so this should be read as a cautious learning-state proxy."
+        if auxiliary_flags["frame_only_guard_active"] and metrics["missing_signals"]:
+            return "Frame-only mode is using a scene-driven proxy without measured pose or IMU, so confidence is intentionally capped."
         if axes["signal_quality_score"] < self.thresholds["signal_caution_floor"]:
             return "Signal quality is moderate rather than strong, so the learning-state proxy may drift slightly."
         return ""
@@ -297,13 +404,23 @@ class StateInterpreter:
 
         if label == "stable_focus":
             support = min(1.0, (engagement * 0.52) + ((1.0 - load) * 0.28) + ((1.0 - fatigue) * 0.20))
+        elif label == "scene_snapshot":
+            surface = self._clamp(metrics["study_surface_score"]) / 100.0
+            lock = self._clamp(metrics["scene_lock_score"]) / 100.0
+            support = min(1.0, (signal * 0.42) + (surface * 0.32) + (lock * 0.18) + 0.08)
         elif label == "load_rising":
             support = min(1.0, (load * 0.50) + ((1.0 - engagement) * 0.30) + (signal * 0.20))
+        elif label == "load_rising_proxy":
+            switching = self._clamp(metrics["scene_switch_rate"] * 0.55 + metrics["drift_trend"] * 0.30) / 100.0
+            support = min(1.0, (load * 0.32) + (switching * 0.28) + (signal * 0.25) + 0.15)
         elif label == "productive_struggle":
             support = min(1.0, (load * 0.38) + (engagement * 0.42) + (signal * 0.20))
         elif label == "off_task_risk":
             switching_support = self._clamp(metrics["switching_index"] * 0.9 + metrics["scene_switch_rate"] * 0.5) / 100.0
             support = min(1.0, (switching_support * 0.42) + ((1.0 - engagement) * 0.33) + ((1.0 - signal) * 0.05) + 0.20)
+        elif label == "off_task_risk_proxy":
+            switching_support = self._clamp(metrics["scene_switch_rate"] * 0.78 + (100.0 - metrics["scene_lock_score"]) * 0.38) / 100.0
+            support = min(1.0, (switching_support * 0.42) + ((1.0 - engagement) * 0.20) + (signal * 0.12) + 0.16)
         elif label == "fatigue_risk":
             support = min(1.0, (fatigue * 0.54) + ((1.0 - engagement) * 0.16) + ((1.0 - load) * 0.08) + 0.22)
         else:
@@ -319,7 +436,18 @@ class StateInterpreter:
         confidence = base + (support * 0.24)
         if label == "signal_uncertain":
             confidence = 0.34 + ((1.0 - signal) * 0.32)
+
+        if auxiliary_flags["frame_only_guard_active"]:
+            missing_penalty = min(0.16, len(metrics["missing_signals"]) * 0.04)
+            confidence -= missing_penalty
+            if not auxiliary_flags["frame_temporal_ready"]:
+                confidence = min(confidence, 0.48 if label == "scene_snapshot" else 0.44)
+            confidence = min(confidence, self.thresholds["frame_only_confidence_cap"] / 100.0)
+
         return self._clamp(confidence, low=0.32, high=0.92)
+
+    def _is_frame_only_guard(self, metrics):
+        return bool(metrics["rokid_compatible_mode"] and metrics["source_mode"] == "frame_only")
 
     def _number(self, payload, *keys, default=0.0):
         for key in keys:
@@ -337,6 +465,22 @@ class StateInterpreter:
     def _text(self, payload, key, default=""):
         value = payload.get(key, default)
         return str(value if value is not None else default).strip().lower()
+
+    def _bool(self, value):
+        if isinstance(value, bool):
+            return value
+        if value is None:
+            return False
+        text = str(value).strip().lower()
+        return text in {"1", "true", "yes", "on"}
+
+    def _list(self, value):
+        if isinstance(value, list):
+            return [str(item).strip().lower() for item in value if str(item).strip()]
+        if value is None:
+            return []
+        text = str(value).strip()
+        return [text.lower()] if text else []
 
     def _clamp(self, value, low=0.0, high=100.0):
         try:

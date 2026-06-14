@@ -2,6 +2,7 @@ import base64
 from dataclasses import asdict
 from datetime import datetime
 import os
+import time
 from typing import Any, Optional
 
 try:
@@ -91,6 +92,10 @@ class RokidFrameAdapter:
         self.lock_streak = 0
         self.scene_lock_score = 0.0
         self.last_pose = (0.0, 0.0, 0.0)
+        self.last_frame_at = None
+        self.last_valid_frame_at = None
+        self.valid_frame_streak = 0
+        self.valid_frame_seconds = 0.0
 
     def has_frame_payload(self, payload: dict[str, Any], image_bytes: Optional[bytes] = None) -> bool:
         return bool(
@@ -109,20 +114,53 @@ class RokidFrameAdapter:
     ) -> RokidInputPacket:
         timestamp = datetime.now()
         task_mode = self._normalize_task_mode(payload.get("task_mode"), default_task_mode)
+        timestamp_ms = self._as_int(self._pick(payload, "timestamp_ms", "sensor_timestamp_ms", "imu.timestamp_ms"))
+        measured_pitch = self._as_float(self._pick(payload, "pitch", "head_pitch", "imu.pitch", "orientation.pitch"))
+        measured_yaw = self._as_float(self._pick(payload, "yaw", "head_yaw", "imu.yaw", "orientation.yaw"))
+        measured_roll = self._as_float(self._pick(payload, "roll", "head_roll", "imu.roll", "orientation.roll"))
+        accel_mag = self._as_float(
+            self._pick(
+                payload,
+                "accel_magnitude",
+                "imu.accel_magnitude",
+                "imu.accelMagnitude",
+                "motion.accel_magnitude",
+            )
+        )
+        gyro_mag = self._as_float(
+            self._pick(
+                payload,
+                "gyro_magnitude",
+                "imu.gyro_magnitude",
+                "imu.gyroMagnitude",
+                "motion.gyro_magnitude",
+            )
+        )
+        explicit_motion = self._as_float(self._pick(payload, "motion_intensity", "motion.movement_intensity"))
+        has_pose = any(value is not None for value in (measured_pitch, measured_yaw, measured_roll))
+        has_imu = accel_mag is not None or gyro_mag is not None
+        source_mode = "hybrid" if (has_pose or has_imu) else "frame_only"
+        pose_reliability = "measured" if has_pose else "scene_proxy"
+        motion, motion_source = self._resolve_motion_intensity(explicit_motion, accel_mag, gyro_mag)
         frame, frame_source = self._load_frame(payload, image_bytes=image_bytes)
-        explicit_motion = self._as_float(payload.get("motion_intensity"))
 
         if frame is None:
+            self._update_valid_frame_window(False, timestamp_ms=timestamp_ms)
             damped_pitch, damped_yaw, damped_roll = self._decay_last_pose(0.62)
+            pitch = measured_pitch if measured_pitch is not None else damped_pitch
+            yaw = measured_yaw if measured_yaw is not None else damped_yaw
+            roll = measured_roll if measured_roll is not None else damped_roll
             return RokidInputPacket(
                 source="rokid_video_adapter",
                 timestamp_text=timestamp.strftime("%H:%M:%S"),
-                timestamp_ms=self._as_int(payload.get("timestamp_ms")),
+                timestamp_ms=timestamp_ms,
                 task_mode=task_mode,
-                pitch=round(damped_pitch, 2),
-                yaw=round(damped_yaw, 2),
-                roll=round(damped_roll, 2),
-                motion_intensity=explicit_motion or 0.0,
+                pitch=round(pitch, 2),
+                yaw=round(yaw, 2),
+                roll=round(roll, 2),
+                motion_intensity=round(float(motion), 1),
+                accel_magnitude=accel_mag,
+                gyro_magnitude=gyro_mag,
                 tracking_state="frame_unavailable",
                 tracking_confidence=0.08,
                 tracking_uncertainty=78.0,
@@ -136,9 +174,22 @@ class RokidFrameAdapter:
                 blur_score=0.0,
                 brightness_score=0.0,
                 device_profile="rokid-video-scene-proxy",
-                motion_source="explicit" if explicit_motion is not None else "unavailable",
-                pose_source="scene-proxy",
+                motion_source=motion_source if motion_source != "default" else "unavailable",
+                pose_source="telemetry" if has_pose else "scene-proxy",
                 frame_source=frame_source,
+                source_mode=source_mode,
+                has_pose=has_pose,
+                has_imu=has_imu,
+                pose_reliability="measured" if has_pose else "missing",
+                valid_frame_streak=self.valid_frame_streak,
+                valid_frame_seconds=round(float(self.valid_frame_seconds), 1),
+                missing_signals=self._build_missing_signals(
+                    has_pose=has_pose,
+                    has_imu=has_imu,
+                    motion_source=motion_source if motion_source != "default" else "unavailable",
+                    pose_reliability="measured" if has_pose else "missing",
+                ),
+                rokid_compatible_mode=True,
             )
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -173,11 +224,13 @@ class RokidFrameAdapter:
             text_score=text_score,
             study_surface_score=study_surface_score,
         )
-        motion = explicit_motion if explicit_motion is not None else self._compute_motion_intensity(
-            scene_delta=scene_delta,
-            histogram_delta=histogram_delta,
-            anchor_shift=anchor_shift,
-        )
+        if explicit_motion is None and not has_imu:
+            motion = self._compute_motion_intensity(
+                scene_delta=scene_delta,
+                histogram_delta=histogram_delta,
+                anchor_shift=anchor_shift,
+            )
+            motion_source = "scene-derived"
         scene_stability = self._compute_scene_stability(
             motion=motion,
             scene_switch_rate=scene_switch_rate,
@@ -211,12 +264,15 @@ class RokidFrameAdapter:
             tracking_confidence=tracking_confidence,
         )
 
-        pitch, yaw, roll = self._derive_scene_pose(
+        proxy_pitch, proxy_yaw, proxy_roll = self._derive_scene_pose(
             anchor=anchor,
             frame_shape=(frame_w, frame_h),
             edges=edges,
             scene_stability=scene_stability,
         )
+        pitch = measured_pitch if measured_pitch is not None else proxy_pitch
+        yaw = measured_yaw if measured_yaw is not None else proxy_yaw
+        roll = measured_roll if measured_roll is not None else proxy_roll
         tracking_state = self._classify_tracking_state(
             blur_score=blur_score,
             brightness_score=brightness_score,
@@ -226,6 +282,10 @@ class RokidFrameAdapter:
             study_surface_score=study_surface_score,
             scene_lock_score=scene_lock_score,
         )
+        self._update_valid_frame_window(
+            tracking_state in {"scene_tracking", "scene_locked"},
+            timestamp_ms=timestamp_ms,
+        )
 
         self.previous_preview = preview
         self.previous_hist = self._compute_histogram(gray)
@@ -233,17 +293,19 @@ class RokidFrameAdapter:
         self.previous_content_score = content_score
         self.previous_surface_score = study_surface_score
         self.scene_lock_score = scene_lock_score
-        self.last_pose = (pitch, yaw, roll)
+        self.last_pose = (proxy_pitch, proxy_yaw, proxy_roll)
 
         return RokidInputPacket(
             source="rokid_video_adapter",
             timestamp_text=timestamp.strftime("%H:%M:%S"),
-            timestamp_ms=self._as_int(payload.get("timestamp_ms")),
+            timestamp_ms=timestamp_ms,
             task_mode=task_mode,
             pitch=round(pitch, 2),
             yaw=round(yaw, 2),
             roll=round(roll, 2),
             motion_intensity=round(float(motion), 1),
+            accel_magnitude=accel_mag,
+            gyro_magnitude=gyro_mag,
             tracking_state=tracking_state,
             tracking_confidence=round(float(tracking_confidence), 2),
             tracking_uncertainty=round(float(tracking_uncertainty), 1),
@@ -259,9 +321,22 @@ class RokidFrameAdapter:
             blur_score=round(float(blur_score), 1),
             brightness_score=round(float(brightness_score), 1),
             device_profile="rokid-video-scene-proxy",
-            motion_source="explicit" if explicit_motion is not None else "scene-derived",
-            pose_source="scene-proxy",
+            motion_source=motion_source,
+            pose_source="telemetry" if has_pose else "scene-proxy",
             frame_source=frame_source,
+            source_mode=source_mode,
+            has_pose=has_pose,
+            has_imu=has_imu,
+            pose_reliability=pose_reliability,
+            valid_frame_streak=self.valid_frame_streak,
+            valid_frame_seconds=round(float(self.valid_frame_seconds), 1),
+            missing_signals=self._build_missing_signals(
+                has_pose=has_pose,
+                has_imu=has_imu,
+                motion_source=motion_source,
+                pose_reliability=pose_reliability,
+            ),
+            rokid_compatible_mode=True,
         )
 
     def blueprint(self):
@@ -292,6 +367,14 @@ class RokidFrameAdapter:
             motion_source="scene-derived",
             pose_source="scene-proxy",
             frame_source="base64",
+            source_mode="frame_only",
+            has_pose=False,
+            has_imu=False,
+            pose_reliability="scene_proxy",
+            valid_frame_streak=4,
+            valid_frame_seconds=3.0,
+            missing_signals=["pose", "imu", "motion"],
+            rokid_compatible_mode=True,
         )
         return {
             "adapter_name": "rokid-video-scene-adapter",
@@ -307,12 +390,16 @@ class RokidFrameAdapter:
                 "blur_score",
                 "brightness_score",
                 "scene-derived pitch/yaw/roll proxies",
+                "valid_frame_streak",
+                "valid_frame_seconds",
+                "source_mode / pose_reliability / missing_signals",
             ],
             "normalized_packet": asdict(sample_packet),
             "limits": [
                 "scene-driven proxy only",
                 "not a precise IMU or eye-tracking replacement",
                 "best for first-person study surfaces such as books, screens, boards, and notes",
+                "frame-only output runs in Rokid-compatible conservative mode",
             ],
         }
 
@@ -640,6 +727,77 @@ class RokidFrameAdapter:
         lock_score = (base * 0.78) + (self.scene_lock_score * 0.22) + streak_bonus
         return self._clamp(lock_score)
 
+    def _resolve_motion_intensity(
+        self,
+        explicit_motion: Optional[float],
+        accel_magnitude: Optional[float],
+        gyro_magnitude: Optional[float],
+    ):
+        if explicit_motion is not None:
+            return self._clamp(explicit_motion), "explicit"
+
+        accel_component = 0.0
+        if accel_magnitude is not None:
+            gravity_offset = max(0.0, abs(accel_magnitude) - 1.0)
+            accel_component = self._clamp(gravity_offset * 55.0)
+
+        gyro_component = 0.0
+        if gyro_magnitude is not None:
+            gyro_component = self._clamp(abs(gyro_magnitude) * 1.2)
+
+        if accel_magnitude is None and gyro_magnitude is None:
+            return 0.0, "default"
+        if accel_magnitude is None:
+            return round(gyro_component, 1), "gyro-derived"
+        if gyro_magnitude is None:
+            return round(accel_component, 1), "accel-derived"
+        return round(self._clamp((accel_component * 0.42) + (gyro_component * 0.58)), 1), "imu-derived"
+
+    def _update_valid_frame_window(self, is_valid_frame: bool, timestamp_ms: Optional[int] = None):
+        current_time = self._timestamp_seconds(timestamp_ms)
+        self.last_frame_at = current_time
+        if not is_valid_frame:
+            self.valid_frame_streak = 0
+            self.valid_frame_seconds = 0.0
+            self.last_valid_frame_at = None
+            return
+
+        if self.last_valid_frame_at is None:
+            self.valid_frame_streak = 1
+            self.valid_frame_seconds = 0.0
+            self.last_valid_frame_at = current_time
+            return
+
+        delta = max(0.0, current_time - self.last_valid_frame_at)
+        if delta > 3.0:
+            self.valid_frame_streak = 1
+            self.valid_frame_seconds = 0.0
+        else:
+            self.valid_frame_streak += 1
+            self.valid_frame_seconds = min(30.0, self.valid_frame_seconds + delta)
+        self.last_valid_frame_at = current_time
+
+    def _build_missing_signals(
+        self,
+        has_pose: bool,
+        has_imu: bool,
+        motion_source: str,
+        pose_reliability: str,
+    ):
+        missing = []
+        if pose_reliability == "missing" or not has_pose:
+            missing.append("pose")
+        if not has_imu:
+            missing.append("imu")
+        if motion_source in {"default", "unavailable", "scene-derived"}:
+            missing.append("motion")
+        return missing
+
+    def _timestamp_seconds(self, timestamp_ms: Optional[int]):
+        if timestamp_ms is None:
+            return time.time()
+        return float(timestamp_ms) / 1000.0
+
     def _decay_last_pose(self, factor):
         damped_pitch = self.last_pose[0] * factor
         damped_yaw = self.last_pose[1] * factor
@@ -652,6 +810,20 @@ class RokidFrameAdapter:
         if candidate in {"lecture", "reading", "note-taking", "review"}:
             return candidate
         return default_task_mode
+
+    def _pick(self, payload: dict[str, Any], *paths: str):
+        for path in paths:
+            current: Any = payload
+            found = True
+            for part in path.split("."):
+                if isinstance(current, dict) and part in current:
+                    current = current[part]
+                else:
+                    found = False
+                    break
+            if found and current is not None:
+                return current
+        return None
 
     def _as_float(self, value: Any) -> Optional[float]:
         try:
